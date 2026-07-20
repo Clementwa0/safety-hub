@@ -1,6 +1,6 @@
 import type { StaticImageData } from "next/image";
 import type { Product, ProductSpec } from "@/types/product";
-import { formatKES as formatProductPrice } from "@/lib/format";
+import { formatKES as formatProductPrice } from "@/lib/formatters/format";
 
 // Product Images
 import helmet from "@/public/images/p-helmet.jpg";

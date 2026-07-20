@@ -1,9 +1,19 @@
-import React from 'react'
+import {
+  Hero,
+  Categories,
+  FeaturedProducts,
+  CTA,
+  Stats,
+} from "@/components/home";
 
-const page = () => {
+export default function HomePage() {
   return (
-    <div>page</div>
-  )
+    <>
+      <Hero />
+      <Categories />
+      <FeaturedProducts />
+      {/* <Stats /> */}
+      <CTA />
+    </>
+  );
 }
-
-export default page
