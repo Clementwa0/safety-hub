@@ -32,7 +32,7 @@ export default function NotFound() {
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <Button  size="lg">
+          <Button asChild size="lg">
             <Link href="/">
               <FaHome className="mr-2 h-5 w-5" />
               Back Home

@@ -1,5 +1,6 @@
-import { Footer, Navbar } from "@/components/common";
 import type { ReactNode } from "react";
+import { Navbar, Footer } from "@/components/common";
+import WhatsAppFab from "@/components/shared/WhatsAppFab";
 
 export default function PublicLayout({
   children,
@@ -8,15 +9,15 @@ export default function PublicLayout({
 }) {
   return (
     <>
-       <Navbar /> 
+      <Navbar />
 
       <main className="min-h-screen bg-background">
         {children}
       </main>
 
-       <Footer />
+      <Footer />
 
-      {/*<WhatsAppFab /> */}
+      <WhatsAppFab />
     </>
   );
 }
