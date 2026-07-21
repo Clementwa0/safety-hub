@@ -1,6 +1,4 @@
 import type { StaticImageData } from "next/image";
-import type { Product, ProductSpec } from "@/types/product";
-import { formatKES as formatProductPrice } from "@/lib/formatters/format";
 
 // Product Images
 import helmet from "@/public/images/p-helmet.jpg";
@@ -56,7 +54,38 @@ export type Category = (typeof CATEGORIES)[number];
 /*                                   Types                                    */
 /* -------------------------------------------------------------------------- */
 
-export type { Product, ProductSpec } from "@/types/product";
+export interface ProductSpec {
+  label: string;
+  value: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  category: Category;
+  subcategory: string;
+  price: number;
+  image: StaticImageData;
+  stock: number;
+  description: string;
+  featured?: boolean;
+  specs: ProductSpec[];
+  // Additional fields for enhanced product detail
+  compareAtPrice?: number;
+  images?: StaticImageData[];
+  rating?: number;
+  reviews?: number;
+  sku?: string;
+  features?: string[];
+  isNew?: boolean;
+  createdAt?: number;
+  popularity?: number;
+  brand?: string;
+  weight?: string;
+  dimensions?: string;
+  warranty?: string;
+  certifications?: string[];
+}
 
 /* -------------------------------------------------------------------------- */
 /*                              Type Guard                                    */
@@ -2945,7 +2974,10 @@ export const PRODUCTS: Product[] = [
 /*                                 Formatting                                 */
 /* -------------------------------------------------------------------------- */
 
-export const formatKES = formatProductPrice;
+export const formatKES = (amount: number) =>
+  `KES ${amount.toLocaleString("en-KE", {
+    maximumFractionDigits: 0,
+  })}`;
 
 /* -------------------------------------------------------------------------- */
 /*                                  Helpers                                   */

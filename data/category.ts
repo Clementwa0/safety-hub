@@ -1,5 +1,17 @@
-import type { IconType } from "react-icons";
-import { FaAnchor, FaCross, FaEarListen, FaEye, FaFireFlameCurved, FaGlobe, FaHand, FaShieldHalved, FaShirt, FaWind, FaShoePrints } from "react-icons/fa6";
+import type { LucideIcon } from "lucide-react";
+import {
+  Anchor,
+  Cross,
+  Ear,
+  Eye,
+  Flame,
+  Globe,
+  Hand,
+  HardHat,
+  Shirt,
+  Wind,
+  Footprints,
+} from "lucide-react";
 
 export interface Category {
   id: string;
@@ -8,7 +20,7 @@ export interface Category {
   description: string;
   count: number;
   image: string;
-  icon: IconType;
+  icon: LucideIcon;
 }
 
 export const categories: Category[] = [
@@ -19,7 +31,7 @@ export const categories: Category[] = [
     description: "Browse every HSE product category.",
     count: 152,
     image: "",
-    icon: FaGlobe,
+    icon: Globe,
   },
   {
     id: "head",
@@ -29,7 +41,7 @@ export const categories: Category[] = [
     count: 18,
     image:
       "https://images.pexels.com/photos/3846517/pexels-photo-3846517.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaShieldHalved,
+    icon: HardHat,
   },
   {
     id: "eye",
@@ -39,7 +51,7 @@ export const categories: Category[] = [
     count: 24,
     image:
       "https://images.pexels.com/photos/8961251/pexels-photo-8961251.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaEye,
+    icon: Eye,
   },
   {
     id: "hearing",
@@ -49,7 +61,7 @@ export const categories: Category[] = [
     count: 15,
     image:
       "https://images.pexels.com/photos/3846022/pexels-photo-3846022.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaEarListen,
+    icon: Ear,
   },
   {
     id: "respiratory",
@@ -59,7 +71,7 @@ export const categories: Category[] = [
     count: 22,
     image:
       "https://images.pexels.com/photos/3985163/pexels-photo-3985163.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaWind,
+    icon: Wind,
   },
   {
     id: "hand",
@@ -69,7 +81,7 @@ export const categories: Category[] = [
     count: 26,
     image:
       "https://images.pexels.com/photos/209230/pexels-photo-209230.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaHand,
+    icon: Hand,
   },
   {
     id: "foot",
@@ -79,7 +91,7 @@ export const categories: Category[] = [
     count: 20,
     image:
       "https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaShoePrints,
+    icon: Footprints,
   },
   {
     id: "workwear",
@@ -89,7 +101,7 @@ export const categories: Category[] = [
     count: 12,
     image:
       "https://images.pexels.com/photos/1098365/pexels-photo-1098365.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaShirt,
+    icon: Shirt,
   },
   {
     id: "fall",
@@ -99,7 +111,7 @@ export const categories: Category[] = [
     count: 10,
     image:
       "https://images.pexels.com/photos/8961134/pexels-photo-8961134.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaAnchor,
+    icon: Anchor,
   },
   {
     id: "fire",
@@ -109,7 +121,7 @@ export const categories: Category[] = [
     count: 13,
     image:
       "https://images.pexels.com/photos/5816291/pexels-photo-5816291.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaFireFlameCurved,
+    icon: Flame,
   },
   {
     id: "firstaid",
@@ -119,7 +131,7 @@ export const categories: Category[] = [
     count: 9,
     image:
       "https://images.pexels.com/photos/4386467/pexels-photo-4386467.jpeg?auto=compress&cs=tinysrgb&w=400",
-    icon: FaCross,
+    icon: Cross,
   },
 ];
 
