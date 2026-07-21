@@ -7,9 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 import ContactForm from "./ContactForm";
+import { COMPANY } from "@/lib/constants";
 
-const mapSrc =
-  "https://www.google.com/maps?q=Capital+Mall+Utawala+Nairobi&output=embed";
+const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(COMPANY.address)}&output=embed`;
 
 export default function GoogleMap() {
   return (
@@ -57,13 +57,11 @@ export default function GoogleMap() {
                 </div>
 
                 <div className="space-y-1 text-sm text-muted-foreground leading-6">
-                  <p>Capital Mall</p>
-                  <p>Utawala, Nairobi</p>
-                  <p>Kenya</p>
+                  <p>{COMPANY.address}</p>
                 </div>
 
                 <a
-                  href="https://maps.google.com/?q=Capital+Mall+Utawala+Nairobi"
+                  href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -98,13 +96,11 @@ export default function GoogleMap() {
           </div>
 
           <div className="space-y-1 text-sm text-muted-foreground leading-6">
-            <p>Capital Mall</p>
-            <p>Utawala, Nairobi</p>
-            <p>Kenya</p>
+            <p>{COMPANY.address}</p>
           </div>
 
           <a
-            href="https://maps.google.com/?q=Capital+Mall+Utawala+Nairobi"
+            href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY.address)}`}
             target="_blank"
             rel="noopener noreferrer"
           >

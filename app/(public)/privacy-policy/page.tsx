@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { COMPANY } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - HSE Hub Limited",
@@ -350,24 +351,24 @@ export default function PrivacyPage() {
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Email</p>
                     <a 
-                      href="mailto:info@hsehub.co.ke" 
+                      href={`mailto:${COMPANY.email}`} 
                       className="text-sm font-medium text-secondary hover:underline"
                     >
-                      info@hsehub.co.ke
+                      {COMPANY.email}
                     </a>
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Phone</p>
                     <a 
-                      href="tel:+254115062024" 
+                      href={`tel:${COMPANY.phone}`} 
                       className="text-sm font-medium text-secondary hover:underline"
                     >
-                      +254 115 062 024
+                      {COMPANY.phone}
                     </a>
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Location</p>
-                    <span className="text-sm font-medium">Machakos, Kenya</span>
+                    <span className="text-sm font-medium">{COMPANY.address}</span>
                   </div>
                 </div>
               </CardContent>

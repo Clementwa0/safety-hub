@@ -15,6 +15,7 @@ import Logo from "@/public/logo/logo.png";
 import { navLinks, TopStripe } from ".";
 import CartIcon from "../cart/CartIcon";
 import { FaSearch } from "react-icons/fa";
+import { COMPANY } from "@/lib/constants";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -59,7 +60,7 @@ export default function Navbar() {
       <div className="container mx-auto flex h-15 items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center">
-          <Image src={Logo} alt="HSE Hub Limited" width={170} priority />
+          <Image src={Logo} alt={COMPANY.name} width={170} priority />
         </Link>
 
         {/* Desktop Navigation */}
@@ -176,7 +177,7 @@ export default function Navbar() {
           <CartIcon />
 
           <Link
-            href="https://wa.me/254700000000"
+            href={`https://wa.me/${COMPANY.whatsapp}`}
             className="hidden md:flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
           >
             <FaWhatsapp size={18} />
@@ -282,7 +283,7 @@ export default function Navbar() {
               })}
 
               <Link
-                href="https://wa.me/254700000000"
+                href={`https://wa.me/${COMPANY.whatsapp}`}
                 className="mt-5 flex items-center justify-center gap-2 rounded-lg bg-primary py-3 font-semibold text-white"
               >
                 <FaWhatsapp size={18} />

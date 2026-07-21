@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import heroImg from "@/public/images/hero.png";
+import { COMPANY } from "@/lib/constants";
 
 export default function Hero() {
   const [isMobile, setIsMobile] = useState(false);
@@ -130,7 +131,7 @@ export default function Hero() {
               </Link>
 
               <Link
-                href="https://wa.me/254115062024"
+                href={`https://wa.me/${COMPANY.whatsapp}`}
                 target="_blank"
                 className="group inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-primary shadow-sm transition hover:shadow-md"
               >

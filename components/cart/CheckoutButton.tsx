@@ -3,6 +3,7 @@
 import { FaCommentDots } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import { generateWhatsAppMessage } from "@/lib/cart";
+import { COMPANY } from "@/lib/constants";
 import { useCartStore } from "@/store/cart-store";
 
 interface CheckoutButtonProps {
@@ -37,7 +38,7 @@ export default function CheckoutButton({
       total,
     );
 
-    const url = `https://wa.me/254700000000?text=${encodeURIComponent(message)}`;
+    const url = `https://wa.me/${COMPANY.whatsapp}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

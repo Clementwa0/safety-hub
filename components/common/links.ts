@@ -20,6 +20,8 @@ import {
   FaPhone,
 } from "react-icons/fa";
 
+import { COMPANY } from "@/lib/constants";
+
 /* -------------------------------------------------------------------------- */
 /*                                   Types                                    */
 /* -------------------------------------------------------------------------- */
@@ -64,8 +66,8 @@ export interface ContactInfo {
 /*                               Helper Functions                             */
 /* -------------------------------------------------------------------------- */
 
-export function createCategoryLink(category: string): string {
-  return `/categories/${encodeURIComponent(category)}`;
+export function createCategoryLink(_: string): string {
+  return "/";
 }
 
 /* -------------------------------------------------------------------------- */
@@ -122,7 +124,7 @@ const categoryItems = [
 
 export const categoriesMenu: DropdownItem[] = categoryItems.map((item) => ({
   ...item,
-  href: createCategoryLink(item.label),
+  href: "/", // Redirect all category dropdown items to Home
 }));
 
 /* -------------------------------------------------------------------------- */
@@ -136,11 +138,11 @@ export const navLinks: NavLink[] = [
   },
   {
     label: "Shop",
-    href: "/shop",
+    href: "/", // Redirect to Home
   },
   {
     label: "Categories",
-    href: "/categories",
+    href: "/", // Redirect to Home
     dropdown: categoriesMenu,
   },
   {
@@ -157,18 +159,18 @@ export const navLinks: NavLink[] = [
 /*                                Footer Links                                */
 /* -------------------------------------------------------------------------- */
 
-export const quickLinks = [
+export const quickLinks: FooterLink[] = [
   {
     label: "Home",
     href: "/",
   },
   {
     label: "Shop",
-    href: "/shop",
+    href: "/", // Redirect to Home
   },
   {
     label: "Categories",
-    href: "/categories",
+    href: "/", // Redirect to Home
   },
   {
     label: "About Us",
@@ -180,24 +182,24 @@ export const quickLinks = [
   },
 ];
 
-export const contactInfo = [
+export const contactInfo: ContactInfo[] = [
   {
     icon: FaPhone,
-    value: "+254 700 000 000",
-    href: "tel:+254700000000",
+    value: COMPANY.phone,
+    href: `tel:${COMPANY.phone}`,
   },
   {
     icon: FaEnvelope,
-    value: "info@hsehub.co.ke",
-    href: "mailto:info@hsehub.co.ke",
+    value: COMPANY.email,
+    href: `mailto:${COMPANY.email}`,
   },
   {
     icon: FaMapMarkerAlt,
-    value: "Nairobi, Kenya",
+    value: COMPANY.address,
   },
 ];
 
-export const legalLinks = [
+export const legalLinks: FooterLink[] = [
   {
     label: "Privacy Policy",
     href: "/privacy-policy",
@@ -208,20 +210,20 @@ export const legalLinks = [
   },
   {
     label: "Shipping Policy",
-    href: "/shipping",
+    href: "/", // Redirect to Home
   },
 ];
 
 export const categories: CategoryLink[] = categoryItems.map((item) => ({
   label: item.label,
-  href: createCategoryLink(item.label),
+  href: "/", // Redirect to Home
 }));
 
 /* -------------------------------------------------------------------------- */
 /*                               Social Links                                 */
 /* -------------------------------------------------------------------------- */
 
-export const socialLinks = [
+export const socialLinks: SocialLink[] = [
   {
     icon: FaFacebook,
     href: "https://facebook.com",

@@ -1,11 +1,12 @@
 "use client";
 
 import { FaWhatsapp } from "react-icons/fa";
+import { COMPANY } from "@/lib/constants";
 import { waLink } from "@/lib/whatsapp";
 
 export default function WhatsAppFab() {
   const href = waLink(
-    "Hello HSE Hub Limited, I'm interested in your safety products. Kindly assist me."
+    `Hello ${COMPANY.name}, I'm interested in your safety products. Kindly assist me.`
   );
 
   return (

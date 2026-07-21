@@ -5,6 +5,7 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 
+import { COMPANY } from "@/lib/constants";
 
 export const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -17,7 +18,7 @@ export const contactCards = [
     iconBg: "bg-blue-900",
     iconColor: "text-blue-600",
     title: "Call Us",
-    lines: ["+254 700 000 000", "+254 722 000 000"],
+    lines: [COMPANY.phone],
     sub: "Mon - Sat: 8:00 AM - 6:00 PM",
   },
   {
@@ -25,7 +26,7 @@ export const contactCards = [
     iconBg: "bg-green-500",
     iconColor: "text-green-600",
     title: "WhatsApp",
-    lines: ["+254 700 000 000"],
+    lines: [COMPANY.whatsapp],
     sub: "Chat with us on WhatsApp anytime!",
   },
   {
@@ -33,7 +34,7 @@ export const contactCards = [
     iconBg: "bg-yellow-500",
     iconColor: "text-red-600",
     title: "Email Us",
-    lines: ["info@hsehub.co.ke", "sales@hsehub.co.ke"],
+    lines: [COMPANY.email],
     sub: "We reply within 24 hours",
   },
   {
@@ -41,7 +42,7 @@ export const contactCards = [
     iconBg: "bg-green-500",
     iconColor: "text-orange-600",
     title: "Visit Us",
-    lines: ["Capital shopping Mall, Utawala road, Nairobi, Kenya"],
+    lines: [COMPANY.address],
     sub: "Mon - Sat: 8:00 AM - 6:00 PM",
   },
 ];

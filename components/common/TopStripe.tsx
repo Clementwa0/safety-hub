@@ -7,9 +7,11 @@ import {
   RiTruckFill,
 } from "react-icons/ri";
 
+import { COMPANY } from "@/lib/constants";
+
 const SITE = {
-  phone: "+254 700 000 000",
-  email: "info@hsehub.co.ke",
+  phone: COMPANY.phone,
+  email: COMPANY.email,
 };
 
 export default function TopStripe() {

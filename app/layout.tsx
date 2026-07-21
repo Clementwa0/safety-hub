@@ -4,13 +4,14 @@ import { Toaster } from "@/components/ui/sonner";
 import CartDrawer from "@/components/cart/CartDrawer";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { COMPANY } from "@/lib/constants";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: {
-    default: "HSE Hub Limited",
-    template: "%s | HSE Hub Limited",
+    default: COMPANY.name,
+    template: `%s | ${COMPANY.name}`,
   },
   description:
     "Leading supplier of PPE, industrial safety equipment and workplace protection solutions in Kenya.",

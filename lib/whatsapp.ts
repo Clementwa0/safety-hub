@@ -1,11 +1,29 @@
 import { formatKES, Product } from "@/data/products";
+import { COMPANY } from "@/lib/constants";
 
-// Replace with your actual business WhatsApp number (international format, no +)
-export const WHATSAPP_NUMBER = "254115062024";
-export const BUSINESS_NAME = "ShieldPro Safety";
-export const BUSINESS_EMAIL = "sales@shieldpro.co.ke";
-export const BUSINESS_PHONE = "+254 115 062 024";
-export const BUSINESS_LOCATION = "Industrial Area, Nairobi, Kenya";
+function normalizeWhatsAppNumber(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.startsWith("254")) {
+    return digits;
+  }
+
+  if (digits.startsWith("0")) {
+    return `254${digits.slice(1)}`;
+  }
+
+  return digits;
+}
+
+export const WHATSAPP_NUMBER = normalizeWhatsAppNumber(COMPANY.whatsapp);
+export const BUSINESS_NAME = COMPANY.name;
+export const BUSINESS_EMAIL = COMPANY.email;
+export const BUSINESS_PHONE = COMPANY.phone;
+export const BUSINESS_LOCATION = COMPANY.address;
 
 export type CartLine = { product: Product; qty: number };
 

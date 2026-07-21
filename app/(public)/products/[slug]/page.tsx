@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useProduct } from "@/hooks/useProduct";
+import { COMPANY } from "@/lib/constants";
 import type { Product } from "@/types/product";
 import {
   ProductGallery,
@@ -66,7 +67,7 @@ export default function ProductPage() {
 
   const handleWhatsApp = () => {
     if (!product) return;
-    const url = `https://wa.me/254700000000?text=${encodeURIComponent(`Hello, I'm interested in ${product.name} (${product.category}) for KES ${product.price.toLocaleString('en-KE')}.`)}`;
+    const url = `https://wa.me/${COMPANY.whatsapp}?text=${encodeURIComponent(`Hello ${COMPANY.name}, I'm interested in ${product.name} (${product.category}) for KES ${product.price.toLocaleString('en-KE')}.`)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

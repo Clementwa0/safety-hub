@@ -8,6 +8,7 @@ import {
   FaPhoneVolume,
   FaShieldHalved,
 } from "react-icons/fa6";
+import { COMPANY } from "@/lib/constants";
 
 export default function CTA() {
   return (
@@ -42,7 +43,7 @@ export default function CTA() {
 
             <div className="mt-6 flex w-full flex-col gap-3">
               <a
-                href="https://wa.me/254700000000"
+                href={`https://wa.me/${COMPANY.whatsapp}`}
                 className="flex h-11 items-center justify-center gap-2 rounded-xl bg-secondary text-sm font-semibold text-white"
               >
                 <FaCommentDots />
@@ -50,7 +51,7 @@ export default function CTA() {
               </a>
 
               <a
-                href="tel:+254700000000"
+                href={`tel:${COMPANY.phone}`}
                 className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 text-sm font-semibold text-white"
               >
                 <FaPhoneVolume />
@@ -98,7 +99,7 @@ export default function CTA() {
                 <motion.a
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  href="https://wa.me/254700000000"
+                  href={`https://wa.me/${COMPANY.whatsapp}`}
                   className="flex h-11 items-center gap-2 rounded-xl bg-secondary px-6 text-sm font-semibold text-white"
                 >
                   <FaCommentDots />
@@ -108,7 +109,7 @@ export default function CTA() {
                 <motion.a
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  href="tel:+254700000000"
+                  href={`tel:${COMPANY.phone}`}
                   className="flex h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 text-sm font-semibold text-white"
                 >
                   <FaPhoneVolume />
