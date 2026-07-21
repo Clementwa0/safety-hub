@@ -138,11 +138,11 @@ export const navLinks: NavLink[] = [
   },
   {
     label: "Shop",
-    href: "/", // Redirect to Home
+    href: "/s", // Redirect to Home
   },
   {
     label: "Categories",
-    href: "/", // Redirect to Home
+    href: "/c", // Redirect to Home
     dropdown: categoriesMenu,
   },
   {
@@ -166,11 +166,11 @@ export const quickLinks: FooterLink[] = [
   },
   {
     label: "Shop",
-    href: "/", // Redirect to Home
+    href: "/s", // Redirect to Home
   },
   {
     label: "Categories",
-    href: "/", // Redirect to Home
+    href: "/c", // Redirect to Home
   },
   {
     label: "About Us",
