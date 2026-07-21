@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import {
   FaShieldAlt,
+  FaPhone,
+  FaEnvelope,
+  FaMapMarkerAlt,
   FaChevronDown,
   FaFacebook,
   FaInstagram,
