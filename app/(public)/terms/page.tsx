@@ -2,14 +2,21 @@ import Link from "next/link";
 import { Metadata } from "next";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { COMPANY } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Terms and Conditions - HSE Hub Limited",
-  description: "Read the terms and conditions for using HSE Hub Limited's website, products, and services.",
+  description:
+    "Read the terms and conditions for using HSE Hub Limited's website, products, and services.",
 };
 
 const sections = [
@@ -228,20 +235,36 @@ export default function TermsPage() {
                       <span>Effective: {effectiveDate}</span>
                     </div>
                     <span className="h-3 w-px bg-border/50" />
-                    <Badge variant="outline" className="text-[9px] px-1.5">v1.0</Badge>
+                    <Badge variant="outline" className="text-[9px] px-1.5">
+                      v1.0
+                    </Badge>
                   </div>
                 </div>
               </Card>
 
               <div className="mt-4 flex flex-col gap-2">
-                <Button variant="outline" size="sm" className="justify-start w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start w-full"
+                >
                   Print Page
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start w-full"
+                >
                   Download PDF
                 </Button>
-                <Button variant="ghost" size="sm" className="justify-start w-full" asChild>
-                  <Link href="/">Back to Home</Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start w-full"
+                  nativeButton={false}
+                  render={<Link href="/" />}
+                >
+                  Back to Home
                 </Button>
               </div>
             </div>
@@ -253,30 +276,42 @@ export default function TermsPage() {
             <header className="mb-8">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-primary sm:text-3xl">Terms and Conditions</h1>
+                  <h1 className="text-2xl font-bold text-primary sm:text-3xl">
+                    Terms and Conditions
+                  </h1>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       Effective: {effectiveDate}
                     </span>
                     <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
-                    <Badge variant="outline" className="text-[10px]">Version 1.0</Badge>
+                    <Badge variant="outline" className="text-[10px]">
+                      Version 1.0
+                    </Badge>
                   </div>
                 </div>
               </div>
             </header>
 
             {/* Introduction */}
-            <Card id="introduction" className="mb-8 border-secondary/20 shadow-sm scroll-mt-24">
+            <Card
+              id="introduction"
+              className="mb-8 border-secondary/20 shadow-sm scroll-mt-24"
+            >
               <CardHeader>
                 <CardTitle className="text-xl">Introduction</CardTitle>
                 <CardDescription className="text-base leading-relaxed">
-                  Welcome to HSE Hub Limited. By using our website, products, and services, you agree to comply with and be bound by the following terms and conditions. Please read these terms carefully before using our services.
+                  Welcome to HSE Hub Limited. By using our website, products,
+                  and services, you agree to comply with and be bound by the
+                  following terms and conditions. Please read these terms
+                  carefully before using our services.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg bg-secondary/5 p-4">
                   <p className="text-sm text-muted-foreground">
-                    These terms apply to all users of our website, products, and services. By continuing to use our services, you accept these terms.
+                    These terms apply to all users of our website, products, and
+                    services. By continuing to use our services, you accept
+                    these terms.
                   </p>
                 </div>
               </CardContent>
@@ -285,8 +320,8 @@ export default function TermsPage() {
             {/* Sections */}
             <div className="space-y-6">
               {sections.map((section) => (
-                <Card 
-                  key={section.id} 
+                <Card
+                  key={section.id}
                   id={section.id}
                   className="border-secondary/10 scroll-mt-24 hover:shadow-md transition-all duration-300"
                 >
@@ -297,9 +332,7 @@ export default function TermsPage() {
                       </span>
                       {section.title}
                     </CardTitle>
-                    <CardDescription>
-                      {section.description}
-                    </CardDescription>
+                    <CardDescription>{section.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
@@ -319,19 +352,23 @@ export default function TermsPage() {
             </div>
 
             {/* Contact Information */}
-            <Card id="contact" className="mt-8 border-secondary/10 shadow-sm scroll-mt-24">
+            <Card
+              id="contact"
+              className="mt-8 border-secondary/10 shadow-sm scroll-mt-24"
+            >
               <CardHeader>
                 <CardTitle className="text-lg">Contact Us</CardTitle>
                 <CardDescription>
-                  If you have any questions about these Terms and Conditions, please contact us:
+                  If you have any questions about these Terms and Conditions,
+                  please contact us:
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Email</p>
-                    <a 
-                      href={`mailto:${COMPANY.email}`} 
+                    <a
+                      href={`mailto:${COMPANY.email}`}
                       className="text-sm font-medium text-secondary hover:underline"
                     >
                       {COMPANY.email}
@@ -339,8 +376,8 @@ export default function TermsPage() {
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Phone</p>
-                    <a 
-                      href={`tel:${COMPANY.phone}`} 
+                    <a
+                      href={`tel:${COMPANY.phone}`}
                       className="text-sm font-medium text-secondary hover:underline"
                     >
                       {COMPANY.phone}
@@ -348,7 +385,9 @@ export default function TermsPage() {
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Location</p>
-                    <span className="text-sm font-medium">{COMPANY.address}</span>
+                    <span className="text-sm font-medium">
+                      {COMPANY.address}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -361,8 +400,10 @@ export default function TermsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  These terms and conditions are governed by and construed in accordance with the laws of the Republic of Kenya. 
-                  Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts of Kenya.
+                  These terms and conditions are governed by and construed in
+                  accordance with the laws of the Republic of Kenya. Any
+                  disputes arising from these terms shall be subject to the
+                  exclusive jurisdiction of the courts of Kenya.
                 </p>
                 <div className="mt-3 rounded-lg bg-secondary/5 p-3">
                   <p className="text-sm text-muted-foreground">

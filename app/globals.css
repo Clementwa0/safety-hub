@@ -471,3 +471,13 @@
     padding: 0;
   }
 }
+@media print {
+  body * { visibility: hidden !important; }
+  #document-print-area, #document-print-area * { visibility: visible !important; }
+  #document-print-area {
+    position: absolute !important;
+    left: 0; top: 0; width: 100%;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+}

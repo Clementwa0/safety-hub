@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FaTriangleExclamation, FaArrowLeft, FaHouse } from "react-icons/fa6";
+import { FaTriangleExclamation, FaArrowLeft } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
 import { FaHome } from "react-icons/fa";
@@ -27,16 +27,14 @@ export default function NotFound() {
         </h2>
 
         <p className="mx-auto mt-6 max-w-lg text-lg leading-8 text-muted-foreground">
-          Sorry, the page you&apos;re looking for doesn&apos;t exist, has been moved, or
-          the URL may be incorrect.
+          Sorry, the page you&apos;re looking for doesn&apos;t exist, has been
+          moved, or the URL may be incorrect.
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <Button asChild size="lg">
-            <Link href="/">
-              <FaHome className="mr-2 h-5 w-5" />
-              Back Home
-            </Link>
+          <Button size="lg" nativeButton={false} render={<Link href="/" />}>
+            <FaHome className="mr-2 h-5 w-5" />
+            Back Home
           </Button>
 
           <Button

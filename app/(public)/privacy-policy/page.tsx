@@ -1,31 +1,37 @@
 import Link from "next/link";
 import { Metadata } from "next";
-import { 
-  FaShieldHalved, 
-  FaCircleCheck, 
-  FaEye, 
-  FaLock, 
-  FaFileLines, 
-  FaUsers, 
-  FaDatabase, 
-  FaEnvelope, 
-  FaArrowLeft, 
-  FaPrint, 
-  FaDownload, 
-  FaClock, 
+import {
+  FaShieldHalved,
+  FaCircleCheck,
+  FaEye,
+  FaLock,
+  FaFileLines,
+  FaUsers,
+  FaDatabase,
+  FaEnvelope,
+  FaArrowLeft,
+  FaPrint,
+  FaDownload,
   FaBars,
-  FaRegClock
+  FaRegClock,
 } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { COMPANY } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - HSE Hub Limited",
-  description: "Learn how HSE Hub Limited collects, uses, and protects your personal information. Your privacy and security are important to us.",
+  description:
+    "Learn how HSE Hub Limited collects, uses, and protects your personal information. Your privacy and security are important to us.",
 };
 
 const sections = [
@@ -34,7 +40,8 @@ const sections = [
     icon: FaDatabase,
     number: "1.",
     title: "Information We Collect",
-    description: "We collect various types of information to provide and improve our services.",
+    description:
+      "We collect various types of information to provide and improve our services.",
     items: [
       "Personal identification information (name, email address, phone number, company name)",
       "Order history and purchase information",
@@ -48,7 +55,8 @@ const sections = [
     icon: FaUsers,
     number: "2.",
     title: "How We Use Your Information",
-    description: "Your information helps us deliver better products and services.",
+    description:
+      "Your information helps us deliver better products and services.",
     items: [
       "Process orders and deliver products",
       "Provide customer support and respond to inquiries",
@@ -261,26 +269,40 @@ export default function PrivacyPage() {
                       <span>Effective: {effectiveDate}</span>
                     </div>
                     <span className="h-3 w-px bg-border/50" />
-                    <Badge variant="outline" className="text-[9px] px-1.5">v1.0</Badge>
+                    <Badge variant="outline" className="text-[9px] px-1.5">
+                      v1.0
+                    </Badge>
                   </div>
                 </div>
               </Card>
 
               {/* Action Buttons */}
               <div className="mt-4 flex flex-col gap-2">
-                <Button variant="outline" size="sm" className="justify-start gap-2 w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start gap-2 w-full"
+                >
                   <FaPrint className="h-3.5 w-3.5" />
                   Print Page
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start gap-2 w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start gap-2 w-full"
+                >
                   <FaDownload className="h-3.5 w-3.5" />
                   Download PDF
                 </Button>
-                <Button variant="ghost" size="sm" className="justify-start gap-2 w-full" asChild>
-                  <Link href="/">
-                    <FaArrowLeft className="h-3.5 w-3.5" />
-                    Back to Home
-                  </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start gap-2 w-full"
+                  nativeButton={false}
+                  render={<Link href="/" />}
+                >
+                  <FaArrowLeft className="h-3.5 w-3.5" />
+                  Back to Home
                 </Button>
               </div>
             </div>
@@ -296,14 +318,18 @@ export default function PrivacyPage() {
                     <FaShieldHalved className="h-6 w-6" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold text-primary sm:text-3xl">Privacy Policy</h1>
+                    <h1 className="text-2xl font-bold text-primary sm:text-3xl">
+                      Privacy Policy
+                    </h1>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <FaRegClock className="h-3.5 w-3.5" />
                         Effective: {effectiveDate}
                       </span>
                       <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
-                      <Badge variant="outline" className="text-[10px]">Version 1.0</Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        Version 1.0
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -311,7 +337,10 @@ export default function PrivacyPage() {
             </header>
 
             {/* Introduction */}
-            <Card id="introduction" className="mb-8 border-secondary/20 shadow-sm scroll-mt-28">
+            <Card
+              id="introduction"
+              className="mb-8 border-secondary/20 shadow-sm scroll-mt-28"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
@@ -320,38 +349,46 @@ export default function PrivacyPage() {
                   Our Commitment to Privacy
                 </CardTitle>
                 <CardDescription className="text-base leading-relaxed">
-                  HSE Hub Limited is committed to protecting your privacy and ensuring the security of your personal information. 
-                  This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, 
-                  products, and services.
+                  HSE Hub Limited is committed to protecting your privacy and
+                  ensuring the security of your personal information. This
+                  Privacy Policy explains how we collect, use, disclose, and
+                  safeguard your information when you use our website, products,
+                  and services.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg bg-secondary/5 p-4">
                   <p className="text-sm text-muted-foreground flex items-start gap-2">
                     <FaCircleCheck className="h-4 w-4 text-secondary shrink-0 mt-0.5" />
-                    By using our website and services, you agree to the collection and use of information in accordance with this policy.
+                    By using our website and services, you agree to the
+                    collection and use of information in accordance with this
+                    policy.
                   </p>
                 </div>
               </CardContent>
             </Card>
 
             {/* Contact Information */}
-            <Card id="contact" className="mb-8 border-secondary/10 shadow-sm scroll-mt-28">
+            <Card
+              id="contact"
+              className="mb-8 border-secondary/10 shadow-sm scroll-mt-28"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FaEnvelope className="h-5 w-5 text-secondary" />
                   Contact Us
                 </CardTitle>
                 <CardDescription>
-                  If you have any questions about this Privacy Policy, please contact us:
+                  If you have any questions about this Privacy Policy, please
+                  contact us:
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Email</p>
-                    <a 
-                      href={`mailto:${COMPANY.email}`} 
+                    <a
+                      href={`mailto:${COMPANY.email}`}
                       className="text-sm font-medium text-secondary hover:underline"
                     >
                       {COMPANY.email}
@@ -359,8 +396,8 @@ export default function PrivacyPage() {
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Phone</p>
-                    <a 
-                      href={`tel:${COMPANY.phone}`} 
+                    <a
+                      href={`tel:${COMPANY.phone}`}
                       className="text-sm font-medium text-secondary hover:underline"
                     >
                       {COMPANY.phone}
@@ -368,7 +405,9 @@ export default function PrivacyPage() {
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Location</p>
-                    <span className="text-sm font-medium">{COMPANY.address}</span>
+                    <span className="text-sm font-medium">
+                      {COMPANY.address}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -379,8 +418,8 @@ export default function PrivacyPage() {
               {sections.map((section) => {
                 const Icon = section.icon;
                 return (
-                  <Card 
-                    key={section.id} 
+                  <Card
+                    key={section.id}
                     id={section.id}
                     className="border-secondary/10 scroll-mt-28 hover:shadow-md transition-all duration-300"
                   >
@@ -394,9 +433,7 @@ export default function PrivacyPage() {
                         </div>
                         {section.title}
                       </CardTitle>
-                      <CardDescription>
-                        {section.description}
-                      </CardDescription>
+                      <CardDescription>{section.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2">
@@ -417,7 +454,10 @@ export default function PrivacyPage() {
             </div>
 
             {/* Policy Updates */}
-            <Card id="updates" className="mt-8 border-secondary/10 scroll-mt-28">
+            <Card
+              id="updates"
+              className="mt-8 border-secondary/10 scroll-mt-28"
+            >
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <FaFileLines className="h-5 w-5 text-secondary" />
@@ -426,8 +466,10 @@ export default function PrivacyPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. 
-                  We encourage you to review this Privacy Policy periodically for any changes.
+                  We may update this Privacy Policy from time to time. We will
+                  notify you of any changes by posting the new Privacy Policy on
+                  this page. We encourage you to review this Privacy Policy
+                  periodically for any changes.
                 </p>
                 <div className="rounded-lg bg-secondary/5 p-3">
                   <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -443,7 +485,9 @@ export default function PrivacyPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">Effective Date</span>
+                    <span className="font-medium text-foreground">
+                      Effective Date
+                    </span>
                     <br />
                     {effectiveDate}
                   </p>
@@ -464,14 +508,27 @@ export default function PrivacyPage() {
                 </div>
               </div>
               <div className="mt-4 text-center text-xs text-muted-foreground">
-                © {new Date().getFullYear()} HSE Hub Limited. All rights reserved.
+                © {new Date().getFullYear()} HSE Hub Limited. All rights
+                reserved.
               </div>
               <div className="mt-2 text-center text-xs text-muted-foreground/60">
-                <Link href="/" className="hover:text-secondary transition-colors">Home</Link>
-                {' · '}
-                <Link href="/privacy" className="text-secondary">Privacy Policy</Link>
-                {' · '}
-                <Link href="/terms" className="hover:text-secondary transition-colors">Terms of Service</Link>
+                <Link
+                  href="/"
+                  className="hover:text-secondary transition-colors"
+                >
+                  Home
+                </Link>
+                {" · "}
+                <Link href="/privacy" className="text-secondary">
+                  Privacy Policy
+                </Link>
+                {" · "}
+                <Link
+                  href="/terms"
+                  className="hover:text-secondary transition-colors"
+                >
+                  Terms of Service
+                </Link>
               </div>
             </footer>
 

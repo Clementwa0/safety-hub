@@ -1,70 +1,64 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { 
-  FaArrowRight, 
-  FaCircleCheck, 
-  FaShieldHalved, 
+import {
+  FaArrowRight,
+  FaCircleCheck,
+  FaShieldHalved,
   FaBox,
-  FaArrowLeft
+  FaHatCowboy,
 } from "react-icons/fa6";
 import type { Metadata } from "next";
 
-import { CATEGORIES, getProductsByCategory, getCategoriesWithCount } from "@/data/products";
+import { getCategoriesWithCounts, getPublicProducts } from "@/lib/server/catalog";
 import ProductCard from "@/components/products/components/Product-Card";
 import { Breadcrumb } from "@/components/shared/ui-bits";
+import { Card } from "@/components/ui/card";
+export const revalidate = 3600;
 
 type Params = Promise<{ slug: string }>;
 
-function normalizeCategorySlug(slug: string): string {
+type CategoryRecord = { name: string; productCount?: number };
+
+function findCategory(
+  categories: CategoryRecord[],
+  slug: string,
+): CategoryRecord | undefined {
   const decoded = decodeURIComponent(slug);
-  
-  // Try to match with known categories (case-insensitive)
-  const matchedCategory = CATEGORIES.find(
-    (c: string) => c.toLowerCase() === decoded.toLowerCase()
-  );
-  
-  return matchedCategory || decoded;
+  return categories.find((c) => c.name.toLowerCase() === decoded.toLowerCase());
 }
 
-// Helper function to create the slug for a category
-function createCategorySlug(category: string): string {
-  // Use the exact category name as the slug (will be URL-encoded automatically)
-  return category;
-}
-
-// Generate static params for all categories
+// Generate static params for all categories currently in the DB
 export async function generateStaticParams() {
-  return CATEGORIES.map((category: string) => ({
-    slug: category, // Use exact category name, Next.js will encode it
+  const categories = await getCategoriesWithCounts();
+  return categories.map((category) => ({
+    slug: category.name,
   }));
 }
 
 // Generate metadata for each category
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  
+
   if (!slug) {
     return {
       title: "Category Not Found",
     };
   }
 
-  const categoryName = normalizeCategorySlug(slug);
-  const category = CATEGORIES.find(
-    (c: string) => c.toLowerCase() === categoryName.toLowerCase()
-  );
+  const categoriesWithCount = await getCategoriesWithCounts();
+  const matched = findCategory(categoriesWithCount, slug);
 
-  if (!category) {
+  if (!matched) {
     return {
       title: "Category Not Found",
     };
   }
 
-  const products = getProductsByCategory(category);
+  const products = await getPublicProducts(matched.name, "active");
 
   return {
-    title: `${category} - HSE Hub Limited`,
-    description: `Shop certified ${category.toLowerCase()} PPE equipment. ${products.length}+ products from trusted brands.`,
+    title: `${matched.name} - HSE Hub Limited`,
+    description: `Shop certified ${matched.name.toLowerCase()} PPE equipment. ${products.length}+ products from trusted brands.`,
   };
 }
 
@@ -72,60 +66,89 @@ interface CategoryPageProps {
   params: Params;
 }
 
+// Short descriptive copy for the category hero. Keyed by known category
+// names; anything not in this map (e.g. a category added later in admin)
+// still renders, just with the generic fallback line.
+const getDescription = (cat: string): string => {
+  const descriptionMap: Record<string, string> = {
+    "Head Protection":
+      "Certified helmets and hard hats engineered to protect against impact, penetration, and falling objects on site.",
+    "Eye Protection":
+      "Safety glasses and goggles built to shield against debris, dust, splashes, and radiation hazards.",
+    "Ear Protection":
+      "Earmuffs and plugs rated to reduce noise exposure in high-decibel industrial environments.",
+    "Body Protection":
+      "Harnesses and fall-arrest systems designed for height work, rescue, and confined-space safety.",
+    "Protective Clothing":
+      "Hi-vis and chemical-resistant workwear that keeps crews visible, dry, and protected on shift.",
+    "Hand Protection":
+      "Cut-, chemical-, and abrasion-resistant gloves for tasks that put hands on the front line.",
+    "Foot Protection":
+      "Safety boots and shoes built for impact resistance, grip, and all-day comfort on site.",
+    "Respiratory Protection":
+      "Masks and respirators rated to filter dust, fumes, and airborne contaminants.",
+    "Safety Equipment":
+      "General-purpose safety gear and site equipment for everyday workplace protection.",
+  };
+  return (
+    descriptionMap[cat] ||
+    "Certified PPE built to keep your team protected, compliant, and comfortable on the job."
+  );
+};
+
+// Standards relevant to the category. Keyed by known category names;
+// anything not in this map (e.g. a category added later in admin)
+// still renders, just with the generic fallback set.
+const getStandards = (cat: string): string[] => {
+  const standardsMap: Record<string, string[]> = {
+    "Head Protection": ["EN397", "ANSI Z89.1", "ISO 45001"],
+    "Eye Protection": ["EN166", "ANSI Z87.1", "ISO 4007"],
+    "Ear Protection": ["EN352", "ANSI S3.19", "ISO 4869"],
+    "Body Protection": ["EN361", "ANSI Z359", "ISO 10333"],
+    "Protective Clothing": ["EN ISO 20471", "ANSI 107", "ISO 13688"],
+    "Hand Protection": ["EN388", "ANSI 105", "ISO 13997"],
+    "Foot Protection": ["EN ISO 20345", "ANSI Z41", "ISO 20344"],
+    "Respiratory Protection": ["EN149", "ANSI Z88.2", "ISO 16900"],
+    "Safety Equipment": ["EN3", "ANSI/UL 299", "ISO 7165"],
+  };
+  return standardsMap[cat] || ["ISO 45001", "EN 397", "ANSI Z89.1"];
+};
+
+// Applications for the category — same fallback approach as above.
+const getApplications = (cat: string): string[] => {
+  const appsMap: Record<string, string[]> = {
+    "Head Protection": ["Construction and heavy engineering", "Manufacturing and processing", "Mining and extraction"],
+    "Eye Protection": ["Welding and fabrication", "Laboratory work", "Woodworking and machining"],
+    "Ear Protection": ["Factory floors", "Construction sites", "Mining operations"],
+    "Body Protection": ["Height work", "Confined spaces", "Rescue operations"],
+    "Protective Clothing": ["Industrial work", "Chemical handling", "Fire fighting"],
+    "Hand Protection": ["Construction work", "Chemical handling", "Food processing"],
+    "Foot Protection": ["Construction sites", "Warehouse work", "Manufacturing plants"],
+    "Respiratory Protection": ["Dust environments", "Chemical plants", "Healthcare facilities"],
+    "Safety Equipment": ["Industrial sites", "Office buildings", "Public facilities"],
+  };
+  return appsMap[cat] || ["Industrial applications", "Workplace safety", "Site operations"];
+};
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  
+
   if (!slug) {
     notFound();
   }
 
-  const categoryName = normalizeCategorySlug(slug);
-  const category = CATEGORIES.find(
-    (c: string) => c.toLowerCase() === categoryName.toLowerCase()
-  );
+  const categoriesWithCount = await getCategoriesWithCounts();
+  const matched = findCategory(categoriesWithCount, slug);
 
-  if (!category) {
+  if (!matched) {
     notFound();
   }
 
-  const products = getProductsByCategory(category);
-  const categoriesWithCount = getCategoriesWithCount();
-  const categoryCount = categoriesWithCount.find((c: { name: string; count: number }) => c.name === category)?.count || 0;
-
-  // Standards relevant to the category
-  const getStandards = (cat: string): string[] => {
-    const standardsMap: Record<string, string[]> = {
-      "Head Protection": ["EN397", "ANSI Z89.1", "ISO 45001"],
-      "Eye Protection": ["EN166", "ANSI Z87.1", "ISO 4007"],
-      "Ear Protection": ["EN352", "ANSI S3.19", "ISO 4869"],
-      "Body Protection": ["EN361", "ANSI Z359", "ISO 10333"],
-      "Protective Clothing": ["EN ISO 20471", "ANSI 107", "ISO 13688"],
-      "Hand Protection": ["EN388", "ANSI 105", "ISO 13997"],
-      "Foot Protection": ["EN ISO 20345", "ANSI Z41", "ISO 20344"],
-      "Respiratory Protection": ["EN149", "ANSI Z88.2", "ISO 16900"],
-      "Safety Equipment": ["EN3", "ANSI/UL 299", "ISO 7165"],
-    };
-    return standardsMap[cat] || ["ISO 45001", "EN 397", "ANSI Z89.1"];
-  };
-
-  // Applications for the category
-  const getApplications = (cat: string): string[] => {
-    const appsMap: Record<string, string[]> = {
-      "Head Protection": ["Construction and heavy engineering", "Manufacturing and processing", "Mining and extraction"],
-      "Eye Protection": ["Welding and fabrication", "Laboratory work", "Woodworking and machining"],
-      "Ear Protection": ["Factory floors", "Construction sites", "Mining operations"],
-      "Body Protection": ["Height work", "Confined spaces", "Rescue operations"],
-      "Protective Clothing": ["Industrial work", "Chemical handling", "Fire fighting"],
-      "Hand Protection": ["Construction work", "Chemical handling", "Food processing"],
-      "Foot Protection": ["Construction sites", "Warehouse work", "Manufacturing plants"],
-      "Respiratory Protection": ["Dust environments", "Chemical plants", "Healthcare facilities"],
-      "Safety Equipment": ["Industrial sites", "Office buildings", "Public facilities"],
-    };
-    return appsMap[cat] || ["Industrial applications", "Workplace safety", "Site operations"];
-  };
-
+  const category = matched.name;
+  const products = await getPublicProducts(category, "active");
   const standards = getStandards(category);
   const applications = getApplications(category);
+  const description = getDescription(category);
 
   return (
     <main className="min-h-screen bg-slate-50 pt-16 sm:pt-20 lg:pt-24">
@@ -136,42 +159,67 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           { label: category },
         ]}
       />
-      
+
+      {/* Category Hero */}
+      <section className="border-b border-border bg-white">
+        <div className="container mx-auto px-4 py-8 sm:py-10 lg:px-8">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <span className="hidden shrink-0 rounded-2xl bg-secondary/10 p-3 text-secondary sm:inline-flex">
+                <FaHatCowboy className="h-7 w-7" aria-hidden="true" />
+              </span>
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-secondary">
+                  PPE Category
+                </span>
+                <h1 className="mt-1 text-2xl font-bold text-primary sm:text-3xl lg:text-4xl">
+                  {category}
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  {description}
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/contact"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+            >
+              Get a Quotation
+              <FaArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Products Section */}
       <section className="mx-auto px-4 py-12 sm:py-16">
         <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-secondary">
-              {products.length} Products
-            </span>
-            <h2 className="mt-1 text-2xl font-bold text-primary md:text-3xl">
-              Shop {category}
-            </h2>
-          </div>
-
           <Link
             href="/categories"
-            className="inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-secondary/80 transition"
+            className="inline-flex items-center gap-2 text-sm font-medium text-secondary transition hover:text-secondary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
           >
             View All Categories
-            <FaArrowRight className="h-4 w-4" />
+            <FaArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-
+   <div className="mb-8 rounded-lg border border-gray-100 bg-slate-50/60 py-10">
         {products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white/50 p-12 text-center">
-            <FaBox className="h-12 w-12 text-muted-foreground/50" />
-            <p className="mt-4 text-lg font-semibold text-primary">No products found</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Check back soon for new products in this category.
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center sm:p-16">
+            <span className="rounded-full bg-slate-100 p-4">
+              <FaBox className="h-10 w-10 text-muted-foreground/60" aria-hidden="true" />
+            </span>
+            <p className="mt-5 text-lg font-semibold text-primary">No products found</p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              We don't have any {category.toLowerCase()} listed right now. Check back soon,
+              or browse the rest of our catalog.
             </p>
             <Link
               href="/shop"
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-secondary px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-secondary/90"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
             >
               Browse All Products
-              <FaArrowRight className="h-4 w-4" />
+              <FaArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         ) : (
@@ -181,38 +229,39 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             ))}
           </div>
         )}
+        </div>
       </section>
 
       {/* Info Section */}
       <section className="border-y border-border bg-white py-12 sm:py-16">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-3 md:gap-10">
             {/* Buying Guide */}
-            <div>
+            <div className="rounded-2xl border border-gray-100 bg-slate-50/60 p-6">
               <h3 className="text-lg font-bold text-primary">Buying Guide</h3>
-              <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
+              <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
                 <li className="flex gap-2.5">
-                  <FaCircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                  <FaCircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" aria-hidden="true" />
                   Match certification to your regulatory requirement.
                 </li>
                 <li className="flex gap-2.5">
-                  <FaCircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                  <FaCircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" aria-hidden="true" />
                   Consider fit, comfort, and duration of use.
                 </li>
                 <li className="flex gap-2.5">
-                  <FaCircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                  <FaCircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" aria-hidden="true" />
                   Bulk orders of 10+ units qualify for corporate pricing.
                 </li>
               </ul>
             </div>
 
             {/* Applications */}
-            <div>
+            <div className="rounded-2xl border border-gray-100 bg-slate-50/60 p-6">
               <h3 className="text-lg font-bold text-primary">Applications</h3>
-              <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
+              <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
                 {applications.map((app, index) => (
                   <li key={index} className="flex gap-2.5">
-                    <FaShieldHalved className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                    <FaShieldHalved className="mt-0.5 h-4 w-4 shrink-0 text-secondary" aria-hidden="true" />
                     {app}
                   </li>
                 ))}
@@ -220,7 +269,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </div>
 
             {/* Safety Standards */}
-            <div>
+            <div className="rounded-2xl border border-gray-100 bg-slate-50/60 p-6">
               <h3 className="text-lg font-bold text-primary">Safety Standards</h3>
               <div className="mt-4 flex flex-wrap gap-2">
                 {standards.map((standard) => (
@@ -234,10 +283,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </div>
               <Link
                 href="/contact"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-secondary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
               >
                 Get a Quotation
-                <FaArrowRight className="h-4 w-4" />
+                <FaArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -245,27 +294,39 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       </section>
 
       {/* Related Categories */}
-      <section className="container mx-auto px-4 py-12 sm:py-16 lg:px-8">
-        <h3 className="text-xl font-bold text-primary">Related Categories</h3>
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {CATEGORIES.filter((c: string) => c !== category).slice(0, 5).map((cat: string) => {
-            const count = categoriesWithCount.find((c: { name: string; count: number }) => c.name === cat)?.count || 0;
-            const slug = createCategorySlug(cat);
-            return (
-              <Link
-                key={cat}
-                href={`/categories/${encodeURIComponent(slug)}`}
-                className="group rounded-lg border bg-white p-4 text-center shadow-sm transition hover:shadow-md hover:border-secondary/30"
-              >
-                <h4 className="text-sm font-semibold text-primary group-hover:text-secondary transition">
-                  {cat}
-                </h4>
-                <p className="text-xs text-muted-foreground">{count} products</p>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      {categoriesWithCount.filter((item) => item.name !== category).length > 0 && (
+        <section className="container mx-auto px-4 py-12 sm:py-16 lg:px-8">
+          <div className="flex items-end justify-between">
+            <h3 className="text-xl font-bold text-primary">Related Categories</h3>
+            <Link
+              href="/categories"
+              className="hidden text-sm font-medium text-secondary transition hover:text-secondary/80 sm:inline-flex sm:items-center sm:gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+            >
+              View all
+              <FaArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {categoriesWithCount
+              .filter((item) => item.name !== category)
+              .slice(0, 5)
+              .map((item) => (
+                <Link
+                  key={item.name}
+                  href={`/categories/${encodeURIComponent(item.name)}`}
+                  className="group rounded-xl border border-gray-100 bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-secondary/30 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+                >
+                  <h4 className="text-sm font-semibold text-primary transition group-hover:text-secondary">
+                    {item.name}
+                  </h4>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {item.productCount ?? 0} products
+                  </p>
+                </Link>
+              ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

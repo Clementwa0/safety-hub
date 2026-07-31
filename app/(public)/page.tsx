@@ -1,19 +1,5 @@
-import {
-  Hero,
-  Categories,
-  FeaturedProducts,
-  CTA,
-  Stats,
-} from "@/components/home";
+import { HomePage } from "@/features/home";
 
-export default function HomePage() {
-  return (
-    <>
-      <Hero />
-      <Categories />
-      <FeaturedProducts />
-      {/* <Stats /> */}
-      <CTA />
-    </>
-  );
+export default function Page() {
+  return <HomePage />;
 }

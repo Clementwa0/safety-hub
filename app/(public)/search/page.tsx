@@ -2,20 +2,26 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 
-import { PRODUCTS, formatKES } from "@/data/products";
+import { productService } from "@/services/product.service";
+import type { Product } from "@/types/product";
+import { formatKES } from "@/lib/format";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
+  const [results, setResults] = useState<Product[]>([]);
 
-  const results = query
-    ? PRODUCTS.filter((product) => {
-        const haystack = `${product.name} ${product.category} ${product.subcategory} ${product.description}`.toLowerCase();
-        return haystack.includes(query.toLowerCase());
-      })
-    : [];
+  useEffect(() => {
+    if (!query) {
+      setResults([]);
+      return;
+    }
+
+    void productService.list({ search: query, status: "active" }).then((items) => setResults(items));
+  }, [query]);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 lg:py-16">

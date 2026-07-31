@@ -44,22 +44,6 @@ export default function ProductPage() {
   const slug = params.slug as string;
   const { product, relatedProducts, loading, error } = useProduct(slug);
 
-  const handleWishlist = () => {
-    if (product) {
-      window.dispatchEvent(new CustomEvent("wishlist:toggle", { detail: product.id }));
-    }
-  };
-
-  const handleShare = () => {
-    if (navigator.share && product) {
-      navigator.share({
-        title: product.name,
-        text: product.description,
-        url: window.location.href,
-      });
-    }
-  };
-
   const handleAddToCart = (quantity: number) => {
     if (!product) return;
     window.dispatchEvent(new CustomEvent("cart:add", { detail: { product, quantity } }));
