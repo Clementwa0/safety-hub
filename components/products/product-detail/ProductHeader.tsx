@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Star, Truck } from "lucide-react";
-import type { Product } from "@/data/products";
-import { formatKES } from "@/data/products";
+import { ShieldCheck, Truck } from "lucide-react";
+import type { Product } from "@/types/product";
 
 interface ProductHeaderProps {
   product: Product;

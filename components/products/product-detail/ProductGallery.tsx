@@ -1,6 +1,6 @@
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
+import { SafeImage } from "@/components/shared/SafeImage";
 
 interface ProductGalleryProps {
   product: Product;
@@ -13,7 +13,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
     <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       {/* Product Image */}
       <div className="relative aspect-square">
-        <Image
+        <SafeImage
           src={primaryImage}
           alt={product.name}
           fill

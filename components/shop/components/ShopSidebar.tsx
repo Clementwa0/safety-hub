@@ -1,14 +1,12 @@
 "use client";
 
-import { CATEGORIES } from "@/data/products";
+import { PRODUCT_CATEGORIES } from "@/types/product";
 import {
   ActiveFiltersSummary,
   CategoriesSection,
   ClearFiltersButton,
   PriceSection,
-  SearchSection,
   SectionWrapper,
-  SortSection,
 } from ".";
 import type { FilterState } from "@/hooks/useShopFilters";
 
@@ -99,7 +97,7 @@ export default function ShopSidebar({
         onToggle={() => {}}
       >
         <CategoriesSection
-          categories={CATEGORIES}
+          categories={PRODUCT_CATEGORIES}
           selectedCategories={filters.category}
           onToggleCategory={handleCategoryToggle}
         />

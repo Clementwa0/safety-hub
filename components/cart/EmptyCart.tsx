@@ -23,11 +23,16 @@ export default function EmptyCart({ onContinue }: EmptyCartProps) {
       </div>
       <h2 className="text-2xl font-bold text-primary">Your cart is empty</h2>
       <p className="mt-2 max-w-md text-muted-foreground">
-        Looks like you haven&apos;t added any items to your cart yet. Browse our collection
-        and find the perfect safety equipment for your needs.
+        Looks like you haven&apos;t added any items to your cart yet. Browse our
+        collection and find the perfect safety equipment for your needs.
       </p>
-      <Button asChild className="mt-6" onClick={onContinue}>
-        <Link href="/shop">Continue Shopping</Link>
+      <Button
+        className="mt-6"
+        onClick={onContinue}
+        nativeButton={false}
+        render={<Link href="/shop" />}
+      >
+        Continue Shopping
       </Button>
     </motion.div>
   );

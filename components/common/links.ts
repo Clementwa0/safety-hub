@@ -1,4 +1,3 @@
-import type { ComponentType } from "react";
 import type { IconType } from "react-icons";
 
 import {
@@ -30,7 +29,7 @@ export type DropdownItem = {
   label: string;
   href: string;
   description?: string;
-  icon?: ComponentType<{ className?: string }>;
+  icon?: IconType;
 };
 
 export type NavLink = {
@@ -40,15 +39,13 @@ export type NavLink = {
   dropdown?: DropdownItem[];
 };
 
-export interface FooterLink {
+export interface LinkItem {
   label: string;
   href: string;
 }
 
-export interface CategoryLink {
-  label: string;
-  href: string;
-}
+export type FooterLink = LinkItem;
+export type CategoryLink = LinkItem;
 
 export interface SocialLink {
   label: string;
@@ -66,66 +63,66 @@ export interface ContactInfo {
 /*                               Helper Functions                             */
 /* -------------------------------------------------------------------------- */
 
-export function createCategoryLink(_: string): string {
-  return "/";
+export function createCategoryLink(category: string): string {
+  return `/categories/${encodeURIComponent(category)}`;
 }
 
 /* -------------------------------------------------------------------------- */
-/*                               Category Data                                */
+/*                          Category Icon Lookup                              */
 /* -------------------------------------------------------------------------- */
+/*
+ * Categories themselves now come from the API/DB (see categoryService),
+ * not from a hardcoded list here. This map only supplies a nicer icon
+ * for known category names when rendering the nav dropdown; anything
+ * not in this map (e.g. a category added later in admin) still works,
+ * it just falls back to a generic icon below.
+ */
 
-const categoryItems = [
-  {
-    label: "Head Protection",
-    description: "Safety helmets, bump caps & face shields",
-    icon: FaHardHat,
-  },
-  {
-    label: "Eye Protection",
-    description: "Safety goggles & glasses",
-    icon: FaEye,
-  },
-  {
-    label: "Ear Protection",
-    description: "Ear plugs & ear muffs",
-    icon: FaAssistiveListeningSystems,
-  },
-  {
-    label: "Body Protection",
-    description: "Harnesses & fall protection",
-    icon: FaShieldAlt,
-  },
-  {
-    label: "Protective Clothing",
-    description: "Coveralls, jackets & reflective wear",
-    icon: FaTshirt,
-  },
-  {
-    label: "Hand Protection",
-    description: "Work, welding & chemical gloves",
-    icon: FaHands,
-  },
-  {
-    label: "Foot Protection",
-    description: "Safety boots & shoes",
-    icon: FaShoePrints,
-  },
-  {
-    label: "Respiratory Protection",
-    description: "Masks & respirators",
-    icon: FaWind,
-  },
-  {
-    label: "Safety Equipment",
-    description: "Fire extinguishers & safety accessories",
-    icon: FaFireExtinguisher,
-  },
-];
+const CATEGORY_ICON_MAP: Record<string, IconType> = {
+  "Head Protection": FaHardHat,
+  "Eye Protection": FaEye,
+  "Ear Protection": FaAssistiveListeningSystems,
+  "Body Protection": FaShieldAlt,
+  "Protective Clothing": FaTshirt,
+  "Hand Protection": FaHands,
+  "Foot Protection": FaShoePrints,
+  "Respiratory Protection": FaWind,
+  "Safety Equipment": FaFireExtinguisher,
+};
 
-export const categoriesMenu: DropdownItem[] = categoryItems.map((item) => ({
-  ...item,
-  href: "/", // Redirect all category dropdown items to Home
-}));
+const DEFAULT_CATEGORY_ICON: IconType = FaShieldAlt;
+
+export function getCategoryIcon(category: string): IconType {
+  return CATEGORY_ICON_MAP[category] ?? DEFAULT_CATEGORY_ICON;
+}
+
+/**
+ * Converts API category records (name + productCount, etc.) into the
+ * shape the navbar dropdown needs. Pass whatever categoryService.list()
+ * resolves to.
+ */
+export function toDropdownItems(
+  categories: { name: string }[],
+): DropdownItem[] {
+  return categories.map((category) => ({
+    label: category.name,
+    href: createCategoryLink(category.name),
+    icon: getCategoryIcon(category.name),
+  }));
+}
+
+/**
+ * Converts API category records into the shape the footer's category
+ * list needs.
+ */
+export function toCategoryLinks(
+  categories: { name: string }[],
+): CategoryLink[] {
+  return categories.map((category) => ({
+    label: category.name,
+    href: createCategoryLink(category.name),
+  }));
+}
 
 /* -------------------------------------------------------------------------- */
 /*                             Navigation Links                               */
@@ -138,12 +135,13 @@ export const navLinks: NavLink[] = [
   },
   {
     label: "Shop",
-    href: "/s", // Redirect to Home
+    href: "/shop",
   },
   {
     label: "Categories",
-    href: "/c", // Redirect to Home
-    dropdown: categoriesMenu,
+    href: "/categories",
+    // dropdown is populated at runtime in Navbar.tsx from categoryService,
+    // since categories now live in the DB, not here.
   },
   {
     label: "About Us",
@@ -166,11 +164,11 @@ export const quickLinks: FooterLink[] = [
   },
   {
     label: "Shop",
-    href: "/s", // Redirect to Home
+    href: "/shop",
   },
   {
     label: "Categories",
-    href: "/c", // Redirect to Home
+    href: "/categories",
   },
   {
     label: "About Us",
@@ -210,14 +208,9 @@ export const legalLinks: FooterLink[] = [
   },
   {
     label: "Shipping Policy",
-    href: "/", // Redirect to Home
+    href: "/",
   },
 ];
-
-export const categories: CategoryLink[] = categoryItems.map((item) => ({
-  label: item.label,
-  href: "/", // Redirect to Home
-}));
 
 /* -------------------------------------------------------------------------- */
 /*                               Social Links                                 */
@@ -225,24 +218,19 @@ export const categories: CategoryLink[] = categoryItems.map((item) => ({
 
 export const socialLinks: SocialLink[] = [
   {
-    icon: FaFacebook,
-    href: "https://facebook.com",
     label: "Facebook",
+    href: COMPANY.social.facebook,
+    icon: FaFacebook,
   },
   {
-    icon: FaInstagram,
-    href: "https://instagram.com",
     label: "Instagram",
+    href: COMPANY.social.instagram,
+    icon: FaInstagram,
   },
   {
-    icon: FaLinkedinIn,
-    href: "https://linkedin.com",
     label: "LinkedIn",
-  },
-  {
-    icon: FaYoutube,
-    href: "https://youtube.com",
-    label: "YouTube",
+    href: COMPANY.social.linkedin,
+    icon: FaLinkedinIn,
   },
 ];
 

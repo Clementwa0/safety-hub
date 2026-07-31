@@ -3,7 +3,7 @@
 import { FaBoxOpen } from "react-icons/fa6";
 import { motion } from "framer-motion";
 
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 import ProductCard from "./Product-Card";
 
 interface ProductGridProps {

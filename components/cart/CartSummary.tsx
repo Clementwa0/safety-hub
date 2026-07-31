@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatKES } from "@/lib/cart";
 import CheckoutButton from "./CheckoutButton";
@@ -15,7 +21,13 @@ interface CartSummaryProps {
   onClear: () => void;
 }
 
-export default function CartSummary({ subtotal, vat, total, itemCount, onClear }: CartSummaryProps) {
+export default function CartSummary({
+  subtotal,
+  vat,
+  total,
+  itemCount,
+  onClear,
+}: CartSummaryProps) {
   return (
     <Card className="lg:sticky lg:top-[170px]">
       <CardHeader>
@@ -23,7 +35,9 @@ export default function CartSummary({ subtotal, vat, total, itemCount, onClear }
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Subtotal ({itemCount} items)</span>
+          <span className="text-muted-foreground">
+            Subtotal ({itemCount} items)
+          </span>
           <span className="font-medium">{formatKES(subtotal)}</span>
         </div>
         <div className="flex justify-between text-sm">
@@ -37,11 +51,20 @@ export default function CartSummary({ subtotal, vat, total, itemCount, onClear }
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-2">
-        <Button asChild className="w-full">
-          <Link href="/shop">Continue Shopping</Link>
+        <Button
+          className="w-full"
+          nativeButton={false}
+          render={<Link href="/shop" />}
+        >
+          Continue Shopping
         </Button>
         <CheckoutButton />
-        <Button type="button" variant="ghost" className="w-full" onClick={onClear}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full"
+          onClick={onClear}
+        >
           Clear Cart
         </Button>
       </CardFooter>

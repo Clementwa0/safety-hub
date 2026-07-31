@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { FaMagnifyingGlass, FaXmark, FaArrowRight, FaBox } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { SafeImage } from "@/components/shared/SafeImage";
 
-import type { Product } from "@/data/products";
-import { formatKES } from "@/data/products";
+import type { Product } from "@/types/product";
+import { formatKES } from "@/lib/format";
 
 interface ProductSearchProps {
   products: Product[];
@@ -245,7 +245,7 @@ export default function ProductSearch({
                           }`}
                         >
                           <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-50">
-                            <Image
+                            <SafeImage
                               src={product.image}
                               alt={product.name}
                               fill

@@ -1,7 +1,7 @@
 "use client";
 
 import SharedProductCard from "@/components/shared/ProductCard";
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 
 interface ProductCardProps {
   product: Product;

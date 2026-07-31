@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Package, FileText, Truck } from "lucide-react";
-import type { Product } from "@/data/products";
+import { CheckCircle2, Package, FileText } from "lucide-react";
+import type { Product } from "@/types/product";
 
 interface ProductTabsProps {
   product: Product;

@@ -14,7 +14,17 @@ import { formatKES } from "@/lib/cart";
 import { useCartStore } from "@/store/cart-store";
 
 export default function CartDrawer() {
-  const { isOpen, closeCart, items, getSubtotal, getVAT, getTotal, removeFromCart, updateQuantity, clearCart } = useCartStore();
+  const {
+    isOpen,
+    closeCart,
+    items,
+    getSubtotal,
+    getVAT,
+    getTotal,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+  } = useCartStore();
 
   const subtotal = useMemo(() => getSubtotal(), [getSubtotal]);
   const vat = useMemo(() => getVAT(), [getVAT]);
@@ -80,8 +90,12 @@ export default function CartDrawer() {
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-4 sm:px-6">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Shopping Cart</h2>
-                <p className="text-sm text-muted-foreground">{items.length} item{items.length === 1 ? "" : "s"}</p>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Shopping Cart
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {items.length} item{items.length === 1 ? "" : "s"}
+                </p>
               </div>
               <button
                 type="button"
@@ -133,13 +147,23 @@ export default function CartDrawer() {
                 </div>
 
                 <div className="mt-4 flex flex-col gap-2">
-                  <Button asChild className="w-full">
-                    <Link href="/cart" onClick={closeCart}>
-                      Continue Shopping
-                    </Link>
+                  <Button
+                    className="w-full"
+                    nativeButton={false}
+                    render={<Link href="/cart" onClick={closeCart} />}
+                  >
+                    Continue Shopping
                   </Button>
-                  <CheckoutButton variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700" />
-                  <Button type="button" variant="ghost" className="w-full" onClick={handleClearCart}>
+                  <CheckoutButton
+                    variant="outline"
+                    className="border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={handleClearCart}
+                  >
                     Clear Cart
                   </Button>
                 </div>

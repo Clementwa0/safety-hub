@@ -1,12 +1,12 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { FaArrowRight } from "react-icons/fa6";
 import type { StaticImageData } from "next/image";
+import { SafeImage } from "@/components/shared/SafeImage";
 
 interface CategoryCardProps {
   title: string;
-  image: StaticImageData;
+  image: string | StaticImageData;
   count: number;
   href: string;
 }
@@ -24,7 +24,7 @@ export function CategoryCard({
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-        <Image
+        <SafeImage
           src={image}
           alt={title}
           fill

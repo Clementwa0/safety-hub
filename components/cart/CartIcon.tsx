@@ -15,7 +15,8 @@ export default function CartIcon({ className = "" }: CartIconProps) {
   const openCart = useCartStore((state) => state.openCart);
 
   useEffect(() => {
-    setIsMounted(true);
+    const frame = requestAnimationFrame(() => setIsMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const ariaLabel = isMounted ? `Open cart with ${itemCount} items` : "Open cart";

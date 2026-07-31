@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -49,9 +49,14 @@ export default function PriceSection({
 }: PriceSectionProps) {
   const [range, setRange] = useState<[number, number]>([minPrice, maxPrice]);
 
-  useEffect(() => {
+  // Re-sync the local slider when the bounds change upstream.
+  const bounds = `${minPrice}:${maxPrice}`;
+  const [lastBounds, setLastBounds] = useState(bounds);
+
+  if (bounds !== lastBounds) {
+    setLastBounds(bounds);
     setRange([minPrice, maxPrice]);
-  }, [minPrice, maxPrice]);
+  }
 
   const [min, max] = range;
   type SliderValue = number | readonly number[];

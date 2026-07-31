@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FaChevronLeft, FaChevronRight, FaTableCellsLarge, FaXmark } from "react-icons/fa6";
+import { FaChevronLeft, FaChevronRight, FaTableCellsLarge } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 
 export type FilterOption = {
@@ -102,19 +102,19 @@ export default function ProductFilters({
   };
 
   const renderOption = (option: FilterOption) => {
-    const isSelected = selectedValue === option.value;
-    const styles = getVariantStyles(isSelected);
+    const selected = selectedValue === option.value;
+    const styles = getVariantStyles(selected);
 
     if (variant === "colors") {
       return (
         <button
           key={option.value}
           onClick={() => onSelect(option.value)}
-          className={`${styles.base} ${isSelected ? styles.selected : styles.unselected}`}
+          className={`${styles.base} ${selected ? styles.selected : styles.unselected}`}
           style={{ backgroundColor: option.value }}
           title={option.label}
         >
-          {isSelected && (
+          {selected && (
             <span className="absolute inset-0 flex items-center justify-center">
               <span className="h-1.5 w-1.5 rounded-full bg-white shadow-sm" />
             </span>
@@ -126,10 +126,10 @@ export default function ProductFilters({
     return (
       <Button
         key={option.value}
-        variant={isSelected ? "default" : "outline"}
+        variant={selected ? "default" : "outline"}
         size="sm"
         onClick={() => onSelect(option.value)}
-        className={`${styles.base} ${isSelected ? styles.selected : styles.unselected}`}
+        className={`${styles.base} ${selected ? styles.selected : styles.unselected}`}
       >
         {option.label}
         {showCounts && option.count !== undefined && (

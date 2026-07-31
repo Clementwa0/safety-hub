@@ -7,10 +7,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FaChevronDown, FaBars, FaXmark, FaWhatsapp } from "react-icons/fa6";
 
 import Logo from "@/public/logo/logo.png";
-import { navLinks, TopStripe } from ".";
+import { navLinks, TopStripe, toDropdownItems, type DropdownItem } from ".";
 import CartIcon from "../cart/CartIcon";
 import { FaSearch } from "react-icons/fa";
 import { COMPANY } from "@/lib/constants";
+import { categoryService } from "@/services/category.service";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export default function Navbar() {
   const [dropdown, setDropdown] = useState<string | null>(null);
   const [mobileDropdown, setMobileDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [categoryItems, setCategoryItems] = useState<DropdownItem[]>([]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +29,23 @@ export default function Navbar() {
     handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Categories now live in the DB — fetch them instead of using a
+  // hardcoded list, so new/renamed/removed categories show up here
+  // without a code change.
+  useEffect(() => {
+    let cancelled = false;
+
+    void categoryService.list().then((items) => {
+      if (!cancelled) {
+        setCategoryItems(toDropdownItems(items));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Function to check if a link is active
@@ -61,7 +80,11 @@ export default function Navbar() {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => {
-            const hasDropdown = !!link.dropdown;
+            // "Categories" gets its dropdown from the API fetch above;
+            // any other link uses whatever static dropdown it defines.
+            const linkDropdown =
+              link.label === "Categories" ? categoryItems : link.dropdown;
+            const hasDropdown = !!linkDropdown && linkDropdown.length > 0;
             const active = isActive(link.href);
 
             return (
@@ -108,7 +131,7 @@ export default function Navbar() {
                     >
                       <div className="max-h-[500px] overflow-y-auto rounded-2xl border border-border bg-white p-2 shadow-2xl">
                         <div className="grid grid-cols-2 gap-1">
-                          {link.dropdown?.map((item) => {
+                          {linkDropdown?.map((item) => {
                             const Icon = item.icon;
 
                             return (
@@ -204,7 +227,9 @@ export default function Navbar() {
           >
             <div className="container mx-auto px-4 py-4">
               {navLinks.map((link) => {
-                const hasDropdown = !!link.dropdown;
+                const linkDropdown =
+                  link.label === "Categories" ? categoryItems : link.dropdown;
+                const hasDropdown = !!linkDropdown && linkDropdown.length > 0;
                 const opened = mobileDropdown === link.label;
                 const active = isActive(link.href);
 
@@ -253,7 +278,7 @@ export default function Navbar() {
                           }}
                           className="overflow-hidden pl-4"
                         >
-                          {link.dropdown?.map((item) => (
+                          {linkDropdown?.map((item) => (
                             <Link
                               key={item.label}
                               href={item.href}

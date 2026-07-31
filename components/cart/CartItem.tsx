@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { SafeImage } from "@/components/shared/SafeImage";
 import { motion } from "framer-motion";
 import { FaMinus, FaPlus } from "react-icons/fa6";
 
@@ -40,7 +40,7 @@ export default function CartItem({
     >
       <Link href={`/products/${id}`} className="shrink-0">
         <div className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
-          <Image src={image} alt={name} fill className="object-contain p-2" sizes="80px" />
+          <SafeImage src={image} alt={name} fill className="object-contain p-2" sizes="80px" />
         </div>
       </Link>
 

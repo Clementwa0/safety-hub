@@ -2,30 +2,40 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { FaShieldAlt, FaChevronDown } from "react-icons/fa";
 import {
-  FaShieldAlt,
-  FaPhone,
-  FaEnvelope,
-  FaMapMarkerAlt,
-  FaChevronDown,
-  FaFacebook,
-  FaInstagram,
-  FaLinkedinIn,
-} from "react-icons/fa";
-import {
-  categories,
   contactInfo,
   containerVariants,
   itemVariants,
   legalLinks,
   quickLinks,
   socialLinks,
+  toCategoryLinks,
+  type CategoryLink,
 } from ".";
+import { categoryService } from "@/services/category.service";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [categories, setCategories] = useState<CategoryLink[]>([]);
+
+  // Categories live in the DB now, so fetch them instead of using a
+  // hardcoded list — keeps the footer in sync with admin changes.
+  useEffect(() => {
+    let cancelled = false;
+
+    void categoryService.list().then((items) => {
+      if (!cancelled) {
+        setCategories(toCategoryLinks(items));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Show only 3 categories on mobile, all on desktop
   const displayedCategories = showAllCategories ? categories : categories.slice(0, 3);
@@ -53,15 +63,19 @@ export function Footer() {
               Certified PPE and industrial safety equipment for sites, factories and field teams across East Africa.
             </p>
             <div className="mt-5 flex gap-3">
-              {[FaFacebook, FaInstagram, FaLinkedinIn].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              ))}
+              {socialLinks.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    aria-label={social.label}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                );
+              })}
             </div>
           </motion.div>
 

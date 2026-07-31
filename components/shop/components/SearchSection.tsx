@@ -29,9 +29,13 @@ export default function SearchSection({
     300
   );
 
-  useEffect(() => {
+  // Mirror the controlled query when it changes upstream.
+  const [lastQuery, setLastQuery] = useState(searchQuery);
+
+  if (searchQuery !== lastQuery) {
+    setLastQuery(searchQuery);
     setLocalSearch(searchQuery);
-  }, [searchQuery]);
+  }
 
   useEffect(() => {
     return () => debouncedSearch.cancel();

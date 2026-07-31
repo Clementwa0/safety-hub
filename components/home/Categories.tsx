@@ -8,7 +8,7 @@ import { CategoryGrid } from "../category";
 
 export default function Categories() {
   return (
-    <section id="categories" className="bg-slate-50 py-20">
+    <section id="categories" className="bg-slate-50">
       <div className="container mx-auto px-6 lg:px-8 space-y-12">
         
         {/* Heading */}
