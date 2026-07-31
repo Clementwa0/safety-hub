@@ -14,6 +14,22 @@ export const PRODUCT_CATEGORIES = [
 
 export type Category = (typeof PRODUCT_CATEGORIES)[number];
 
+/** `out_of_stock` is a merchandising status (hidden from checkout even with stock);
+ *  it is independent from the numeric `stock` count, which can also hit 0 under `active`. */
+export const PRODUCT_STATUSES = ["active", "draft", "out_of_stock", "archived"] as const;
+
+export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
+export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
+  active: "Active",
+  draft: "Draft",
+  out_of_stock: "Out of Stock",
+  archived: "Archived",
+};
+
+/** Images may be imported assets (public site) or remote URLs (admin created). */
+export type ProductImage = string | StaticImageData;
+
 export interface ProductSpec {
   label: string;
   value: string;
@@ -22,26 +38,62 @@ export interface ProductSpec {
 export interface Product {
   id: string;
   name: string;
-  category: Category;
+  category: Category | string;
   subcategory: string;
   price: number;
-  image: StaticImageData;
+  image: ProductImage;
   stock: number;
   description: string;
+  status?: ProductStatus;
   featured?: boolean;
   specs: ProductSpec[];
   compareAtPrice?: number;
-  images?: StaticImageData[];
+  images?: ProductImage[];
   rating?: number;
   reviews?: number;
   sku?: string;
   features?: string[];
-  isNew?: boolean;
+  isNewArrival?: boolean;
   createdAt?: number;
+  updatedAt?: number;
   popularity?: number;
   brand?: string;
   weight?: string;
   dimensions?: string;
   warranty?: string;
   certifications?: string[];
+}
+
+/** Payload accepted by the admin create/update product forms. */
+export interface ProductInput {
+  name: string;
+  description: string;
+  category: string;
+  subcategory?: string;
+  brand?: string;
+  sku?: string;
+  price: number;
+  compareAtPrice?: number;
+  stock: number;
+  status: ProductStatus;
+  image: string;
+  images?: string[];
+  featured?: boolean;
+  isNewArrival?: boolean;
+  features?: string[];
+  specs?: ProductSpec[];
+  weight?: string;
+  dimensions?: string;
+  warranty?: string;
+  certifications?: string[];
+}
+
+/** Returns the discount percentage (rounded, positive) when `compareAtPrice`
+ *  is genuinely higher than `price`, otherwise `null`. */
+export function getDiscountPercent(
+  price: number,
+  compareAtPrice?: number | null,
+): number | null {
+  if (!compareAtPrice || compareAtPrice <= price) return null;
+  return Math.round(((compareAtPrice - price) / compareAtPrice) * 100);
 }
