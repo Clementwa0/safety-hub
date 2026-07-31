@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getProductById, getRelatedProducts } from "@/data/products";
-import type { Product } from "@/data/products";
+import { productService } from "@/services/product.service";
+import type { Product } from "@/types/product";
 
 interface UseProductReturn {
   product: Product | null;
@@ -28,18 +28,11 @@ export function useProduct(slug: string): UseProductReturn {
           return;
         }
 
-        // Simulate async loading
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        const found = await productService.getById(slug);
+        setProduct(found);
 
-        const found = getProductById(slug);
-
-        if (found) {
-          setProduct(found);
-          const related = getRelatedProducts(found.id);
-          setRelatedProducts(related);
-        } else {
-          setError("Product not found");
-        }
+        const related = (await productService.list({ category: found.category })).filter((item) => item.id !== found.id).slice(0, 4);
+        setRelatedProducts(related);
       } catch (err) {
         setError("Failed to load product");
         console.error("Error loading product:", err);

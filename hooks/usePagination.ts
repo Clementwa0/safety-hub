@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 interface UsePaginationOptions {
   pageSize?: number;
@@ -9,10 +9,6 @@ export function usePagination<T>(items: T[], { pageSize = 10 }: UsePaginationOpt
 
   const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-  useEffect(() => {
-    setPage((currentPage) => Math.min(currentPage, Math.max(1, totalPages)));
-  }, [totalPages]);
 
   const safePage = Math.min(page, totalPages);
 

@@ -12,63 +12,46 @@ export type SortKey =
 
 export interface FilterState {
   search: string;
-
   category: string[];
   brand: string[];
   colors: string[];
   sizes: string[];
-
   availability: ("in-stock" | "out-of-stock")[];
-
   featured: boolean;
   onSale: boolean;
-
   minRating: number;
-
   priceRange: {
     min: number;
     max: number;
   };
-
   sort: SortKey;
 }
 
 const DEFAULT_FILTERS: FilterState = {
   search: "",
-
   category: [],
   brand: [],
   colors: [],
   sizes: [],
-
   availability: [],
-
   featured: false,
   onSale: false,
-
   minRating: 0,
-
   priceRange: {
     min: 0,
     max: 100000,
   },
-
   sort: "featured",
 };
 
-export function useShopFilters(
-  initialState?: Partial<FilterState>
-) {
+export function useShopFilters(initialState?: Partial<FilterState>) {
   const [filters, setFilters] = useState<FilterState>({
     ...DEFAULT_FILTERS,
     ...initialState,
   });
 
   const updateFilter = useCallback(
-    <K extends keyof FilterState>(
-      key: K,
-      value: FilterState[K]
-    ) => {
+    <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
       setFilters((prev) => ({
         ...prev,
         [key]: value,
@@ -84,7 +67,6 @@ export function useShopFilters(
     ) => {
       setFilters((prev) => {
         const exists = prev[key].includes(value as never);
-
         return {
           ...prev,
           [key]: exists
@@ -96,12 +78,16 @@ export function useShopFilters(
     []
   );
 
- const clearFilters = useCallback(
-  (key: "category" | "brand" | "colors" | "sizes" | "availability") => {
-    setFilters((prev) => ({ ...prev, [key]: [] }));
-  },
-  []
-);
+  const clearArrayFilter = useCallback(
+    (key: "category" | "brand" | "colors" | "sizes" | "availability") => {
+      setFilters((prev) => ({ ...prev, [key]: [] }));
+    },
+    []
+  );
+
+  const clearFilters = useCallback(() => {
+    setFilters({ ...DEFAULT_FILTERS });
+  }, []);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -113,15 +99,10 @@ export function useShopFilters(
     count += filters.availability.length;
 
     if (filters.search) count++;
-
     if (filters.featured) count++;
-
     if (filters.onSale) count++;
-
     if (filters.minRating > 0) count++;
-
     if (filters.priceRange.min > 0) count++;
-
     if (filters.priceRange.max < 100000) count++;
 
     return count;
@@ -129,15 +110,11 @@ export function useShopFilters(
 
   return {
     filters,
-
     updateFilter,
-
     toggleArrayFilter,
-
+    clearArrayFilter,
     clearFilters,
-
     activeFilterCount,
-
     hasActiveFilters: activeFilterCount > 0,
   };
 }
