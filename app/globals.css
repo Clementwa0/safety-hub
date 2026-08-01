@@ -1,0 +1,483 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-foreground: var(--whatsapp-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px -8px oklch(0.2 0.05 250 / 0.18);
+  --shadow-elevated: 0 20px 60px -20px oklch(0.2 0.05 250 / 0.25);
+  --shadow-soft: 0 2px 8px rgba(15, 45, 82, 0.05);
+  --shadow-lift: 0 18px 40px rgba(15, 45, 82, 0.12);
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, oklch(0.22 0.08 250) 0%, oklch(0.32 0.1 245) 100%);
+  --gradient-accent: linear-gradient(135deg, oklch(0.72 0.18 55) 0%, oklch(0.78 0.17 75) 100%);
+}
+
+/* ==========================================================
+   LIGHT THEME
+========================================================== */
+
+:root {
+  /* Brand Colors */
+  --primary: #0F2D52;
+  --primary-foreground: #ffffff;
+
+  --secondary: #2E7D32;
+  --secondary-foreground: #ffffff;
+
+  --accent: #F59E0B;
+  --accent-foreground: #ffffff;
+
+  /* Background */
+  --background: #F8FAFC;
+  --card: #ffffff;
+  --popover: #ffffff;
+
+  /* Text */
+  --foreground: #1E293B;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+
+  /* Border & Input */
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #0F2D52;
+
+  /* Status */
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --error: #DC2626;
+  --info: #2563EB;
+  --destructive: #DC2626;
+  --destructive-foreground: #ffffff;
+
+  /* WhatsApp */
+  --whatsapp: #25D366;
+  --whatsapp-foreground: #ffffff;
+
+  /* Radius */
+  --radius: 0.75rem;
+}
+
+/* ==========================================================
+   DARK THEME
+========================================================== */
+
+.dark {
+  /* Brand Colors */
+  --primary: #2c5b93;
+  --primary-foreground: #ffffff;
+
+  --secondary: #4CAF50;
+  --secondary-foreground: #ffffff;
+
+  --accent: #FFB020;
+  --accent-foreground: #ffffff;
+
+  /* Background */
+  --background: #071322;
+  --card: #10233d;
+  --popover: #10233d;
+
+  /* Text */
+  --foreground: #f8fafc;
+  --muted: #132942;
+  --muted-foreground: #cbd5e1;
+
+  /* Border & Input */
+  --border: #23405e;
+  --input: #23405e;
+  --ring: #2c5b93;
+
+  /* Status */
+  --success: #4CAF50;
+  --warning: #FFB020;
+  --error: #EF4444;
+  --info: #3B82F6;
+  --destructive: #EF4444;
+  --destructive-foreground: #ffffff;
+
+  /* WhatsApp */
+  --whatsapp: #25D366;
+  --whatsapp-foreground: #ffffff;
+
+  /* Radius */
+  --radius: 0.75rem;
+}
+
+/* ==========================================================
+   BASE STYLES
+========================================================== */
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+  }
+
+  h2 {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: var(--color-muted-foreground);
+    line-height: 1.75;
+  }
+
+  a {
+    transition: color 0.25s ease;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  input,
+  textarea,
+  select {
+    outline: none;
+  }
+
+  ::selection {
+    background: var(--color-secondary);
+    color: #ffffff;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+  }
+}
+
+/* ==========================================================
+   COMPONENT STYLES
+========================================================== */
+
+@layer components {
+  .container {
+    width: min(100% - 2rem, 80rem);
+    margin-inline: auto;
+  }
+
+  .section {
+    padding-block: 5rem;
+  }
+
+  .card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-size: clamp(2.75rem, 6vw, 4rem);
+    line-height: 1.1;
+  }
+
+  .hero-highlight {
+    color: var(--color-secondary);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .badge-success {
+    background: rgba(22, 163, 74, 0.1);
+    color: var(--color-success);
+  }
+
+  .badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+  }
+
+  .badge-error {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--color-error);
+  }
+
+  .input {
+    display: block;
+    height: 2.5rem;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+
+  .input:focus {
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 2px var(--color-ring);
+  }
+
+  .input-error {
+    border-color: var(--color-error);
+  }
+
+  .input-error:focus {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 2px var(--color-error);
+  }
+}
+
+/* ==========================================================
+   UTILITY CLASSES
+========================================================== */
+
+@layer utilities {
+  .text-brand {
+    color: var(--color-primary);
+  }
+
+  .text-secondary {
+    color: var(--color-secondary);
+  }
+
+  .text-accent {
+    color: var(--color-accent);
+  }
+
+  .bg-brand {
+    background-color: var(--color-primary);
+  }
+
+  .bg-secondary {
+    background-color: var(--color-secondary);
+  }
+
+  .bg-accent {
+    background-color: var(--color-accent);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-lift {
+    box-shadow: var(--shadow-lift);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .transition-default {
+    transition: all 0.3s ease;
+  }
+
+  .transition-fast {
+    transition: all 0.15s ease;
+  }
+
+  .transition-slow {
+    transition: all 0.5s ease;
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* ==========================================================
+   RESPONSIVE BREAKPOINTS
+========================================================== */
+
+@layer base {
+  @media (max-width: 640px) {
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.5rem);
+    }
+
+    h2 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+    }
+
+    h3 {
+      font-size: 1.25rem;
+    }
+
+    .section {
+      padding-block: 2.5rem;
+    }
+
+    .container {
+      width: min(100% - 1.5rem, 80rem);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .section {
+      padding-block: 3rem;
+    }
+  }
+}
+
+/* ==========================================================
+   PRINT STYLES
+========================================================== */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    transform: none !important;
+  }
+
+  .card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .container {
+    max-width: 100%;
+    padding: 0;
+  }
+}
+@media print {
+  body * { visibility: hidden !important; }
+  #document-print-area, #document-print-area * { visibility: visible !important; }
+  #document-print-area {
+    position: absolute !important;
+    left: 0; top: 0; width: 100%;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+}
