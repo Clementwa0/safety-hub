@@ -129,9 +129,12 @@ importers:
       tailwindcss:
         specifier: ^4
         version: 4.3.3
+<<<<<<< HEAD
       tsx:
         specifier: ^4.23.1
         version: 4.23.1
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -324,6 +327,7 @@ packages:
   '@emnapi/wasi-threads@1.2.1':
     resolution: {integrity: sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==}
 
+<<<<<<< HEAD
   '@esbuild/aix-ppc64@0.28.1':
     resolution: {integrity: sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==}
     engines: {node: '>=18'}
@@ -480,6 +484,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   '@eslint-community/eslint-utils@4.9.1':
     resolution: {integrity: sha512-phrYmNiYppR7znFEdqgfWHXR6NCkZEK7hwWDHZUjit/2/U0r6XvkDl0SYnoM51Hq7FhCGdLDT6zxCCOY1hexsQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -1972,11 +1978,14 @@ packages:
   es-toolkit@1.49.0:
     resolution: {integrity: sha512-G5iZ6Pc/FNRY/soKZHC+TxGDD83rHUDXxzaWhGCX44vAv/tMs56WMusnm/KMNK+luUPsgA9U28cGr4RDlSzL2g==}
 
+<<<<<<< HEAD
   esbuild@0.28.1:
     resolution: {integrity: sha512-HrJrvZv5ayxBzPfwphOoNzkzOIIlifzk0KJrGK2c8R4+LKpMtpYLQeUdjnwjWv/LZlkH2laZk+4w78pi99D4Vw==}
     engines: {node: '>=18'}
     hasBin: true
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   escalade@3.2.0:
     resolution: {integrity: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==}
     engines: {node: '>=6'}
@@ -2239,11 +2248,14 @@ packages:
     resolution: {integrity: sha512-w8ZNZr2mKIc7qeNaQ9AVPT1+iFaI+Avd4xudVOvdDJ8VytREi1Ft5Ih7hd9jjehod8vAM5GMsfQ/TpPf4EyoEA==}
     engines: {node: '>=14.14'}
 
+<<<<<<< HEAD
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
 
@@ -3625,11 +3637,14 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+<<<<<<< HEAD
   tsx@4.23.1:
     resolution: {integrity: sha512-GQHnkIfxyx1wYCOS/wonik5MVRZU9hi1TEZmzGZSCJB1y9YgoZ8H6itNE/u4suE+yLmOzuE4E5S4TZ/ZX2wcWQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   tw-animate-css@1.4.0:
     resolution: {integrity: sha512-7bziOlRqH0hJx80h/3mbicLW7o8qLsH5+RaLR2t+OHM3D0JlWGODQKQ4cxbK7WlvmUxpcj6Kgu6EKqjrGFe3QQ==}
 
@@ -4105,6 +4120,7 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+<<<<<<< HEAD
   '@esbuild/aix-ppc64@0.28.1':
     optional: true
 
@@ -4183,6 +4199,8 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   '@eslint-community/eslint-utils@4.9.1(eslint@9.39.5(jiti@2.7.0))':
     dependencies:
       eslint: 9.39.5(jiti@2.7.0)
@@ -5520,6 +5538,7 @@ snapshots:
 
   es-toolkit@1.49.0: {}
 
+<<<<<<< HEAD
   esbuild@0.28.1:
     optionalDependencies:
       '@esbuild/aix-ppc64': 0.28.1
@@ -5549,6 +5568,8 @@ snapshots:
       '@esbuild/win32-ia32': 0.28.1
       '@esbuild/win32-x64': 0.28.1
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   escalade@3.2.0: {}
 
   escape-html@1.0.3: {}
@@ -5934,9 +5955,12 @@ snapshots:
       jsonfile: 6.2.1
       universalify: 2.0.1
 
+<<<<<<< HEAD
   fsevents@2.3.3:
     optional: true
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   function-bind@1.1.2: {}
 
   function.prototype.name@1.2.0:
@@ -7335,12 +7359,15 @@ snapshots:
 
   tslib@2.8.1: {}
 
+<<<<<<< HEAD
   tsx@4.23.1:
     dependencies:
       esbuild: 0.28.1
     optionalDependencies:
       fsevents: 2.3.3
 
+=======
+>>>>>>> e5ed8c7264032ee6cacd59f3109fa9a2560ca27c
   tw-animate-css@1.4.0: {}
 
   type-check@0.4.0:
