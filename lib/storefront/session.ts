@@ -1,13 +1,18 @@
 import { randomUUID } from "crypto";
 import type { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { auth as getCustomerAuthSession } from "@/lib/customer-auth";
+import type { CartUserModel } from "@/lib/models/Cart";
+import { CART_SESSION_COOKIE } from "@/lib/storefront/constants";
 
-export const CART_SESSION_COOKIE = "cart_session";
+export { CART_SESSION_COOKIE };
 const CART_SESSION_MAX_AGE = 60 * 60 * 24 * 90; // 90 days
 
 export interface CartIdentity {
-  /** Set when the request comes from an authenticated (staff/admin) user. */
+  /** Set when the request comes from an authenticated (staff/admin) user, or a signed-in storefront customer. */
   userId?: string;
+  /** Which model `userId` refers to — only meaningful when `userId` is set. */
+  userModel?: CartUserModel;
   /** Set for guest carts, identified by an opaque cookie value. */
   sessionId?: string;
   /** True when a session cookie had to be minted for this request. */
@@ -17,18 +22,30 @@ export interface CartIdentity {
 /**
  * Resolves who a cart/order request belongs to.
  *
- * This project's only authentication system (`lib/auth.ts`) issues JWTs for
- * Sentinel staff/admin accounts — there is no public customer login. So for
- * the storefront, every unauthenticated visitor is treated as a guest
- * identified by a long-lived, httpOnly session cookie. If a logged-in
- * staff/admin user happens to shop, we key their cart to their user id
- * instead so the two systems stay consistent with each other.
+ * Three possible identities, checked in this order:
+ *
+ *  1. A logged-in Sentinel staff/admin user (`lib/auth.ts`, JWT in the
+ *     `auth_token` cookie) — pre-existing behavior, unchanged: if a
+ *     staff/admin happens to shop, their cart is keyed to their staff user
+ *     id so the two systems stay consistent with each other.
+ *  2. A signed-in storefront customer account (`lib/customer-auth.ts`,
+ *     Auth.js database session) — the new optional account layer.
+ *  3. Otherwise, a guest, identified by a long-lived, httpOnly session
+ *     cookie — this remains the default, zero-friction path for anyone who
+ *     hasn't created an account, and is completely unaffected by either of
+ *     the above.
  */
 export async function resolveCartIdentity(request: NextRequest): Promise<CartIdentity> {
-  const user = await getAuthenticatedUser();
+  const staffUser = await getAuthenticatedUser();
 
-  if (user) {
-    return { userId: String(user._id), isNewSession: false };
+  if (staffUser) {
+    return { userId: String(staffUser._id), userModel: "User", isNewSession: false };
+  }
+
+  const customerSession = await getCustomerAuthSession();
+
+  if (customerSession?.user?.id) {
+    return { userId: customerSession.user.id, userModel: "StorefrontCustomer", isNewSession: false };
   }
 
   const existing = request.cookies.get(CART_SESSION_COOKIE)?.value;

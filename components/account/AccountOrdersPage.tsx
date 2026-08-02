@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { FaBoxOpen } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import type { StoreOrder } from "@/types/store-order";
 import { StoreOrderStatusBadge } from "@/components/checkout/StoreOrderStatusBadge";
 
 export default function AccountOrdersPage() {
+  const { status } = useSession();
   const [orders, setOrders] = useState<StoreOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +44,23 @@ export default function AccountOrdersPage() {
   return (
     <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <h1 className="text-2xl font-bold text-foreground">My Orders</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Orders placed from this browser. Keep this device/browser to track them later.
-      </p>
+      {status === "authenticated" ? (
+        <p className="mt-1 text-sm text-muted-foreground">
+          Orders placed on your account, from any device.
+        </p>
+      ) : (
+        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+          <span>Orders placed from this browser.</span>
+          {!loading && orders.length > 0 && (
+            <>
+              <span>Sign in to see orders from all your devices —</span>
+              <Link href="/account/sign-in" className="font-medium text-secondary hover:underline">
+                sign in
+              </Link>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="mt-6">
         {loading ? (

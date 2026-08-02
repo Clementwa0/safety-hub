@@ -16,15 +16,11 @@ interface MobileShopSidebarProps {
 
   filters: FilterState;
   activeFilterCount: number;
+  brands: string[];
 
-  toggleArrayFilter: (
-    key: "category" | "brand" | "colors" | "sizes" | "availability",
-    value: string
-  ) => void;
+  toggleArrayFilter: (key: "category" | "brand" | "availability", value: string) => void;
 
-  clearArrayFilter: (
-    key: "category" | "brand" | "colors" | "sizes" | "availability"
-  ) => void;
+  clearArrayFilter: (key: "category" | "brand" | "availability") => void;
 
   updateFilter: <K extends keyof FilterState>(
     key: K,

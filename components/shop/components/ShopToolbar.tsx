@@ -1,4 +1,4 @@
-import { Search, Grid3x3, List, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,15 +10,14 @@ import {
 } from "@/components/ui/select";
 import type { SortKey } from "@/hooks/useShopFilters";
 
+// Kept to exactly what the storefront can implement correctly against
+// real product fields — see the comment on `SortKey`.
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "featured", label: "Featured" },
+  { value: "featured", label: "Relevance" },
   { value: "newest", label: "Newest" },
-  { value: "best-selling", label: "Best selling" },
-  { value: "rating", label: "Highest rated" },
-  { value: "price-asc", label: "Price: Low → High" },
-  { value: "price-desc", label: "Price: High → Low" },
-  { value: "az", label: "Alphabetical A–Z" },
-  { value: "za", label: "Alphabetical Z–A" },
+  { value: "price-asc", label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "az", label: "Name: A-Z" },
 ];
 
 type Props = {
@@ -27,8 +26,6 @@ type Props = {
   onQueryChange: (v: string) => void;
   sort: SortKey;
   onSortChange: (v: SortKey) => void;
-  view: "grid" | "list";
-  onViewChange: (v: "grid" | "list") => void;
   onOpenMobileFilters: () => void;
   activeCount: number;
 };
@@ -39,8 +36,6 @@ export function ShopToolbar({
   onQueryChange,
   sort,
   onSortChange,
-  view,
-  onViewChange,
   onOpenMobileFilters,
   activeCount,
 }: Props) {
@@ -51,7 +46,9 @@ export function ShopToolbar({
           <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
             Safety Equipment
           </h1>
-          <p className="text-sm text-muted-foreground">{total.toLocaleString()} products</p>
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            {total.toLocaleString()} product{total === 1 ? "" : "s"}
+          </p>
         </div>
         <div className="relative w-full max-w-sm shrink-0 sm:w-80">
           <Search
@@ -82,7 +79,7 @@ export function ShopToolbar({
 
         <div className="ml-auto flex items-center gap-2">
           <Select value={sort} onValueChange={(v) => onSortChange(v as SortKey)}>
-            <SelectTrigger className="h-9 w-[180px] text-sm" aria-label="Sort products">
+            <SelectTrigger className="h-9 w-[190px] text-sm" aria-label="Sort products">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -93,27 +90,10 @@ export function ShopToolbar({
               ))}
             </SelectContent>
           </Select>
-
-          <div className="hidden rounded-md border sm:flex">
-            <button
-              aria-label="Grid view"
-              aria-pressed={view === "grid"}
-              onClick={() => onViewChange("grid")}
-              className={`grid h-9 w-9 place-items-center ${view === "grid" ? "bg-accent" : "hover:bg-muted"}`}
-            >
-              <Grid3x3 className="h-4 w-4" />
-            </button>
-            <button
-              aria-label="List view"
-              aria-pressed={view === "list"}
-              onClick={() => onViewChange("list")}
-              className={`grid h-9 w-9 place-items-center border-l ${view === "list" ? "bg-accent" : "hover:bg-muted"}`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 }
+
+export { SORT_OPTIONS };

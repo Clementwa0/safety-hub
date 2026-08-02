@@ -14,7 +14,7 @@ import {
   getCategoryBySlug,
   getProductsByCategoryId,
 } from "@/lib/server/catalog";
-import ProductCard from "@/components/products/components/Product-Card";
+import CategoryProductsSection from "@/components/category/CategoryProductsSection";
 import { Breadcrumb } from "@/components/shared/ui-bits";
 
 // This page depends on live MongoDB data (product counts, newly added
@@ -170,6 +170,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   return (
     <main className="min-h-screen bg-slate-50 pt-16 sm:pt-20 lg:pt-24">
       <Breadcrumb
+        className="container mx-auto mb-4 rounded-xl bg-primary px-4 py-2.5 lg:px-8"
         items={[
           { label: "Home", href: "/" },
           { label: "Categories", href: "/categories" },
@@ -220,7 +221,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             <FaArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
-   <div className="mb-8 rounded-lg border border-gray-100 bg-slate-50/60 py-10">
+        <div className="mb-8 rounded-lg border border-gray-100 bg-slate-50/60 px-4 py-10 sm:px-6">
         {products.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center sm:p-16">
             <span className="rounded-full bg-slate-100 p-4">
@@ -240,11 +241,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} featured={product.featured} />
-            ))}
-          </div>
+          <CategoryProductsSection products={products} category={category} />
         )}
         </div>
       </section>

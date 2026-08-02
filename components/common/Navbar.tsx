@@ -9,9 +9,11 @@ import { FaChevronDown, FaBars, FaXmark, FaWhatsapp } from "react-icons/fa6";
 import Logo from "@/public/logo/logo.png";
 import { navLinks, TopStripe, toDropdownItems, type DropdownItem } from ".";
 import CartIcon from "../cart/CartIcon";
+import AccountMenu from "../account/AccountMenu";
 import { FaSearch } from "react-icons/fa";
 import { COMPANY } from "@/lib/constants";
 import { categoryService } from "@/services/category.service";
+import SearchOverlay from "./SearchOverlay";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -20,6 +22,21 @@ export default function Navbar() {
   const [mobileDropdown, setMobileDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [categoryItems, setCategoryItems] = useState<DropdownItem[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Keyboard shortcut (Cmd/Ctrl+K) to open search from anywhere, same as
+  // any standard command-palette-style search.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -181,11 +198,20 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
-          <button className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-muted">
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search products"
+            className="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-muted"
+          >
             <FaSearch className="h-5 w-5 text-primary" />
           </button>
 
+          <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} />
+
           <CartIcon />
+
+          <AccountMenu />
 
           <Link
             href={`https://wa.me/${COMPANY.whatsapp}`}

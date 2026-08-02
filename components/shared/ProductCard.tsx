@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { SafeImage } from '@/components/shared/SafeImage'
 import { motion, useReducedMotion } from 'framer-motion'
 import { AiOutlineEye } from 'react-icons/ai'
-import { FaCartPlus } from 'react-icons/fa6'
+import { FaCartPlus, FaStar } from 'react-icons/fa6'
 import { toast } from 'sonner'
 
 // Swap this for wherever your clsx + tailwind-merge helper lives.
@@ -29,6 +29,9 @@ export interface ProductCardItem {
   subcategory?: string
   isNewArrival?: boolean
   compareAtPrice?: number
+  brand?: string
+  rating?: number
+  reviews?: number
 }
 
 export interface ProductCardProps {
@@ -159,6 +162,17 @@ export default function ProductCard ({
         </div>
 
         <div className={cn('flex flex-col', compact ? 'p-2' : 'p-2.5')}>
+          {product.brand && (
+            <p
+              className={cn(
+                'truncate font-medium uppercase tracking-wide text-muted-foreground/80',
+                compact ? 'text-[9px]' : 'text-[9px] sm:text-[10px]'
+              )}
+            >
+              {product.brand}
+            </p>
+          )}
+
           <h3
             className={cn(
               'line-clamp-2 min-h-[2rem] font-semibold leading-tight text-primary transition-colors group-hover:text-secondary',
@@ -168,14 +182,33 @@ export default function ProductCard ({
             {product.name}
           </h3>
 
-          <p
-            className={cn(
-              'mt-1 truncate text-muted-foreground',
-              compact ? 'text-[10px]' : 'text-[10px] sm:text-xs'
+          <div className='mt-1 flex items-center justify-between gap-2'>
+            <p
+              className={cn(
+                'truncate text-muted-foreground',
+                compact ? 'text-[10px]' : 'text-[10px] sm:text-xs'
+              )}
+            >
+              {product.category}
+            </p>
+
+            {typeof product.rating === 'number' && product.rating > 0 && (
+              <span
+                className='flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-amber-500'
+                aria-label={
+                  product.reviews
+                    ? `Rated ${product.rating.toFixed(1)} out of 5, ${product.reviews} reviews`
+                    : `Rated ${product.rating.toFixed(1)} out of 5`
+                }
+              >
+                <FaStar className='text-[10px]' aria-hidden='true' />
+                {product.rating.toFixed(1)}
+                {typeof product.reviews === 'number' && product.reviews > 0 && (
+                  <span className='text-muted-foreground'>({product.reviews})</span>
+                )}
+              </span>
             )}
-          >
-            {product.category}
-          </p>
+          </div>
         </div>
       </Link>
 

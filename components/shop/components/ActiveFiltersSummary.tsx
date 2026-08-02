@@ -20,11 +20,7 @@ interface Props {
   onClearAll: () => void;
 }
 
-export default function ActiveFiltersSummary({
-  filters,
-  onRemove,
-  onClearAll,
-}: Props) {
+export default function ActiveFiltersSummary({ filters, onRemove, onClearAll }: Props) {
   const chips: {
     id: string;
     label: string;
@@ -32,36 +28,18 @@ export default function ActiveFiltersSummary({
     value?: string;
   }[] = [];
 
-  // Search
   if (filters.search) {
-    chips.push({
-      id: "search",
-      label: `"${filters.search}"`,
-      key: "search",
-    });
+    chips.push({ id: "search", label: `"${filters.search}"`, key: "search" });
   }
 
-  // Categories
   filters.category.forEach((category) => {
-    chips.push({
-      id: `category-${category}`,
-      label: category,
-      key: "category",
-      value: category,
-    });
+    chips.push({ id: `category-${category}`, label: category, key: "category", value: category });
   });
 
-  // Brands
   filters.brand.forEach((brand) => {
-    chips.push({
-      id: `brand-${brand}`,
-      label: brand,
-      key: "brand",
-      value: brand,
-    });
+    chips.push({ id: `brand-${brand}`, label: brand, key: "brand", value: brand });
   });
 
-  // Availability
   filters.availability.forEach((status) => {
     chips.push({
       id: `availability-${status}`,
@@ -71,70 +49,45 @@ export default function ActiveFiltersSummary({
     });
   });
 
-  // Featured
   if (filters.featured) {
-    chips.push({
-      id: "featured",
-      label: "Featured",
-      key: "featured",
-    });
+    chips.push({ id: "featured", label: "Featured", key: "featured" });
   }
 
-  // On Sale
+  if (filters.newOnly) {
+    chips.push({ id: "new", label: "New Arrivals", key: "newOnly" });
+  }
+
   if (filters.onSale) {
-    chips.push({
-      id: "sale",
-      label: "On Sale",
-      key: "onSale",
-    });
+    chips.push({ id: "sale", label: "On Sale", key: "onSale" });
   }
 
-  // Price
-  if (
-    filters.priceRange.min > 0 ||
-    filters.priceRange.max < MAX_PRICE
-  ) {
+  if (filters.priceRange.min > 0 || filters.priceRange.max < MAX_PRICE) {
     chips.push({
       id: "price",
-      label: `${formatPrice(filters.priceRange.min)} – ${formatPrice(
-        filters.priceRange.max
-      )}`,
+      label: `${formatPrice(filters.priceRange.min)} – ${formatPrice(filters.priceRange.max)}`,
       key: "priceRange",
     });
   }
 
-  // Sort
   if (filters.sort !== "featured") {
     const labels: Record<string, string> = {
       newest: "Newest",
-      "best-selling": "Best Selling",
-      rating: "Highest Rated",
       "price-asc": "Price ↑",
       "price-desc": "Price ↓",
       az: "A → Z",
-      za: "Z → A",
     };
 
-    chips.push({
-      id: "sort",
-      label: labels[filters.sort] ?? filters.sort,
-      key: "sort",
-    });
+    chips.push({ id: "sort", label: labels[filters.sort] ?? filters.sort, key: "sort" });
   }
 
   if (!chips.length) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/30 p-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/30 p-4">
       <div className="flex flex-wrap gap-2">
         {chips.map((chip) => (
-          <Badge
-            key={chip.id}
-            variant="secondary"
-            className="flex items-center gap-1 rounded-full px-3 py-1"
-          >
+          <Badge key={chip.id} variant="secondary" className="flex items-center gap-1 rounded-full px-3 py-1">
             <span>{chip.label}</span>
-
             <button
               onClick={() => onRemove(chip.key, chip.value)}
               className="rounded-full p-0.5 transition-colors hover:bg-black/10 dark:hover:bg-white/10"
@@ -146,12 +99,7 @@ export default function ActiveFiltersSummary({
         ))}
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onClearAll}
-        className="shrink-0"
-      >
+      <Button variant="ghost" size="sm" onClick={onClearAll} className="shrink-0">
         Clear All
       </Button>
     </div>

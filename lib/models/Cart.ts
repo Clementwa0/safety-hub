@@ -9,8 +9,18 @@ export interface ICartItem {
   quantity: number;
 }
 
+export type CartUserModel = "User" | "StorefrontCustomer";
+
 export interface ICart extends Document {
   user?: mongoose.Types.ObjectId;
+  /**
+   * Which model `user` refers to: `"User"` for a staff/admin shopping while
+   * signed into Sentinel (the original, pre-existing behavior), or
+   * `"StorefrontCustomer"` for a signed-in storefront customer account.
+   * Only meaningful when `user` is set. See `resolveCartIdentity` in
+   * `lib/storefront/session.ts` for how this gets decided.
+   */
+  userModel?: CartUserModel;
   sessionId?: string;
   items: ICartItem[];
   createdAt: Date;
@@ -44,7 +54,16 @@ const cartSchema = new Schema<ICart>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      // `refPath` lets this same field point at either the staff `User`
+      // model or the `StorefrontCustomer` model depending on `userModel`,
+      // so `.populate("user")` resolves correctly either way.
+      refPath: "userModel",
+      default: undefined,
+    },
+
+    userModel: {
+      type: String,
+      enum: ["User", "StorefrontCustomer"],
       default: undefined,
     },
 

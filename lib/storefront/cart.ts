@@ -23,7 +23,13 @@ export async function getOrCreateCart(identity: CartIdentity): Promise<ICart> {
   let cart = await CartModel.findOne(filter);
 
   if (!cart) {
-    cart = await CartModel.create({ ...filter, items: [] });
+    cart = await CartModel.create({
+      ...filter,
+      // `userModel` is only meaningful when `user` is set (identity.userId);
+      // omitted entirely for guest carts.
+      ...(identity.userId ? { userModel: identity.userModel } : {}),
+      items: [],
+    });
   }
 
   return cart;

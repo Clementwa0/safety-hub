@@ -12,12 +12,15 @@ import {
   Bell,
   FileBarChart,
   ShoppingBag,
+  MessagesSquare,
 } from "lucide-react";
 
 export interface NavigationItem {
   name: string;
   path: string;
   icon: LucideIcon;
+  /** Optional key used to look up a live badge count for this item (e.g. unread contact messages). */
+  badgeKey?: "contactMessages";
 }
 
 export const sentinelNavigation: NavigationItem[] = [
@@ -40,6 +43,12 @@ export const sentinelNavigation: NavigationItem[] = [
     name: "Store Orders",
     path: "/sentinel/store-orders",
     icon: ShoppingBag,
+  },
+  {
+    name: "Contact Messages",
+    path: "/sentinel/contact-messages",
+    icon: MessagesSquare,
+    badgeKey: "contactMessages",
   },
   {
     name: "Orders",

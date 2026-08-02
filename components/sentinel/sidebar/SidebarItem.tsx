@@ -14,6 +14,7 @@ interface SidebarItemProps {
   item: NavigationItem;
   collapsed: boolean;
   isActive: boolean;
+  badgeCount?: number;
   onClick?: () => void;
 }
 
@@ -21,9 +22,11 @@ export default function SidebarItem({
   item,
   collapsed,
   isActive,
+  badgeCount,
   onClick,
 }: SidebarItemProps) {
   const Icon = item.icon;
+  const showBadge = Boolean(badgeCount && badgeCount > 0);
 
   return (
     <SidebarMenuItem>
@@ -42,11 +45,28 @@ export default function SidebarItem({
           onClick={onClick}
           className="flex w-full items-center gap-3"
         >
-          <Icon className="h-5 w-5 shrink-0" />
+          <span className="relative shrink-0">
+            <Icon className="h-5 w-5" />
+            {showBadge && collapsed && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />
+            )}
+          </span>
 
           {!collapsed && (
-            <span className="truncate text-sm font-medium">
-              {item.name}
+            <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+              <span className="truncate text-sm font-medium">{item.name}</span>
+              {showBadge && (
+                <span
+                  className={cn(
+                    "flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold",
+                    isActive
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-destructive text-destructive-foreground"
+                  )}
+                >
+                  {badgeCount && badgeCount > 99 ? "99+" : badgeCount}
+                </span>
+              )}
             </span>
           )}
         </Link>

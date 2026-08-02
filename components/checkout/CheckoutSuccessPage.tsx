@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { formatKES } from "@/lib/format";
 import { storeOrderService } from "@/services/store-order.service";
 import type { StoreOrder } from "@/types/store-order";
+import SaveOrderPrompt from "@/components/checkout/SaveOrderPrompt";
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
@@ -95,6 +96,8 @@ export default function CheckoutSuccessPage() {
           </div>
         </CardContent>
       </Card>
+
+      <SaveOrderPrompt order={order} />
 
       <div className="mt-8 flex w-full flex-col gap-3 sm:flex-row">
         <Button className="flex-1" nativeButton={false} render={<Link href={`/account/orders/${order.id}`} />}>

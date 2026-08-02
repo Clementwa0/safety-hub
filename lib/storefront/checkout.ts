@@ -92,6 +92,7 @@ export async function performCheckout(
           {
             orderNumber,
             user: identity.userId,
+            userModel: identity.userId ? identity.userModel : undefined,
             sessionId: identity.sessionId,
             items: orderItems,
             subtotal,

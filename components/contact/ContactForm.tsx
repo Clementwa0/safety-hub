@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaPaperPlane, FaUser, FaEnvelope, FaPhone, FaPen, FaCommentDots } from "react-icons/fa6";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,33 +39,103 @@ const item = {
   },
 };
 
+interface ContactFormState {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+}
+
+const initialFormState: ContactFormState = {
+  name: "",
+  email: "",
+  phone: "",
+  subject: "",
+  message: "",
+};
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function ContactForm() {
   const [agree, setAgree] = useState(false);
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
-  });
+  const [sending, setSending] = useState(false);
+  const [form, setForm] = useState<ContactFormState>(initialFormState);
 
   const update =
-    (field: keyof typeof form) =>
-    (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-      setForm({
-        ...form,
+    (field: keyof ContactFormState) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((current) => ({
+        ...current,
         [field]: e.target.value,
-      });
+      }));
     };
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    console.log(form);
-  }
+    if (sending) return;
+
+    if (!agree) {
+      toast.error("Please agree to the privacy policy before submitting.");
+      return;
+    }
+
+    if (
+      !form.name.trim() ||
+      !form.email.trim() ||
+      !form.phone.trim() ||
+      !form.subject.trim() ||
+      !form.message.trim()
+    ) {
+      toast.error("All fields are required.");
+      return;
+    }
+
+    if (!emailRegex.test(form.email.trim())) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          subject: form.subject.trim(),
+          message: form.message.trim(),
+        }),
+      });
+
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage =
+          body?.error || body?.message || "Could not send your message. Please try again later.";
+        toast.error(errorMessage);
+        return;
+      }
+
+      toast.success("Your message was sent successfully.");
+      setForm(initialFormState);
+      setAgree(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred while sending your message.",
+      );
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <motion.div
@@ -226,11 +298,20 @@ export default function ContactForm() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={!agree}
+                disabled={!agree || sending}
                 className="h-12 w-full rounded-xl text-base font-semibold"
               >
-                <FaPaperPlane className="mr-2 h-4 w-4" />
-                Send Message
+                {sending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <FaPaperPlane className="mr-2 h-4 w-4" />
+                    Send Message
+                  </>
+                )}
               </Button>
             </motion.div>
           </motion.form>

@@ -48,9 +48,17 @@ export interface IStoreOrderItem {
   subtotal: number;
 }
 
+export type StoreOrderUserModel = "User" | "StorefrontCustomer";
+
 export interface IStoreOrder extends Document {
   orderNumber: string;
   user?: mongoose.Types.ObjectId;
+  /**
+   * Which model `user` refers to — `"User"` for a staff/admin account,
+   * `"StorefrontCustomer"` for a signed-in storefront customer. See
+   * `lib/models/Cart.ts` for the same pattern and rationale.
+   */
+  userModel?: StoreOrderUserModel;
   sessionId?: string;
 
   items: IStoreOrderItem[];
@@ -100,7 +108,8 @@ const storeOrderSchema = new Schema<IStoreOrder>(
   {
     orderNumber: { type: String, required: true, trim: true },
 
-    user: { type: Schema.Types.ObjectId, ref: "User" },
+    user: { type: Schema.Types.ObjectId, refPath: "userModel" },
+    userModel: { type: String, enum: ["User", "StorefrontCustomer"] },
     sessionId: { type: String, trim: true },
 
     items: {

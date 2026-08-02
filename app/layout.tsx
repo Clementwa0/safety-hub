@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import CartDrawer from "@/components/cart/CartDrawer";
+import { CustomerSessionProvider } from "@/components/providers/CustomerSessionProvider";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { COMPANY } from "@/lib/constants";
@@ -25,8 +26,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-sans", inter.variable)}>
       <body>
-        {children}
-        <CartDrawer />
+        <CustomerSessionProvider>
+          {children}
+          <CartDrawer />
+        </CustomerSessionProvider>
         <Toaster
           position="top-right"
           richColors

@@ -67,16 +67,6 @@ export function createCategoryLink(slug: string): string {
   return `/categories/${slug}`;
 }
 
-/* -------------------------------------------------------------------------- */
-/*                          Category Icon Lookup                              */
-/* -------------------------------------------------------------------------- */
-/*
- * Categories themselves now come from the API/DB (see categoryService),
- * not from a hardcoded list here. This map only supplies a nicer icon
- * for known category names when rendering the nav dropdown; anything
- * not in this map (e.g. a category added later in admin) still works,
- * it just falls back to a generic icon below.
- */
 
 const CATEGORY_ICON_MAP: Record<string, IconType> = {
   "Head Protection": FaHardHat,
@@ -96,11 +86,6 @@ export function getCategoryIcon(category: string): IconType {
   return CATEGORY_ICON_MAP[category] ?? DEFAULT_CATEGORY_ICON;
 }
 
-/**
- * Converts API category records (name + productCount, etc.) into the
- * shape the navbar dropdown needs. Pass whatever categoryService.list()
- * resolves to.
- */
 export function toDropdownItems(
   categories: { name: string; slug: string }[],
 ): DropdownItem[] {
