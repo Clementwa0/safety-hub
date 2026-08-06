@@ -1,4 +1,4 @@
-import AccountOrdersPage from "@/components/account/AccountOrdersPage";
+import AccountOrdersPage from "@/components/account/AccountOrders";
 
 export default function AccountOrdersRoute() {
   return <AccountOrdersPage />;

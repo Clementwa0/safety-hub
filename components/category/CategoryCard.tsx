@@ -53,7 +53,7 @@ export function CategoryCard({
         <div className="flex items-center justify-between border-t pt-2">
 
           <span className="text-xs md:text-sm font-medium text-slate-500">
-            Browser Category
+            Browse Category
           </span>
 
           <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-secondary text-white transition-all duration-300 group-hover:translate-x-1">
