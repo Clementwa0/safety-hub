@@ -1,21 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { FaArrowLeft, FaLock } from "react-icons/fa6";
+import { useSession } from "next-auth/react";
+import { FaArrowLeft, FaLock, FaMobileScreenButton, FaTruck, FaWhatsapp } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loading } from "@/components/shared/Loading";
 import EmptyCart from "@/components/cart/EmptyCart";
 import { formatKES } from "@/lib/format";
 import { useCart } from "@/hooks/useCart";
 import { storeOrderService } from "@/services/store-order.service";
+import type { StorePaymentMethod } from "@/types/store-order";
+import {
+  buildWhatsAppOrderMessage,
+  generateWhatsAppReference,
+  openWhatsAppCheckout,
+  type WhatsAppPreferredPayment,
+} from "@/lib/storefront/whatsapp";
 
 interface CheckoutFormState {
   name: string;
@@ -35,12 +44,56 @@ const INITIAL_FORM: CheckoutFormState = {
   country: "Kenya",
 };
 
+
+type CheckoutSelection = StorePaymentMethod | "whatsapp";
+
+const PAYMENT_OPTIONS: {
+  value: CheckoutSelection;
+  label: string;
+  description: string;
+  icon: typeof FaMobileScreenButton;
+  requiresAccount: boolean;
+}[] = [
+ /**  {
+    value: "mpesa",
+    label: "M-Pesa",
+    description: "Pay instantly with a Safaricom M-Pesa STK push. Requires an account.",
+    icon: FaMobileScreenButton,
+    requiresAccount: true,
+  },
+  
+  */
+  {
+    value: "cod",
+    label: "Cash on Delivery",
+    description: "Pay in cash when your order arrives.",
+    icon: FaTruck,
+    requiresAccount: false,
+  },
+  {
+    value: "whatsapp",
+    label: "Order via WhatsApp",
+    description: "Chat with our team to confirm availability and payment — no order is placed here.",
+    icon: FaWhatsapp,
+    requiresAccount: false,
+  },
+];
+
 export default function CheckoutPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const { data: session, status: sessionStatus } = useSession();
   const { items, itemCount, subtotal, shippingFee, tax, total, loading, refresh } = useCart();
   const [form, setForm] = useState<CheckoutFormState>(INITIAL_FORM);
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutSelection>("cod");
+  const [whatsappPreferredPayment, setWhatsappPreferredPayment] = useState<WhatsAppPreferredPayment>("cod");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const isSignedIn = Boolean(session?.user?.id);
+  const signInHref = `/account/sign-in?next=${encodeURIComponent(pathname || "/checkout")}`;
+  const needsSignInForMpesa = paymentMethod === "mpesa" && !isSignedIn;
+  const isWhatsAppOrder = paymentMethod === "whatsapp";
 
   const update =
     (field: keyof CheckoutFormState) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,6 +102,7 @@ export default function CheckoutPage() {
 
   const hasUnavailableItems = items.some((item) => item.unavailable);
   const hasStockIssue = items.some((item) => !item.unavailable && item.quantity > item.stock);
+  const fullShippingAddress = [form.address, form.city, form.country].filter(Boolean).join(", ");
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -59,11 +113,52 @@ export default function CheckoutPage() {
       return;
     }
 
+    // M-Pesa payments require a signed-in account. Rather than letting the
+    // request round-trip to the server just to be rejected, send the
+    // shopper to sign in first and bring them straight back here.
+    if (needsSignInForMpesa) {
+      router.push(signInHref);
+      return;
+    }
+
+    // WhatsApp Checkout never touches the order-creation API — it's a
+    // parallel channel that hands the customer off to a human in chat.
+    // Everything they've typed into the form above still gets used, just
+    // to build the message instead of a `StoreOrder`. Checking
+    // `paymentMethod` directly (not the `isWhatsAppOrder` bool) so
+    // TypeScript narrows it to `StorePaymentMethod` for the checkout()
+    // call below, once this branch has returned.
+    if (paymentMethod === "whatsapp") {
+      setSubmitting(true);
+      try {
+        const message = buildWhatsAppOrderMessage({
+          customer: { name: form.name, phone: form.phone, email: form.email, address: fullShippingAddress },
+          items: items.map((item) => ({ name: item.name, quantity: item.quantity, lineTotal: item.subtotal })),
+          totals: { subtotal, shippingFee, tax, total },
+          preferredPayment: whatsappPreferredPayment,
+          reference: generateWhatsAppReference(),
+        });
+
+        const result = openWhatsAppCheckout(message);
+        if (!result.ok) {
+          setFormError(result.error);
+          toast.error(result.error);
+          return;
+        }
+
+        toast.success("Opening WhatsApp — your cart is still saved here.");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     setSubmitting(true);
     try {
       const order = await storeOrderService.checkout({
         customer: { name: form.name, email: form.email, phone: form.phone },
         shippingAddress: { address: form.address, city: form.city, country: form.country },
+        paymentMethod,
       });
 
       await refresh();
@@ -158,6 +253,84 @@ export default function CheckoutPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Payment Method</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={(value) => setPaymentMethod(value as CheckoutSelection)}
+                className="gap-3"
+              >
+                {PAYMENT_OPTIONS.map((option) => {
+                  const Icon = option.icon;
+                  const locked = option.requiresAccount && !isSignedIn && sessionStatus !== "loading";
+
+                  return (
+                    <Label
+                      key={option.value}
+                      htmlFor={`payment-${option.value}`}
+                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-input p-3 has-[[data-checked]]:border-secondary has-[[data-checked]]:bg-secondary/5"
+                    >
+                      <RadioGroupItem value={option.value} id={`payment-${option.value}`} className="mt-1" />
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="flex-1">
+                        <span className="block text-sm font-medium text-foreground">{option.label}</span>
+                        <span className="block text-xs text-muted-foreground">{option.description}</span>
+                        {locked && (
+                          <span className="mt-1 block text-xs font-medium text-secondary">
+                            You&apos;ll be asked to sign in before this order is placed.
+                          </span>
+                        )}
+                      </span>
+                    </Label>
+                  );
+                })}
+              </RadioGroup>
+
+              {/* {/needsSignInForMpesa && ( 
+                <div className="mt-4 rounded-md bg-secondary/10 p-3 text-xs text-foreground">
+                  <p>M-Pesa payments require an account so we can send your payment prompt and receipt.</p>
+                  <Link href={signInHref} className="mt-2 inline-block font-medium text-secondary underline">
+                    Sign in to continue with M-Pesa
+                  </Link>
+                </div>
+              )}*/}
+
+              {isWhatsAppOrder && (
+                <div className="mt-4 space-y-2 rounded-md bg-green-600/5 p-3">
+                  <Label className="text-xs font-medium text-foreground">
+                    Preferred payment to mention in the chat
+                  </Label>
+                  <RadioGroup
+                    value={whatsappPreferredPayment}
+                    onValueChange={(value) => setWhatsappPreferredPayment(value as WhatsAppPreferredPayment)}
+                    className="flex gap-4"
+                  >
+                    <Label
+                      htmlFor="wa-pref-cod"
+                      className="flex cursor-pointer items-center gap-2 text-sm font-normal text-foreground"
+                    >
+                      <RadioGroupItem value="cod" id="wa-pref-cod" />
+                      Cash on Delivery
+                    </Label>
+                    <Label
+                      htmlFor="wa-pref-mpesa"
+                      className="flex cursor-pointer items-center gap-2 text-sm font-normal text-foreground"
+                    >
+                      <RadioGroupItem value="mpesa" id="wa-pref-mpesa" />
+                      M-Pesa
+                    </Label>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground">
+                    No order is placed yet — our team will confirm this with you on WhatsApp.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="h-fit lg:sticky lg:top-[170px]">
@@ -220,11 +393,19 @@ export default function CheckoutPage() {
 
             <Button
               type="submit"
-              className="w-full gap-2"
+              className={`w-full gap-2 ${isWhatsAppOrder ? "bg-green-600 hover:bg-green-700" : ""}`}
               disabled={submitting || hasUnavailableItems || hasStockIssue}
             >
-              <FaLock className="h-4 w-4" />
-              {submitting ? "Placing Order..." : "Place Order"}
+              {isWhatsAppOrder ? <FaWhatsapp className="h-4 w-4" /> : <FaLock className="h-4 w-4" />}
+              {submitting
+                ? isWhatsAppOrder
+                  ? "Opening WhatsApp..."
+                  : "Placing Order..."
+                : needsSignInForMpesa
+                  ? "Sign In to Continue"
+                  : isWhatsAppOrder
+                    ? "Continue on WhatsApp"
+                    : "Place Order"}
             </Button>
           </CardContent>
         </Card>

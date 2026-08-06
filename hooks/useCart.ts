@@ -1,16 +1,10 @@
+// hooks/useCart.ts
 "use client";
 
 import { useEffect } from "react";
 import { useServerCartStore } from "@/store/server-cart-store";
 import { calculateShippingFee, calculateTax, calculateTotal } from "@/lib/storefront/pricing";
 
-/**
- * Server-backed cart hook. The cart lives in MongoDB (see `lib/models/Cart.ts`)
- * and is keyed to a guest session cookie or, if a staff/admin is browsing
- * while signed in, their user id. This hook lazily loads it once and shares
- * state across every component that calls it (backed by a Zustand store, so
- * no prop drilling and no duplicate fetches).
- */
 export function useCart() {
   const cart = useServerCartStore((state) => state.cart);
   const loading = useServerCartStore((state) => state.loading);

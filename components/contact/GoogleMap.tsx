@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { FaArrowRight, FaMapPin } from "react-icons/fa6";
 
@@ -120,7 +121,9 @@ export function FormAndMap() {
     <section className="py-14 sm:py-16 lg:py-20">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-          <ContactForm />
+          <Suspense fallback={null}>
+            <ContactForm />
+          </Suspense>
           <GoogleMap />
         </div>
       </div>

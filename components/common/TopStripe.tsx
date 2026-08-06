@@ -8,6 +8,7 @@ import {
 } from "react-icons/ri";
 
 import { COMPANY } from "@/lib/constants";
+import { corporateLink } from "./links";
 
 const SITE = {
   phone: COMPANY.phone,
@@ -52,6 +53,13 @@ export default function TopStripe() {
           >
             <RiMailFill className="text-sm" />
             {SITE.email}
+          </a>
+
+          <a
+            href={corporateLink.href}
+            className="flex items-center gap-1.5 transition-colors hover:text-orange-400"
+          >
+            {corporateLink.label}
           </a>
 
           <a

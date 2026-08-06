@@ -1,3 +1,4 @@
+// lib/storefront/cart.ts
 import mongoose from "mongoose";
 import { CartModel, type ICart } from "@/lib/models/Cart";
 import { ProductModel, type IProduct } from "@/lib/models/Product";
@@ -25,8 +26,6 @@ export async function getOrCreateCart(identity: CartIdentity): Promise<ICart> {
   if (!cart) {
     cart = await CartModel.create({
       ...filter,
-      // `userModel` is only meaningful when `user` is set (identity.userId);
-      // omitted entirely for guest carts.
       ...(identity.userId ? { userModel: identity.userModel } : {}),
       items: [],
     });
@@ -35,7 +34,6 @@ export async function getOrCreateCart(identity: CartIdentity): Promise<ICart> {
   return cart;
 }
 
-/** Loads the cart's products in one query, keyed by product id string. */
 async function loadProductsForCart(cart: ICart): Promise<Map<string, IProduct>> {
   const ids = cart.items.map((item) => item.product);
   if (ids.length === 0) return new Map();
@@ -45,6 +43,7 @@ async function loadProductsForCart(cart: ICart): Promise<Map<string, IProduct>> 
 }
 
 export interface SerializedCartItem {
+  id: string;
   productId: string;
   name: string;
   slug: string;
@@ -66,21 +65,35 @@ export interface SerializedCart {
   subtotal: number;
 }
 
-/**
- * Serializes a cart for the client, reading CURRENT product price/stock/status
- * from the database every time (never trusting anything cached on the cart
- * document itself). Items whose product was deleted or archived are flagged
- * `unavailable` rather than silently dropped, so the UI can tell the shopper
- * what happened instead of the item just vanishing.
- */
+// Helper to generate unique IDs during serialization (fallback)
+const generateItemId = (productId: string): string => {
+  return `${productId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
 export async function serializeCart(cart: ICart): Promise<SerializedCart> {
   const products = await loadProductsForCart(cart);
+
+  // Track used IDs to ensure uniqueness
+  const usedIds = new Set<string>();
 
   const items: SerializedCartItem[] = cart.items.map((item) => {
     const product = products.get(String(item.product));
 
+    // Use the item's ID if it exists, otherwise generate one
+    let itemId = (item as any).id;
+    if (!itemId) {
+      itemId = generateItemId(String(item.product));
+    }
+
+    // Ensure uniqueness
+    while (usedIds.has(itemId)) {
+      itemId = generateItemId(String(item.product));
+    }
+    usedIds.add(itemId);
+
     if (!product) {
       return {
+        id: itemId,
         productId: String(item.product),
         name: "Product no longer available",
         slug: "",
@@ -106,6 +119,7 @@ export async function serializeCart(cart: ICart): Promise<SerializedCart> {
         : "";
 
     return {
+      id: itemId,
       productId: String(product._id),
       name: product.name,
       slug: product.slug,
@@ -171,10 +185,19 @@ export async function addItemToCart(
 
   await assertAddable(product, newQuantity);
 
+  // Generate a unique ID for new items
+  const generateId = (): string => {
+    return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   if (existing) {
     existing.quantity = newQuantity;
   } else {
-    cart.items.push({ product: new mongoose.Types.ObjectId(productId), quantity });
+    cart.items.push({
+      id: generateId(),
+      product: new mongoose.Types.ObjectId(productId),
+      quantity,
+    });
   }
 
   await cart.save();

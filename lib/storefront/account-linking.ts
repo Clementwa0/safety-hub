@@ -7,33 +7,8 @@ export interface LinkGuestOrdersResult {
   linkedCount: number;
 }
 
-/**
- * Links existing guest `StoreOrder` documents to a now-authenticated
- * customer account.
- *
- * Match criteria (either is sufficient, per the product spec):
- *  - `sessionId` equals the current browser's guest cart cookie, OR
- *  - `customer.email` equals the account's own verified email.
- *
- * Both sides of that OR are safe as an authorization boundary:
- *  - The guest session cookie is httpOnly and only ever read server-side,
- *    so "matches the caller's own cookie" already means "this is the
- *    caller's own browsing history" — nobody can supply someone else's
- *    session id.
- *  - `accountEmail` here is never taken from client input — every caller
- *    of this function passes the email from the server-verified Auth.js
- *    session (`session.user.email`), which only becomes true after Google
- *    OAuth or a clicked magic link proved ownership of that address. A
- *    shopper can never "link by guessing" someone else's email because
- *    the email side of this function is not attacker-controlled input.
- *
- * Only orders that aren't already linked to *some* account are touched
- * (`user: { $exists: false }`) — this can never steal an order that
- * already belongs to a different customer.
- *
- * Runs inside a transaction because it can touch multiple documents and we
- * want it to be all-or-nothing.
- */
+
+ 
 export async function linkGuestOrdersToCustomer(
   customerId: string,
   accountEmail: string,

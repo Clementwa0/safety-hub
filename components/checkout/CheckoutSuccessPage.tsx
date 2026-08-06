@@ -14,6 +14,7 @@ import { formatKES } from "@/lib/format";
 import { storeOrderService } from "@/services/store-order.service";
 import type { StoreOrder } from "@/types/store-order";
 import SaveOrderPrompt from "@/components/checkout/SaveOrderPrompt";
+import { MpesaPaymentPanel } from "@/components/checkout/MpesaPaymentPanel";
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
@@ -70,6 +71,8 @@ export default function CheckoutSuccessPage() {
     );
   }
 
+  const awaitingMpesaPayment = order.paymentMethod === "mpesa" && order.paymentStatus !== "paid";
+
   return (
     <div className="container mx-auto flex max-w-lg flex-col items-center px-4 py-16 text-center">
       <motion.div
@@ -78,10 +81,16 @@ export default function CheckoutSuccessPage() {
         transition={{ duration: 0.4 }}
       >
         <div className="mb-6 flex justify-center">
-          <FaCircleCheck className="h-16 w-16 text-green-500" />
+          <FaCircleCheck className={`h-16 w-16 ${awaitingMpesaPayment ? "text-secondary" : "text-green-500"}`} />
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Order Confirmed!</h1>
-        <p className="mt-2 text-muted-foreground">Thank you for your order.</p>
+        <h1 className="text-2xl font-bold text-foreground">
+          {awaitingMpesaPayment ? "Order Placed!" : "Order Confirmed!"}
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          {awaitingMpesaPayment
+            ? "Complete your M-Pesa payment below to confirm this order."
+            : "Thank you for your order."}
+        </p>
       </motion.div>
 
       <Card className="mt-8 w-full">
@@ -94,6 +103,14 @@ export default function CheckoutSuccessPage() {
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Total</p>
             <p className="text-lg font-semibold text-secondary">{formatKES(order.total)}</p>
           </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Payment Method</p>
+            <p className="text-sm font-medium text-foreground">
+              {order.paymentMethod === "mpesa" ? "M-Pesa" : "Cash on Delivery"}
+            </p>
+          </div>
+
+          {order.paymentMethod === "mpesa" && <MpesaPaymentPanel order={order} onOrderUpdate={setOrder} />}
         </CardContent>
       </Card>
 

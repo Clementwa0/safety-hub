@@ -21,6 +21,9 @@ export type StoreOrderStatus =
 
 export type StorePaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
+/** How the customer chose to pay at checkout. */
+export type StorePaymentMethod = "mpesa" | "cod";
+
 export const STORE_ORDER_STATUSES: StoreOrderStatus[] = [
   "pending",
   "confirmed",
@@ -36,6 +39,8 @@ export const STORE_PAYMENT_STATUSES: StorePaymentStatus[] = [
   "failed",
   "refunded",
 ];
+
+export const STORE_PAYMENT_METHODS: StorePaymentMethod[] = ["mpesa", "cod"];
 
 export interface IStoreOrderItem {
   product?: mongoose.Types.ObjectId;
@@ -70,6 +75,24 @@ export interface IStoreOrder extends Document {
 
   status: StoreOrderStatus;
   paymentStatus: StorePaymentStatus;
+  /** Payment method the customer chose at checkout. M-Pesa requires the
+   *  customer to be signed in (enforced client-side and re-validated on the
+   *  server in `performCheckout`); Cash on Delivery is available to guests. */
+  paymentMethod: StorePaymentMethod;
+
+  /** Populated only for `paymentMethod: "mpesa"` orders — tracks the STK
+   *  push lifecycle so the storefront can poll for and the callback route
+   *  can record the outcome. */
+  mpesa?: {
+    phone?: string;
+    merchantRequestId?: string;
+    checkoutRequestId?: string;
+    resultCode?: string;
+    resultDesc?: string;
+    receiptNumber?: string;
+    transactionDate?: string;
+    requestedAt?: Date;
+  };
 
   customer: {
     name: string;
@@ -136,6 +159,29 @@ const storeOrderSchema = new Schema<IStoreOrder>(
       enum: STORE_PAYMENT_STATUSES,
       default: "pending",
     },
+    paymentMethod: {
+      type: String,
+      enum: STORE_PAYMENT_METHODS,
+      required: true,
+      default: "cod",
+    },
+
+    mpesa: {
+      type: new Schema(
+        {
+          phone: { type: String, trim: true },
+          merchantRequestId: { type: String, trim: true },
+          checkoutRequestId: { type: String, trim: true },
+          resultCode: { type: String, trim: true },
+          resultDesc: { type: String, trim: true },
+          receiptNumber: { type: String, trim: true },
+          transactionDate: { type: String, trim: true },
+          requestedAt: { type: Date },
+        },
+        { _id: false },
+      ),
+      required: false,
+    },
 
     customer: {
       name: { type: String, required: true, trim: true },
@@ -163,6 +209,10 @@ storeOrderSchema.index({ status: 1, createdAt: -1 });
 storeOrderSchema.index({ paymentStatus: 1 });
 storeOrderSchema.index({ "customer.email": 1 });
 storeOrderSchema.index({ "customer.name": "text" });
+storeOrderSchema.index(
+  { "mpesa.checkoutRequestId": 1 },
+  { unique: true, partialFilterExpression: { "mpesa.checkoutRequestId": { $exists: true } } },
+);
 
 export const StoreOrderModel: Model<IStoreOrder> =
   mongoose.models.StoreOrder ||

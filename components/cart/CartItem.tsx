@@ -45,10 +45,10 @@ export default function CartItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex gap-4 rounded-2xl border border-border bg-card/70 p-3 shadow-sm"
+      className="flex gap-4 rounded-xl bg-white p-4 shadow-sm"
     >
       <Link href={unavailable ? "#" : `/products/${productId}`} className="shrink-0">
-        <div className="relative h-20 w-20 overflow-hidden rounded-xl bg-muted">
+        <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-gray-100">
           {image ? (
             <SafeImage src={image} alt={name} fill className="object-contain p-2" sizes="80px" />
           ) : null}
@@ -56,23 +56,27 @@ export default function CartItem({
       </Link>
 
       <div className="flex flex-1 flex-col">
-        <Link href={unavailable ? "#" : `/products/${productId}`}>
-          <h4 className="line-clamp-2 text-sm font-semibold text-foreground transition-colors hover:text-secondary">
-            {name}
-          </h4>
-        </Link>
-        {category ? <p className="mt-1 text-xs text-muted-foreground">{category}</p> : null}
+        <div className="flex justify-between">
+          <Link href={unavailable ? "#" : `/products/${productId}`}>
+            <h4 className="line-clamp-2 text-sm font-semibold text-foreground transition-colors hover:text-secondary">
+              {name}
+            </h4>
+          </Link>
+          <span className="text-sm font-semibold text-foreground">{formatKES(subtotal)}</span>
+        </div>
+
+        {category ? <p className="text-xs text-muted-foreground">{category}</p> : null}
 
         {unavailable ? (
-          <p className="mt-1 text-xs font-medium text-destructive">
+          <p className="text-xs font-medium text-destructive">
             {unavailableReason ?? "This item is no longer available."}
           </p>
         ) : (
-          <p className="mt-1 text-sm font-semibold text-secondary">{formatKES(price)}</p>
+          <p className="text-sm font-semibold text-secondary">{formatKES(price)}</p>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <div className="flex items-center rounded-lg border border-border bg-background">
+        <div className="mt-3 flex items-center gap-3">
+          <div className="flex items-center rounded-lg border border-border">
             <button
               type="button"
               onClick={() => onUpdateQuantity(productId, Math.max(1, quantity - 1))}
@@ -80,7 +84,7 @@ export default function CartItem({
               className="flex h-8 w-8 items-center justify-center rounded-l-lg transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Decrease quantity"
             >
-              <FaMinus className="h-3.5 w-3.5" />
+              <FaMinus className="h-3 w-3" />
             </button>
             <input
               type="number"
@@ -99,11 +103,11 @@ export default function CartItem({
               className="flex h-8 w-8 items-center justify-center rounded-r-lg transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Increase quantity"
             >
-              <FaPlus className="h-3.5 w-3.5" />
+              <FaPlus className="h-3 w-3" />
             </button>
           </div>
 
-          {atMaxStock && <span className="text-xs text-orange-600">Max stock reached</span>}
+          {atMaxStock && <span className="text-xs text-amber-600">Max stock</span>}
 
           <button
             type="button"
@@ -115,13 +119,6 @@ export default function CartItem({
             Remove
           </button>
         </div>
-      </div>
-
-      <div className="hidden text-right sm:block">
-        <p className="text-sm font-semibold text-foreground">{formatKES(subtotal)}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {formatKES(price)} × {quantity}
-        </p>
       </div>
     </motion.div>
   );

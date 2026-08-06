@@ -5,11 +5,10 @@ import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa6";
 
 import { productService } from "@/services/product.service";
-import type { Product } from "@/types/product";
-import ProductCard from "../products/components/Product-Card";
+import ProductCard, { type ProductCardItem } from "@/components/shared/ProductCard";
 
 export default function FeaturedProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductCardItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,11 +21,26 @@ export default function FeaturedProducts() {
         });
 
         if (mounted) {
-          setProducts(
-            items
-              .filter((product) => product.featured)
-              .slice(0, 4)
-          );
+          // Map Product to ProductCardItem and ensure featured is set
+          const mappedProducts: ProductCardItem[] = items
+            .filter((product) => product.featured)
+            .slice(0, 4)
+            .map((product) => ({
+              id: product.id,
+              name: product.name,
+              category: product.category,
+              price: product.price,
+              image: product.image,
+              stock: product.stock,
+              featured: true,
+              isNewArrival: false,
+              compareAtPrice: product.compareAtPrice,
+              brand: product.brand,
+              rating: product.rating,
+              reviews: product.reviews,
+            }));
+
+          setProducts(mappedProducts);
         }
       } catch (error) {
         console.error("Failed to load featured products:", error);
@@ -60,17 +74,17 @@ export default function FeaturedProducts() {
           </div>
 
           <Link
-            href="/shop?featured=true"
-            className="group inline-flex items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-secondary"
+            href="/shop?featured=1"
+            className="group inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-secondary"
           >
             See All
             <FaArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
-        {/* Loading */}
+        {/* Loading Skeletons */}
         {loading && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
@@ -92,14 +106,21 @@ export default function FeaturedProducts() {
           </div>
         )}
 
-        {/* Products */}
         {!loading && products.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">
+          <div
+            className="grid gap-4 grid-cols-2 md:grid-cols-3
+                       lg:grid-cols-4 lg:gap-5"
+          >
             {products.map((product) => (
-              <ProductCard
+              <div
                 key={product.id}
-                product={product}
-              />
+                className="w-[45vw] shrink-0 snap-start sm:w-auto"
+              >
+                <ProductCard 
+                  product={product}
+                  featured={true}
+                />
+              </div>
             ))}
           </div>
         )}

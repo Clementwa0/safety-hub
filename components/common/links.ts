@@ -129,6 +129,14 @@ export const navLinks: NavLink[] = [
     // since categories now live in the DB, not here.
   },
   {
+    label: "New Arrivals",
+    href: "/shop?sort=newest",
+  },
+  {
+    label: "Featured",
+    href: "/shop?featured=1",
+  },
+  {
     label: "About Us",
     href: "/about",
   },
@@ -137,6 +145,21 @@ export const navLinks: NavLink[] = [
     href: "/contact",
   },
 ];
+
+/**
+ * Corporate / bulk purchasing entry point, surfaced in the top utility
+ * bar and the homepage hero. Routes to the existing contact form with
+ * the subject pre-filled — there's no dedicated bulk-order flow yet.
+ */
+export const corporateLink: LinkItem = {
+  label: "Corporate / Bulk Orders",
+  href: "/contact?subject=Corporate%20%2F%20Bulk%20Order",
+};
+
+export const requestQuoteLink: LinkItem = {
+  label: "Request a Quote",
+  href: "/contact?subject=Request%20a%20Quote",
+};
 
 /* -------------------------------------------------------------------------- */
 /*                                Footer Links                                */
@@ -162,6 +185,40 @@ export const quickLinks: FooterLink[] = [
   {
     label: "Contact Us",
     href: "/contact",
+  },
+];
+
+export const shopLinks: FooterLink[] = [
+  {
+    label: "All Products",
+    href: "/shop",
+  },
+  {
+    label: "Categories",
+    href: "/categories",
+  },
+  {
+    label: "New Arrivals",
+    href: "/shop?sort=newest",
+  },
+  {
+    label: "Featured Products",
+    href: "/shop?featured=1",
+  },
+];
+
+export const businessLinks: FooterLink[] = [
+  {
+    label: "Corporate Orders",
+    href: "/contact?subject=Corporate%20Order",
+  },
+  {
+    label: "Bulk Purchasing",
+    href: "/contact?subject=Bulk%20Purchasing",
+  },
+  {
+    label: "Request a Quote",
+    href: "/contact?subject=Request%20a%20Quote",
   },
 ];
 

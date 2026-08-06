@@ -1,3 +1,4 @@
+// services/store-cart.service.ts
 "use client";
 
 import { apiRequest } from "@/lib/http";
@@ -20,9 +21,13 @@ export const storeCartService = {
     });
   },
   async removeItem(productId: string): Promise<StoreCart> {
-    return apiRequest<StoreCart>(`/api/cart/items/${productId}`, { method: "DELETE" });
+    return apiRequest<StoreCart>(`/api/cart/items/${productId}`, { 
+      method: "DELETE" 
+    });
   },
   async clear(): Promise<StoreCart> {
-    return apiRequest<StoreCart>("/api/cart", { method: "DELETE" });
+    return apiRequest<StoreCart>("/api/cart", { 
+      method: "DELETE" 
+    });
   },
 };

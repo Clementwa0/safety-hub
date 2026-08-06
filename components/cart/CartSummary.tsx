@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatKES } from "@/lib/format";
-import CheckoutButton from "./CheckoutButton";
+import { WhatsAppOrderDialog } from "./WhatsAppOrderDialog";
 
 interface CartSummaryProps {
   subtotal: number;
@@ -68,7 +68,17 @@ export default function CartSummary({
         >
           Continue Shopping
         </Button>
-        <CheckoutButton />
+        <Button
+          className="w-full gap-2"
+          nativeButton={false}
+          render={<Link href="/checkout" />}
+        >
+          <span className="flex items-center gap-2">
+            <span className="h-4 w-4">🔒</span>
+            Proceed to Checkout
+          </span>
+        </Button>
+        <WhatsAppOrderDialog />
         <Button
           type="button"
           variant="ghost"
