@@ -7,7 +7,7 @@ import { ProductModel } from "@/lib/models/Product";
 import { StorefrontCustomerModel } from "@/lib/models/StorefrontCustomer";
 import { formatKES } from "@/lib/format";
 
-const DEFAULT_THRESHOLD_HOURS = 2;
+const DEFAULT_THRESHOLD_HOURS = 24;
 
 const CUSTOMER_MODEL = "StorefrontCustomer";
 
