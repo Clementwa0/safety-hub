@@ -8,8 +8,9 @@ import { StorefrontCustomerModel } from "@/lib/models/StorefrontCustomer";
 import { formatKES } from "@/lib/format";
 
 const DEFAULT_THRESHOLD_HOURS = 24;
-
 const CUSTOMER_MODEL = "StorefrontCustomer";
+const BATCH_LIMIT = 30; // Prevents function timeout by capping per run
+const CHUNK_SIZE = 5;    // Number of emails to send concurrently
 
 function getThresholdHours(): number {
   const raw = Number(process.env.ABANDONED_CART_THRESHOLD_HOURS);
@@ -53,24 +54,18 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
     appUrl,
   } = getEnv();
 
-  if (
-    !authEmailFrom ||
-    !authEmailHost ||
-    !authEmailUser ||
-    !authEmailPassword
-  ) {
+  if (!authEmailFrom || !authEmailHost || !authEmailUser || !authEmailPassword) {
     result.errors.push(
-      "Email configuration is incomplete (AUTH_EMAIL_SERVER_* / AUTH_EMAIL_FROM).",
+      "Email configuration is incomplete (AUTH_EMAIL_SERVER_* / AUTH_EMAIL_FROM)."
     );
     return result;
   }
 
   await connectToDatabase();
 
-  const cutoff = new Date(
-    Date.now() - getThresholdHours() * 60 * 60 * 1000,
-  );
+  const cutoff = new Date(Date.now() - getThresholdHours() * 60 * 60 * 1000);
 
+  // Added .limit(BATCH_LIMIT) to ensure we don't exceed Vercel max execution time
   const staleCarts = await CartModel.find({
     userModel: CUSTOMER_MODEL,
     user: { $exists: true },
@@ -82,7 +77,8 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
         { $lt: ["$abandonedEmailSentAt", "$updatedAt"] },
       ],
     },
-  });
+  })
+    .limit(BATCH_LIMIT);
 
   result.scanned = staleCarts.length;
 
@@ -90,74 +86,62 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
     return result;
   }
 
+  // Reuse TCP connections with SMTP Pooling
   const transporter = nodemailer.createTransport({
     host: authEmailHost,
     port: authEmailPort,
     secure: authEmailPort === 465,
+    pool: true,
+    maxConnections: 5,
     auth: {
       user: authEmailUser,
       pass: authEmailPassword,
     },
   });
 
-  // Collect unique product ids
-  const productIds: mongoose.Types.ObjectId[] = [
+  const productIds = [
     ...new Set(
-      staleCarts.flatMap((cart) =>
-        cart.items.map((item) => String(item.product)),
-      ),
+      staleCarts.flatMap((cart) => cart.items.map((item) => String(item.product)))
     ),
   ].map((id) => new mongoose.Types.ObjectId(id));
 
-  const products = await ProductModel.find({
-    _id: { $in: productIds },
-  });
+  const products = await ProductModel.find({ _id: { $in: productIds } }).lean();
 
   const productMap = new Map(
-    products.map((product) => [String(product._id), product]),
+    products.map((product) => [String(product._id), product])
   );
 
-  // Collect unique customer ids (TYPE SAFE)
-  const customerIds: mongoose.Types.ObjectId[] = [
+  const customerIds = [
     ...new Set(
       staleCarts
         .map((cart) => cart.user)
-        .filter(
-          (id): id is mongoose.Types.ObjectId =>
-            id !== undefined && id !== null,
-        )
-        .map((id) => String(id)),
+        .filter((id): id is mongoose.Types.ObjectId => id !== undefined && id !== null)
+        .map((id) => String(id))
     ),
   ].map((id) => new mongoose.Types.ObjectId(id));
 
   const customers = await StorefrontCustomerModel.find({
-    _id: {
-      $in: customerIds,
-    },
-  });
+    _id: { $in: customerIds },
+  }).lean();
 
   const customerMap = new Map(
-    customers.map((customer) => [String(customer._id), customer]),
+    customers.map((customer) => [String(customer._id), customer])
   );
 
-  const cartLink = appUrl
-    ? `${appUrl.replace(/\/$/, "")}/cart`
-    : "/cart";
+  const cartLink = appUrl ? `${appUrl.replace(/\/$/, "")}/cart` : "/cart";
 
-  for (const cart of staleCarts) {
-    const customer = cart.user
-      ? customerMap.get(String(cart.user))
-      : undefined;
+  // Helper function to process an individual cart
+  async function processCart(cart: typeof staleCarts[number]) {
+    const customer = cart.user ? customerMap.get(String(cart.user)) : undefined;
 
     if (!customer?.email) {
       result.skipped++;
-      continue;
+      return;
     }
 
     const lines = cart.items
       .map((item) => {
         const product = productMap.get(String(item.product));
-
         if (!product) return null;
 
         return {
@@ -167,34 +151,20 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
         };
       })
       .filter(
-        (
-          line,
-        ): line is {
-          name: string;
-          quantity: number;
-          lineTotal: number;
-        } => line !== null,
+        (line): line is { name: string; quantity: number; lineTotal: number } =>
+          line !== null
       );
 
     if (lines.length === 0) {
       result.skipped++;
-      continue;
+      return;
     }
 
-    const total = lines.reduce(
-      (sum, line) => sum + line.lineTotal,
-      0,
-    );
-
-    const greetingName = customer.name
-      ? customer.name.split(" ")[0]
-      : "there";
+    const total = lines.reduce((sum, line) => sum + line.lineTotal, 0);
+    const greetingName = customer.name ? customer.name.split(" ")[0] : "there";
 
     const textLines = lines.map(
-      (line) =>
-        `• ${line.name} ×${line.quantity} — ${formatKES(
-          line.lineTotal,
-        )}`,
+      (line) => `• ${line.name} ×${line.quantity} — ${formatKES(line.lineTotal)}`
     );
 
     try {
@@ -216,35 +186,22 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
         html: `
           <div style="font-family:system-ui,sans-serif;line-height:1.5;color:#111;">
             <p>Hi ${greetingName},</p>
-
             <p>You still have items waiting in your Safety Hub cart:</p>
-
             <ul>
               ${lines
                 .map(
                   (line) =>
                     `<li>${line.name} ×${line.quantity} — ${formatKES(
-                      line.lineTotal,
-                    )}</li>`,
+                      line.lineTotal
+                    )}</li>`
                 )
                 .join("")}
             </ul>
-
-            <p>
-              <strong>Total: ${formatKES(total)}</strong>
-            </p>
-
+            <p><strong>Total: ${formatKES(total)}</strong></p>
             <p>
               <a
                 href="${cartLink}"
-                style="
-                  display:inline-block;
-                  padding:12px 20px;
-                  background:#0f172a;
-                  color:#fff;
-                  text-decoration:none;
-                  border-radius:6px;
-                "
+                style="display:inline-block;padding:12px 20px;background:#0f172a;color:#fff;text-decoration:none;border-radius:6px;"
               >
                 Return to your cart
               </a>
@@ -255,26 +212,20 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
 
       cart.abandonedEmailSentAt = new Date();
       await cart.save();
-
       result.emailed++;
     } catch (error) {
       result.failed++;
-
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unknown error";
-
-      result.errors.push(
-        `Cart ${String(cart._id)}: ${message}`,
-      );
-
-      console.error(
-        "[abandoned-cart] Failed to send reminder email:",
-        error,
-      );
+      const message = error instanceof Error ? error.message : "Unknown error";
+      result.errors.push(`Cart ${String(cart._id)}: ${message}`);
     }
   }
 
+  // Execute in concurrent chunks of size CHUNK_SIZE
+  for (let i = 0; i < staleCarts.length; i += CHUNK_SIZE) {
+    const chunk = staleCarts.slice(i, i + CHUNK_SIZE);
+    await Promise.all(chunk.map((cart) => processCart(cart)));
+  }
+
+  transporter.close();
   return result;
-}
+    }
