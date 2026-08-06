@@ -5,16 +5,13 @@ import { sendAbandonedCartEmails } from "@/lib/storefront/abandoned-cart";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Extend Vercel function timeout limit (60s for Hobby, up to 300s/800s for Pro)
+export const maxDuration = 60;
+
 /**
  * Triggers the abandoned-cart reminder email sweep. Intended to be called
  * on a schedule (e.g. hourly) by a scheduler such as Vercel Cron — not by
  * the storefront itself.
- *
- * Protected by `CRON_SECRET`: the caller must send it either as
- * `Authorization: Bearer <secret>` (what Vercel Cron sends automatically
- * when `CRON_SECRET` is set in the project) or as a `?secret=` query param
- * for schedulers that can't set headers. If `CRON_SECRET` isn't configured,
- * the route refuses to run rather than sending unauthenticated bulk email.
  */
 export async function GET(request: NextRequest) {
   const configuredSecret = process.env.CRON_SECRET;
@@ -35,6 +32,10 @@ export async function GET(request: NextRequest) {
   try {
     const result = await sendAbandonedCartEmails();
     return apiSuccess(result, `Sent ${result.emailed} abandoned cart reminder email(s).`);
+  } catch (error) {
+    return apiError(error instanceof Error ? error.message : "Failed to run abandoned cart sweep.", [], 500);
+  }
+}    return apiSuccess(result, `Sent ${result.emailed} abandoned cart reminder email(s).`);
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to run abandoned cart sweep.", [], 500);
   }
