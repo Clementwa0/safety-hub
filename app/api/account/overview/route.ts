@@ -1,8 +1,9 @@
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { auth } from "@/lib/customer-auth";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
 import { AddressModel } from "@/lib/models/Address";
+import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
+import { customerOrderFilter } from "@/lib/storefront/ownership";
 import type {
   AccountOverview,
   AccountOverviewOrder,
@@ -10,25 +11,24 @@ import type {
 
 export async function GET() {
   try {
-    const session = await auth();
+    const customer = await resolveStorefrontCustomer();
 
-    if (!session?.user?.id) {
+    if (!customer) {
       return apiError("Not signed in", [], 401);
     }
 
     await connectToDatabase();
 
-    const userId = session.user.id;
-
     const [orderCount, pendingOrders, completedOrders, addressCount, recentOrders] = await Promise.all([
-      StoreOrderModel.countDocuments({ user: userId }),
-      StoreOrderModel.countDocuments({
-        user: userId,
-        status: { $in: ["pending", "confirmed", "processing", "shipped"] },
-      }),
-      StoreOrderModel.countDocuments({ user: userId, status: "delivered" }),
-      AddressModel.countDocuments({ customer: userId }),
-      StoreOrderModel.find({ user: userId })
+      StoreOrderModel.countDocuments(customerOrderFilter(customer.id)),
+      StoreOrderModel.countDocuments(
+        customerOrderFilter(customer.id, {
+          status: { $in: ["pending", "confirmed", "processing", "shipped"] },
+        }),
+      ),
+      StoreOrderModel.countDocuments(customerOrderFilter(customer.id, { status: "delivered" })),
+      AddressModel.countDocuments({ customer: customer.id }),
+      StoreOrderModel.find(customerOrderFilter(customer.id))
         .sort({ createdAt: -1 })
         .limit(3)
         .select("_id orderNumber createdAt total paymentStatus status")

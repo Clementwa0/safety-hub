@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { auth } from "@/lib/customer-auth";
+import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
 import { AddressModel } from "@/lib/models/Address";
 
 interface RouteContext {
@@ -10,9 +10,9 @@ interface RouteContext {
 
 export async function DELETE(request: Request, { params }: RouteContext) {
   try {
-    const session = await auth();
+    const customer = await resolveStorefrontCustomer();
 
-    if (!session?.user?.id) {
+    if (!customer) {
       return apiError("Not signed in", [], 401);
     }
 
@@ -23,12 +23,9 @@ export async function DELETE(request: Request, { params }: RouteContext) {
     }
 
     await connectToDatabase();
-
-    // Scoped to `customer` so a customer can never delete someone else's
-    // saved address, even by guessing/incrementing the id.
-    const deleted = await AddressModel.findOneAndDelete({
+const deleted = await AddressModel.findOneAndDelete({
       _id: id,
-      customer: session.user.id,
+      customer: customer.id,
     });
 
     if (!deleted) {

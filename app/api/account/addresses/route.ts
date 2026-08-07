@@ -1,20 +1,20 @@
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { auth } from "@/lib/customer-auth";
+import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
 import { AddressModel } from "@/lib/models/Address";
 import { createAddressSchema } from "@/lib/storefront/validation";
 
 export async function GET() {
   try {
-    const session = await auth();
+    const customer = await resolveStorefrontCustomer();
 
-    if (!session?.user?.id) {
+    if (!customer) {
       return apiError("Not signed in", [], 401);
     }
 
     await connectToDatabase();
 
-    const addresses = await AddressModel.find({ customer: session.user.id })
+    const addresses = await AddressModel.find({ customer: customer.id })
       .sort("-isDefault -createdAt")
       .lean();
 
@@ -26,9 +26,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    const customer = await resolveStorefrontCustomer();
 
-    if (!session?.user?.id) {
+    if (!customer) {
       return apiError("Not signed in", [], 401);
     }
 
@@ -42,12 +42,12 @@ export async function POST(request: Request) {
     await connectToDatabase();
 
     if (parsed.data.isDefault) {
-      await AddressModel.updateMany({ customer: session.user.id }, { $set: { isDefault: false } });
+      await AddressModel.updateMany({ customer: customer.id }, { $set: { isDefault: false } });
     }
 
     const address = await AddressModel.create({
       ...parsed.data,
-      customer: session.user.id,
+      customer: customer.id,
     });
 
     return apiSuccess(serializeDoc(address.toObject()), "Address saved");
