@@ -1,153 +1,284 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { FaMobileScreenButton, FaCircleCheck, FaCircleExclamation, FaRotateRight } from "react-icons/fa6";
+import { useState } from "react";
+import { FaCheck, FaCircleInfo, FaCopy, FaMobileScreenButton } from "react-icons/fa6";
+import { toast } from "sonner";
 
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { formatKES } from "@/lib/format";
-import { storeOrderService } from "@/services/store-order.service";
-import type { StoreOrder } from "@/types/store-order";
+import { getMpesaNumberLabel, getMpesaTypeLabel, type MpesaPaymentType } from "@/lib/config/mpesa";
 
-const POLL_INTERVAL_MS = 4000;
-const POLL_TIMEOUT_MS = 90_000;
+export interface MpesaPaymentCardProps {
+  /** Order total in KES — rendered as the amount the customer must pay. */
+  total: number;
+  /** Paybill or Till, drives copy and step-by-step instructions. */
+  paymentType: MpesaPaymentType;
+  /** The order's real `orderNumber` — used as the M-Pesa account reference. */
+  accountReference: string;
+  /** The Paybill or Till number to pay to. */
+  businessNumber: string;
+  /** Optional business/shop name shown next to the number. */
+  businessName?: string;
+  className?: string;
+}
 
-interface MpesaPaymentPanelProps {
-  order: StoreOrder;
-  onOrderUpdate: (order: StoreOrder) => void;
+type CopyField = "business" | "account" | "amount" | "all";
+
+const STEP_COPY: Record<MpesaPaymentType, { menu: string; number: string }> = {
+  paybill: { menu: "Choose Paybill.", number: "Enter the Business/Paybill Number." },
+  till: { menu: "Choose Buy Goods and Services.", number: "Enter the Business/Till Number." },
+};
+
+function buildInstructions(type: MpesaPaymentType): string[] {
+  const copy = STEP_COPY[type];
+  return [
+    "Open M-Pesa on your phone.",
+    "Select Lipa na M-Pesa.",
+    copy.menu,
+    copy.number,
+    "Enter the Order Number shown above as the Account Number.",
+    "Enter the exact amount displayed.",
+    "Complete the payment with your M-Pesa PIN.",
+    "Wait for payment confirmation.",
+  ];
 }
 
 /**
- * Drives the M-Pesa payment for an order from the checkout success page:
- * sends the STK push automatically the first time it renders for a
- * still-pending order, polls for the outcome, and offers a retry if the
- * customer cancels, the request times out, or it fails outright.
+ * Copies text to the clipboard using the async Clipboard API where
+ * available, falling back to a hidden textarea + execCommand for
+ * non-secure contexts or older browsers.
  */
-export function MpesaPaymentPanel({ order, onOrderUpdate }: MpesaPaymentPanelProps) {
-  const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [timedOut, setTimedOut] = useState(false);
-  const hasAutoSentRef = useRef(false);
-
-  const send = async () => {
-    setSending(true);
-    setSendError(null);
-    setTimedOut(false);
-    try {
-      const updated = await storeOrderService.payWithMpesa(order.id);
-      onOrderUpdate(updated);
-    } catch (error) {
-      setSendError(error instanceof Error ? error.message : "Could not send the M-Pesa prompt.");
-    } finally {
-      setSending(false);
+async function copyToClipboard(value: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return true;
     }
-  };
-
-  // Auto-send the STK push exactly once, the first time this order shows
-  // up here pending and without a request already in flight.
-  useEffect(() => {
-    if (hasAutoSentRef.current) return;
-    if (order.paymentStatus !== "pending" || order.mpesa?.checkoutRequestId) return;
-    hasAutoSentRef.current = true;
-    void send();
-    // Intentionally only runs on mount — later status changes are handled
-    // by the polling effect below, not by re-running this one.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Poll for the outcome while a request is in flight and still pending.
-  useEffect(() => {
-    if (order.paymentStatus !== "pending" || !order.mpesa?.checkoutRequestId) return;
-
-    let cancelled = false;
-    const startedAt = Date.now();
-
-    const interval = setInterval(() => {
-      if (cancelled) return;
-
-      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
-        setTimedOut(true);
-        clearInterval(interval);
-        return;
-      }
-
-      storeOrderService
-        .getMpesaStatus(order.id)
-        .then((updated) => {
-          if (!cancelled) onOrderUpdate(updated);
-        })
-        .catch(() => {
-          // Transient network/API hiccup — the next tick tries again.
-        });
-    }, POLL_INTERVAL_MS);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [order.id, order.paymentStatus, order.mpesa?.checkoutRequestId, onOrderUpdate]);
-
-  if (order.paymentStatus === "paid") {
-    return (
-      <div className="mt-4 flex items-center gap-2 rounded-md bg-green-500/10 p-3 text-sm text-green-700">
-        <FaCircleCheck className="h-4 w-4 shrink-0" />
-        <span>
-          Payment received{order.mpesa?.receiptNumber ? ` — M-Pesa receipt ${order.mpesa.receiptNumber}` : ""}.
-        </span>
-      </div>
-    );
+  } catch {
+    // fall through to the legacy fallback below
   }
 
-  if (order.paymentStatus === "failed") {
-    return (
-      <div className="mt-4 space-y-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-        <div className="flex items-center gap-2">
-          <FaCircleExclamation className="h-4 w-4 shrink-0" />
-          <span>{order.mpesa?.resultDesc || "The M-Pesa payment wasn't completed."}</span>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => void send()}
-          disabled={sending}
-          className="gap-2"
-        >
-          <FaRotateRight className="h-3.5 w-3.5" />
-          {sending ? "Sending..." : "Try Again"}
-        </Button>
-      </div>
-    );
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "0";
+    textarea.style.left = "0";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const succeeded = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return succeeded;
+  } catch {
+    return false;
   }
+}
+
+/**
+ * Read-only field with a label and a one-click copy button — used for the
+ * Business Number and Account Number rows.
+ */
+function CopyField({
+  label,
+  value,
+  fieldKey,
+  copiedField,
+  copyLabel,
+  onCopy,
+}: {
+  label: string;
+  value: string;
+  fieldKey: CopyField;
+  copiedField: CopyField | null;
+  /** Short lowercase-first noun used in toast copy, e.g. "Order number". */
+  copyLabel: string;
+  onCopy: (value: string, copyLabel: string, field: CopyField) => void;
+}) {
+  const justCopied = copiedField === fieldKey;
 
   return (
-    <div className="mt-4 space-y-2 rounded-md bg-secondary/10 p-3 text-sm text-foreground">
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground" htmlFor={`mpesa-${fieldKey}`}>
+        {label}
+      </label>
       <div className="flex items-center gap-2">
-        <FaMobileScreenButton className="h-4 w-4 shrink-0 text-secondary" />
-        <span>
-          {sending
-            ? "Sending the payment prompt to your phone..."
-            : `Check ${order.mpesa?.phone || "your phone"} and enter your M-Pesa PIN to pay ${formatKES(order.total)}.`}
-        </span>
+        <Input
+          id={`mpesa-${fieldKey}`}
+          readOnly
+          value={value}
+          onFocus={(event) => event.currentTarget.select()}
+          className="font-mono text-sm tracking-wide"
+          aria-label={label}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => onCopy(value, copyLabel, fieldKey)}
+          aria-label={`Copy ${copyLabel.toLowerCase()}`}
+          className={cn("shrink-0", justCopied && "border-success text-success")}
+        >
+          {justCopied ? <FaCheck className="h-3.5 w-3.5" /> : <FaCopy className="h-3.5 w-3.5" />}
+        </Button>
       </div>
-
-      {timedOut && (
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Still waiting on that payment.</p>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => void send()}
-            disabled={sending}
-            className="gap-2"
-          >
-            <FaRotateRight className="h-3.5 w-3.5" />
-            {sending ? "Sending..." : "Resend Prompt"}
-          </Button>
-        </div>
-      )}
-
-      {sendError && <p className="text-xs text-destructive">{sendError}</p>}
     </div>
   );
 }
+
+export function MpesaPaymentCard({
+  total,
+  paymentType,
+  accountReference,
+  businessNumber,
+  businessName,
+  className,
+}: MpesaPaymentCardProps) {
+  const [copiedField, setCopiedField] = useState<CopyField | null>(null);
+  const formattedAmount = formatKES(total);
+  const typeLabel = getMpesaTypeLabel(paymentType);
+  const numberLabel = getMpesaNumberLabel(paymentType);
+  const businessCopyLabel = paymentType === "till" ? "Till number" : "Paybill number";
+  const instructions = buildInstructions(paymentType);
+
+  const handleCopy = async (value: string, copyLabel: string, field: CopyField) => {
+    const succeeded = await copyToClipboard(value);
+    if (succeeded) {
+      setCopiedField(field);
+      toast.success(`${copyLabel} copied`);
+      window.setTimeout(() => {
+        setCopiedField((current) => (current === field ? null : current));
+      }, 2000);
+    } else {
+      toast.error(`Couldn't copy ${copyLabel.toLowerCase()}. Please copy it manually.`);
+    }
+  };
+
+  const handleCopyAll = () => {
+    const lines = [
+      "Pay with M-Pesa",
+      `${typeLabel}: ${businessNumber}${businessName ? ` (${businessName})` : ""}`,
+      `Account Number: ${accountReference}`,
+      `Amount: ${formattedAmount}`,
+    ];
+    void handleCopy(lines.join("\n"), "Payment details", "all");
+  };
+
+  return (
+    <Card
+      role="group"
+      aria-label="M-Pesa payment details"
+      className={cn("gap-4 border-success/20 bg-success/[0.03] py-4", className)}
+    >
+      <CardHeader className="gap-3">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden="true"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"
+          >
+            <FaMobileScreenButton className="h-4.5 w-4.5" />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <h3 className="text-base font-semibold text-foreground">Pay with M-Pesa</h3>
+            <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+              <FaCircleInfo className="mt-0.5 h-3 w-3 shrink-0 text-success" aria-hidden="true" />
+              <span>
+                Use the details below to complete your payment on your phone — we&apos;ll match it to this order
+                automatically using the order number as the account reference.
+              </span>
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="rounded-lg border border-border bg-card p-3 sm:p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <CopyField
+              label={numberLabel}
+              value={businessNumber}
+              fieldKey="business"
+              copyLabel={businessCopyLabel}
+              copiedField={copiedField}
+              onCopy={(value, copyLabel, field) => void handleCopy(value, copyLabel, field)}
+            />
+            <CopyField
+              label="Account Number"
+              value={accountReference}
+              fieldKey="account"
+              copyLabel="Order number"
+              copiedField={copiedField}
+              onCopy={(value, copyLabel, field) => void handleCopy(value, copyLabel, field)}
+            />
+          </div>
+
+          <Separator className="my-3" />
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">Amount to pay</p>
+              <p className="text-xl font-bold text-success">{formattedAmount}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {businessName && (
+                <p className="text-xs text-muted-foreground">
+                  {typeLabel} · {businessName}
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => void handleCopy(formattedAmount, "Amount", "amount")}
+                aria-label="Copy amount"
+                className={cn("shrink-0", copiedField === "amount" && "border-success text-success")}
+              >
+                {copiedField === "amount" ? (
+                  <FaCheck className="h-3.5 w-3.5" />
+                ) : (
+                  <FaCopy className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleCopyAll}
+          className={cn("w-full gap-2 sm:w-auto", copiedField === "all" && "border-success text-success")}
+        >
+          {copiedField === "all" ? <FaCheck className="h-3.5 w-3.5" /> : <FaCopy className="h-3.5 w-3.5" />}
+          Copy All Payment Details
+        </Button>
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-foreground">How to pay</p>
+          <ol className="space-y-1.5 text-xs text-muted-foreground">
+            {instructions.map((step, index) => (
+              <li key={step} className="flex gap-2">
+                <span
+                  aria-hidden="true"
+                  className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-success/10 text-[10px] font-semibold text-success"
+                >
+                  {index + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default MpesaPaymentCard;

@@ -1,23 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { FaArrowLeft, FaLock, FaMobileScreenButton, FaTruck, FaWhatsapp } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loading } from "@/components/shared/Loading";
 import EmptyCart from "@/components/cart/EmptyCart";
 import { formatKES } from "@/lib/format";
+import { MPESA_CONFIG, getMpesaNumberLabel } from "@/lib/config/mpesa";
 import { useCart } from "@/hooks/useCart";
 import { storeOrderService } from "@/services/store-order.service";
+import { accountService } from "@/services/account.service";
+import { checkoutFormSchema, toCheckoutInput, type CheckoutFormValues } from "@/lib/schemas/checkout";
 import type { StorePaymentMethod } from "@/types/store-order";
 import {
   buildWhatsAppOrderMessage,
@@ -26,24 +32,15 @@ import {
   type WhatsAppPreferredPayment,
 } from "@/lib/storefront/whatsapp";
 
-interface CheckoutFormState {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  country: string;
-}
-
-const INITIAL_FORM: CheckoutFormState = {
+const EMPTY_VALUES: CheckoutFormValues = {
   name: "",
   email: "",
   phone: "",
   address: "",
   city: "",
   country: "Kenya",
+  saveToProfile: false,
 };
-
 
 type CheckoutSelection = StorePaymentMethod | "whatsapp";
 
@@ -54,15 +51,13 @@ const PAYMENT_OPTIONS: {
   icon: typeof FaMobileScreenButton;
   requiresAccount: boolean;
 }[] = [
- /**  {
+  {
     value: "mpesa",
     label: "M-Pesa",
-    description: "Pay instantly with a Safaricom M-Pesa STK push. Requires an account.",
+    description: "Place your order, then pay using the Paybill details we'll show you next.",
     icon: FaMobileScreenButton,
-    requiresAccount: true,
+    requiresAccount: false,
   },
-  
-  */
   {
     value: "cod",
     label: "Cash on Delivery",
@@ -84,7 +79,6 @@ export default function CheckoutPage() {
   const pathname = usePathname();
   const { data: session, status: sessionStatus } = useSession();
   const { items, itemCount, subtotal, shippingFee, tax, total, loading, refresh } = useCart();
-  const [form, setForm] = useState<CheckoutFormState>(INITIAL_FORM);
   const [paymentMethod, setPaymentMethod] = useState<CheckoutSelection>("cod");
   const [whatsappPreferredPayment, setWhatsappPreferredPayment] = useState<WhatsAppPreferredPayment>("cod");
   const [submitting, setSubmitting] = useState(false);
@@ -92,20 +86,64 @@ export default function CheckoutPage() {
 
   const isSignedIn = Boolean(session?.user?.id);
   const signInHref = `/account/sign-in?next=${encodeURIComponent(pathname || "/checkout")}`;
-  const needsSignInForMpesa = paymentMethod === "mpesa" && !isSignedIn;
+  const selectedOption = PAYMENT_OPTIONS.find((option) => option.value === paymentMethod);
+  const needsSignIn = Boolean(selectedOption?.requiresAccount) && !isSignedIn && sessionStatus !== "loading";
   const isWhatsAppOrder = paymentMethod === "whatsapp";
+  const isMpesaOrder = paymentMethod === "mpesa";
 
-  const update =
-    (field: keyof CheckoutFormState) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: event.target.value }));
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CheckoutFormValues>({
+    resolver: zodResolver(checkoutFormSchema),
+    defaultValues: EMPTY_VALUES,
+    mode: "onBlur",
+  });
+
+  const formValues = watch();
+
+ useEffect(() => {
+    if (sessionStatus !== "authenticated" || !session?.user?.id) return;
+
+    let cancelled = false;
+
+    accountService
+      .me()
+      .then((profile) => {
+        if (cancelled) return;
+        reset({
+          name: profile.name ?? session.user?.name ?? "",
+          email: profile.email ?? session.user?.email ?? "",
+          phone: profile.phone ?? "",
+          address: profile.address?.address ?? "",
+          city: profile.address?.city ?? "",
+          country: profile.address?.country ?? "Kenya",
+          saveToProfile: false,
+        });
+      })
+      .catch(() => {
+       if (!cancelled) {
+          setValue("name", session.user?.name ?? "");
+          setValue("email", session.user?.email ?? "");
+        }
+      });
+
+    return () => {
+      cancelled = true;
     };
+  }, [sessionStatus, session?.user?.id]);
 
   const hasUnavailableItems = items.some((item) => item.unavailable);
   const hasStockIssue = items.some((item) => !item.unavailable && item.quantity > item.stock);
-  const fullShippingAddress = [form.address, form.city, form.country].filter(Boolean).join(", ");
+  const fullShippingAddress = [formValues.address, formValues.city, formValues.country]
+    .filter(Boolean)
+    .join(", ");
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const onSubmit = async (values: CheckoutFormValues) => {
     setFormError(null);
 
     if (hasUnavailableItems || hasStockIssue) {
@@ -113,26 +151,16 @@ export default function CheckoutPage() {
       return;
     }
 
-    // M-Pesa payments require a signed-in account. Rather than letting the
-    // request round-trip to the server just to be rejected, send the
-    // shopper to sign in first and bring them straight back here.
-    if (needsSignInForMpesa) {
+    if (needsSignIn) {
       router.push(signInHref);
       return;
     }
 
-    // WhatsApp Checkout never touches the order-creation API — it's a
-    // parallel channel that hands the customer off to a human in chat.
-    // Everything they've typed into the form above still gets used, just
-    // to build the message instead of a `StoreOrder`. Checking
-    // `paymentMethod` directly (not the `isWhatsAppOrder` bool) so
-    // TypeScript narrows it to `StorePaymentMethod` for the checkout()
-    // call below, once this branch has returned.
     if (paymentMethod === "whatsapp") {
       setSubmitting(true);
       try {
         const message = buildWhatsAppOrderMessage({
-          customer: { name: form.name, phone: form.phone, email: form.email, address: fullShippingAddress },
+          customer: { name: values.name, phone: values.phone, email: values.email, address: fullShippingAddress },
           items: items.map((item) => ({ name: item.name, quantity: item.quantity, lineTotal: item.subtotal })),
           totals: { subtotal, shippingFee, tax, total },
           preferredPayment: whatsappPreferredPayment,
@@ -155,11 +183,21 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      const order = await storeOrderService.checkout({
-        customer: { name: form.name, email: form.email, phone: form.phone },
-        shippingAddress: { address: form.address, city: form.city, country: form.country },
-        paymentMethod,
-      });
+      const order = await storeOrderService.checkout(toCheckoutInput(values, paymentMethod));
+
+      if (isSignedIn && values.saveToProfile) {
+        try {
+          await accountService.updateProfile({
+            name: values.name,
+            phone: values.phone,
+            address: values.address,
+            city: values.city,
+            country: values.country,
+          });
+        } catch {
+          toast.error("Order placed, but we couldn't save these details to your profile.");
+        }
+      }
 
       await refresh();
       router.push(`/checkout/success?order=${order.orderNumber}`);
@@ -192,7 +230,7 @@ export default function CheckoutPage() {
 
       <h1 className="mt-4 text-2xl font-bold text-foreground">Checkout</h1>
 
-      <form onSubmit={(event) => void handleSubmit(event)} className="mt-6 grid gap-8 lg:grid-cols-[1.5fr_0.9fr]">
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 grid gap-8 lg:grid-cols-[1.5fr_0.9fr]">
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -201,29 +239,39 @@ export default function CheckoutPage() {
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" required value={form.name} onChange={update("name")} placeholder="John Doe" />
+                <Input id="name" {...register("name")} placeholder="John Doe" />
+                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="justify-between">
+                  <span>Email</span>
+                  {isSignedIn && (
+                    <span className="inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                      <FaLock className="h-3 w-3" />
+                      Locked
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="email"
                   type="email"
-                  required
-                  value={form.email}
-                  onChange={update("email")}
                   placeholder="john@example.com"
+                  // Read-only for authenticated customers: the account's
+                  // email is the only source of truth for it, and it can
+                  // only be changed through the sign-in provider — never
+                  // from this form. Disabling here is a UX cue only; the
+                  // server independently re-pins the email for signed-in
+                  // customers regardless of what this input contains.
+                  disabled={isSignedIn}
+                  readOnly={isSignedIn}
+                  {...register("email")}
                 />
+                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  required
-                  value={form.phone}
-                  onChange={update("phone")}
-                  placeholder="07XX XXX XXX"
-                />
+                <Input id="phone" type="tel" placeholder="07XX XXX XXX" {...register("phone")} />
+                {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
               </div>
             </CardContent>
           </Card>
@@ -235,22 +283,31 @@ export default function CheckoutPage() {
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  required
-                  value={form.address}
-                  onChange={update("address")}
-                  placeholder="Street, building, apartment"
-                />
+                <Input id="address" placeholder="Street, building, apartment" {...register("address")} />
+                {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" required value={form.city} onChange={update("city")} placeholder="Nairobi" />
+                <Input id="city" placeholder="Nairobi" {...register("city")} />
+                {errors.city && <p className="text-xs text-destructive">{errors.city.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="country">Country</Label>
-                <Input id="country" required value={form.country} onChange={update("country")} placeholder="Kenya" />
+                <Input id="country" placeholder="Kenya" {...register("country")} />
+                {errors.country && <p className="text-xs text-destructive">{errors.country.message}</p>}
               </div>
+
+              {isSignedIn && (
+                <label htmlFor="saveToProfile" className="flex cursor-pointer items-start gap-2 sm:col-span-2">
+                  <Checkbox
+                    id="saveToProfile"
+                    checked={Boolean(formValues.saveToProfile)}
+                    onCheckedChange={(checked) => setValue("saveToProfile", checked === true)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm text-muted-foreground">Save updated details to my profile</span>
+                </label>
+              )}
             </CardContent>
           </Card>
 
@@ -290,14 +347,30 @@ export default function CheckoutPage() {
                 })}
               </RadioGroup>
 
-              {/* {/needsSignInForMpesa && ( 
-                <div className="mt-4 rounded-md bg-secondary/10 p-3 text-xs text-foreground">
-                  <p>M-Pesa payments require an account so we can send your payment prompt and receipt.</p>
-                  <Link href={signInHref} className="mt-2 inline-block font-medium text-secondary underline">
-                    Sign in to continue with M-Pesa
-                  </Link>
+              {isMpesaOrder && (
+                <div className="mt-4 space-y-3 rounded-lg border border-success/20 bg-success/[0.03] p-4">
+                  <div className="flex items-start gap-3">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"
+                    >
+                      <FaMobileScreenButton className="h-4.5 w-4.5" />
+                    </span>
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="text-sm font-semibold text-foreground">Pay with M-Pesa</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Select M-Pesa and place your order first. After your order is created, we&apos;ll show your{" "}
+                        {getMpesaNumberLabel(MPESA_CONFIG.type).toLowerCase()}, order number, and exact amount to
+                        pay.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm">
+                    <span className="text-muted-foreground">{getMpesaNumberLabel(MPESA_CONFIG.type)}</span>
+                    <span className="font-mono font-semibold text-foreground">{MPESA_CONFIG.businessNumber}</span>
+                  </div>
                 </div>
-              )}*/}
+              )}
 
               {isWhatsAppOrder && (
                 <div className="mt-4 space-y-2 rounded-md bg-green-600/5 p-3">
@@ -401,7 +474,7 @@ export default function CheckoutPage() {
                 ? isWhatsAppOrder
                   ? "Opening WhatsApp..."
                   : "Placing Order..."
-                : needsSignInForMpesa
+                : needsSignIn
                   ? "Sign In to Continue"
                   : isWhatsAppOrder
                     ? "Continue on WhatsApp"
