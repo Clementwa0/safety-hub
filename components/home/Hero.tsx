@@ -123,7 +123,7 @@ export default function Hero() {
               href="/shop"
               className="group inline-flex items-center justify-center gap-2 rounded-lg bg-secondary px-7 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-secondary/90 hover:shadow-lg"
             >
-              Shop Now
+              Shop PPE
               <FaArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
 

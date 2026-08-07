@@ -33,6 +33,8 @@ export interface IStorefrontCustomer extends Document {
   email: string;
   emailVerified?: Date | null;
   image?: string;
+  /** Delivery contact number, editable by the customer in /account/profile. */
+  phone?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +45,7 @@ const storefrontCustomerSchema = new Schema<IStorefrontCustomer>(
     email: { type: String, required: true, trim: true, lowercase: true },
     emailVerified: { type: Date, default: null },
     image: { type: String },
+    phone: { type: String, trim: true },
   },
   {
     // The Auth.js MongoDB adapter writes its own `createdAt`/`updatedAt`-less

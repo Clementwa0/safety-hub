@@ -5,11 +5,12 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { FaShieldAlt, FaChevronDown } from "react-icons/fa";
 import {
+  businessLinks,
   contactInfo,
   containerVariants,
   itemVariants,
   legalLinks,
-  quickLinks,
+  shopLinks,
   socialLinks,
   toCategoryLinks,
   type CategoryLink,
@@ -50,9 +51,9 @@ export function Footer() {
         variants={containerVariants}
         className="mx-auto max-w-7xl px-4 py-14 sm:px-6"
       >
-        <div className="grid gap-10 md:grid-cols-4">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
           {/* Brand Section */}
-          <motion.div variants={itemVariants}>
+          <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-2">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                 <FaShieldAlt className="h-5 w-5" />
@@ -79,11 +80,11 @@ export function Footer() {
             </div>
           </motion.div>
 
-          {/* Quick Links */}
+          {/* Shop */}
           <motion.div variants={itemVariants}>
-            <h4 className="text-sm font-semibold uppercase tracking-wider">Quick Links</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider">Shop</h4>
             <ul className="mt-4 space-y-2 text-sm text-primary-foreground/70">
-              {quickLinks.slice(0, 4).map((link) => (
+              {shopLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
@@ -93,6 +94,31 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+            </ul>
+          </motion.div>
+
+          {/* Business */}
+          <motion.div variants={itemVariants}>
+            <h4 className="text-sm font-semibold uppercase tracking-wider">Business</h4>
+            <ul className="mt-4 space-y-2 text-sm text-primary-foreground/70">
+              {businessLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="hover:text-accent transition-colors duration-200"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link
+                  href="/contact"
+                  className="hover:text-accent transition-colors duration-200"
+                >
+                  Contact
+                </Link>
+              </li>
             </ul>
           </motion.div>
 

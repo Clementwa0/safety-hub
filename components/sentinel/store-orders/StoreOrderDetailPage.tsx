@@ -201,6 +201,12 @@ export default function AdminStoreOrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Method</span>
+                <span className="text-sm font-medium capitalize text-foreground">
+                  {order.paymentMethod === "mpesa" ? "M-Pesa" : "Cash on Delivery"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Status</span>
                 <StorePaymentStatusBadge status={order.paymentStatus} />
               </div>

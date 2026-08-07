@@ -1,14 +1,3 @@
-/**
- * Centralized URL-only image validation.
- *
- * This app never stores uploaded files — every image (product, category,
- * banner, testimonial, etc.) is referenced by a public HTTPS URL. All
- * format/shape validation for those URLs lives here so the admin UI (see
- * `components/shared/ImageUrlInput.tsx`), form schemas, and API routes stay
- * in sync instead of re-implementing the same regex in five places.
- */
-
-/** Extensions we recognize as image files when a URL has a file extension. */
 export const SUPPORTED_IMAGE_EXTENSIONS = [
   "jpg",
   "jpeg",
@@ -26,11 +15,7 @@ export type ImageUrlValidation =
   | { valid: true }
   | { valid: false; reason: string };
 
-/**
- * Synchronous, format-only validation: is this a well-formed HTTPS URL that
- * plausibly points at an image? This does NOT confirm the image actually
- * loads — pair it with `checkImageLoads` (browser-only) for that.
- */
+
 export function validateImageUrlFormat(rawUrl: string): ImageUrlValidation {
   const url = rawUrl.trim();
 
@@ -48,12 +33,7 @@ export function validateImageUrlFormat(rawUrl: string): ImageUrlValidation {
   if (parsed.protocol !== "https:") {
     return { valid: false, reason: "Image URLs must use HTTPS." };
   }
-
-  // Many CDNs (Cloudinary, ImageKit, Unsplash, S3 signed URLs, etc.) serve
-  // images without a file extension in the pathname, so we only reject a URL
-  // outright when it has an extension we recognize as non-image. A missing
-  // or unrecognized extension is allowed through to the real load check.
-  const pathname = parsed.pathname.toLowerCase();
+const pathname = parsed.pathname.toLowerCase();
   const lastSegment = pathname.split("/").pop() ?? "";
   const extensionMatch = lastSegment.match(/\.([a-z0-9]+)$/);
 
@@ -80,11 +60,7 @@ export function validateImageUrlFormat(rawUrl: string): ImageUrlValidation {
   return { valid: true };
 }
 
-/**
- * Browser-only: attempts to actually load the image so we can show a live
- * preview and catch broken/inaccessible URLs before saving. Resolves true/
- * false rather than throwing, so callers can drive UI state directly.
- */
+
 export function checkImageLoads(url: string, timeoutMs = 8000): Promise<boolean> {
   if (typeof window === "undefined") {
     return Promise.resolve(true);
@@ -111,7 +87,6 @@ export function checkImageLoads(url: string, timeoutMs = 8000): Promise<boolean>
   });
 }
 
-/** Returns `url` if it looks like a usable image URL, otherwise the shared placeholder. */
 export function withImageFallback(url: string | null | undefined): string {
   if (!url || !url.trim()) return PLACEHOLDER_IMAGE_URL;
   return validateImageUrlFormat(url).valid ? url : PLACEHOLDER_IMAGE_URL;

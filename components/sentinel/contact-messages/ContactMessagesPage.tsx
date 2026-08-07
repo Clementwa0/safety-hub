@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Archive, Inbox, MailOpen, Reply, Search } from "lucide-react";
+import { Archive, Inbox, MailOpen, MessageSquare, Reply, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import ContactMessageTable from "@/components/sentinel/contact-messages/ContactMessageTable";
@@ -99,6 +99,10 @@ export default function ContactMessagesPage() {
     setDetailOpen(true);
   };
 
+  const handleReply = (message: ContactMessage) => {
+    window.location.href = `mailto:${message.email}?subject=${encodeURIComponent(`Re: ${message.subject}`)}`;
+  };
+
   const handleStatusChange = async (id: string, nextStatus: ContactMessageStatus) => {
     try {
       const updated = await contactMessageService.updateStatus(id, nextStatus);
@@ -144,6 +148,7 @@ export default function ContactMessagesPage() {
         ]}
       />
 
+      {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="New"
@@ -171,6 +176,7 @@ export default function ContactMessagesPage() {
         />
       </div>
 
+      {/* Filters */}
       <Card>
         <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_auto_auto]">
           <div className="relative">
@@ -178,7 +184,7 @@ export default function ContactMessagesPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, email or subject..."
+              placeholder="Search customer, email, phone or subject..."
               className="pl-9"
               aria-label="Search contact messages"
             />
@@ -217,10 +223,11 @@ export default function ContactMessagesPage() {
         </CardContent>
       </Card>
 
+      {/* Messages Table */}
       <Card>
         <CardContent className="px-0">
           {loading ? (
-            <TableSkeleton rows={6} columns={6} />
+            <TableSkeleton rows={6} columns={5} />
           ) : error ? (
             <div className="p-4">
               <EmptyState
@@ -228,6 +235,7 @@ export default function ContactMessagesPage() {
                 description={error}
                 action={
                   <Button variant="outline" onClick={() => void load()}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     Try again
                   </Button>
                 }
@@ -240,7 +248,7 @@ export default function ContactMessagesPage() {
                 description={
                   hasFilters
                     ? "Try a different search term or clear the filters."
-                    : "Messages submitted through the public contact form will show up here."
+                    : "Customer enquiries submitted through your website will appear here."
                 }
                 action={
                   hasFilters ? (
@@ -253,7 +261,15 @@ export default function ContactMessagesPage() {
                     >
                       Clear filters
                     </Button>
-                  ) : undefined
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => void load()}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Refresh
+                    </Button>
+                  )
                 }
               />
             </div>
@@ -263,6 +279,7 @@ export default function ContactMessagesPage() {
                 messages={messages}
                 onView={handleView}
                 onDelete={setPendingDelete}
+                onReply={handleReply}
               />
               <Pagination
                 page={pagination.page}

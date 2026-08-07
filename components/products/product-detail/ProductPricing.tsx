@@ -1,81 +1,133 @@
+"use client";
+
+import { Minus, Plus, ShoppingCart, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { FaMinus, FaPlus, FaCartShopping, FaWhatsapp } from "react-icons/fa6";
 
 interface ProductPricingProps {
   price: number;
+  compareAtPrice?: number;
   stock: number;
   quantity: number;
-  onQuantityChange: (value: number) => void;
+  onQuantityChange: (quantity: number) => void;
   onAddToCart: () => void;
   onWhatsApp: () => void;
 }
 
 export function ProductPricing({
   price,
+  compareAtPrice,
   stock,
   quantity,
   onQuantityChange,
   onAddToCart,
   onWhatsApp,
 }: ProductPricingProps) {
+  const isOutOfStock = stock === 0;
+  const hasDiscount = compareAtPrice && compareAtPrice > price;
+
+  const incrementQuantity = () => {
+    if (quantity < stock) {
+      onQuantityChange(quantity + 1);
+    }
+  };
+
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      onQuantityChange(quantity - 1);
+    }
+  };
 
   return (
-    <Card className="rounded-[1.5rem] border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-6 shadow-md space-y-6">
-      {/* Price + Secure Checkout */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500">Price</p>
-          <p className="text-xl font-bold text-slate-900">
+    <div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      {/* Price Section */}
+      <div className="space-y-2">
+        <div className="flex items-baseline gap-3">
+          <span className="text-3xl font-bold text-slate-900">
             KES {price.toLocaleString("en-KE")}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">VAT Inclusive</p>
+          </span>
+          {hasDiscount && (
+            <>
+              <span className="text-lg text-slate-400 line-through">
+                KES {compareAtPrice.toLocaleString("en-KE")}
+              </span>
+              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-sm font-medium text-red-600">
+                Save {Math.round(((compareAtPrice - price) / compareAtPrice) * 100)}%
+              </span>
+            </>
+          )}
         </div>
-        <div className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-600">
-          Secure Checkout
-        </div>
+        <p className="text-sm text-slate-500">
+          {isOutOfStock ? (
+            <span className="text-red-500 font-medium">Out of Stock</span>
+          ) : stock < 10 ? (
+            <span className="text-amber-600 font-medium">
+              Only {stock} left in stock
+            </span>
+          ) : (
+            <span>In Stock</span>
+          )}
+        </p>
       </div>
-      {/* Quantity + Add to Cart */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center rounded-full border border-slate-300 bg-white">
-          <button
-            type="button"
-            onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-            className="flex h-10 w-10 items-center justify-center rounded-l-full transition hover:bg-slate-100"
-            disabled={stock === 0}
-          >
-            <FaMinus className="h-4 w-4" />
-          </button>
-          <span className="w-10 text-center text-sm font-semibold">{quantity}</span>
-          <button
-            type="button"
-            onClick={() => onQuantityChange(Math.min(stock, quantity + 1))}
-            className="flex h-10 w-10 items-center justify-center rounded-r-full transition hover:bg-slate-100"
-            disabled={stock === 0}
-          >
-            <FaPlus className="h-4 w-4" />
-          </button>
+
+      {/* Quantity Selector */}
+      {!isOutOfStock && (
+        <div className="flex items-center gap-4">
+          <label htmlFor="quantity" className="text-sm font-medium text-slate-700">
+            Quantity
+          </label>
+          <div className="flex items-center rounded-lg border border-slate-200">
+            <button
+              onClick={decrementQuantity}
+              disabled={quantity <= 1}
+              className="px-3 py-2 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Decrease quantity"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="w-12 text-center text-sm font-medium text-slate-900">
+              {quantity}
+            </span>
+            <button
+              onClick={incrementQuantity}
+              disabled={quantity >= stock}
+              className="px-3 py-2 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Increase quantity"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="space-y-3">
+        <Button
+          onClick={onAddToCart}
+          disabled={isOutOfStock}
+          className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+          size="lg"
+        >
+          <ShoppingCart className="h-5 w-5" />
+          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+        </Button>
 
         <Button
-          className="flex-1 gap-2 bg-slate-700 text-white hover:bg-slate-800"
-          disabled={stock === 0}
-          onClick={onAddToCart}
+          onClick={onWhatsApp}
+          variant="outline"
+          className="w-full gap-2 border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+          size="lg"
         >
-          <FaCartShopping className="h-4 w-4" />
-          Add to Cart
+          <Send className="h-5 w-5" />
+          Order on WhatsApp
         </Button>
       </div>
 
-      {/* WhatsApp Enquiry */}
-      <Button
-        variant="outline"
-        className="mt-3 w-full gap-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50"
-        onClick={onWhatsApp}
-      >
-        <FaWhatsapp className="h-4 w-4" />
-        Enquire on WhatsApp
-      </Button>
-    </Card>
+      {/* Trust Badges */}
+      <div className="flex justify-center gap-6 pt-2 text-xs text-slate-500">
+        <span>✓ Secure Checkout</span>
+        <span>✓ Fast Delivery</span>
+        <span>✓ 100% Authentic</span>
+      </div>
+    </div>
   );
 }

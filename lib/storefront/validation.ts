@@ -20,6 +20,9 @@ export const checkoutSchema = z.object({
     city: z.string().trim().min(2, "City is required"),
     country: z.string().trim().min(2, "Country is required"),
   }),
+  paymentMethod: z.enum(["mpesa", "cod"], {
+    message: "Select a payment method",
+  }),
 });
 
 export const updateStoreOrderSchema = z
@@ -32,3 +35,13 @@ export const updateStoreOrderSchema = z
   .refine((data) => data.status !== undefined || data.paymentStatus !== undefined, {
     message: "Provide status and/or paymentStatus",
   });
+
+export const createAddressSchema = z.object({
+  label: z.string().trim().max(60).optional(),
+  fullName: z.string().trim().min(1, "Full name is required"),
+  phone: z.string().trim().min(7, "Enter a valid phone number"),
+  address: z.string().trim().min(3, "Address is required"),
+  city: z.string().trim().min(2, "City is required"),
+  country: z.string().trim().min(2, "Country is required"),
+  isDefault: z.boolean().optional(),
+});

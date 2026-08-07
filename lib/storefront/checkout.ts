@@ -10,19 +10,20 @@ import { CartError } from "@/lib/storefront/cart";
 export interface CheckoutInput {
   customer: { name: string; email: string; phone: string };
   shippingAddress: { address: string; city: string; country: string };
+  paymentMethod: "mpesa" | "cod";
 }
 
-/**
- * Runs the full Cart -> Order pipeline inside a single MongoDB transaction:
- * validate cart -> validate products -> validate stock -> validate prices
- * (server-read only) -> calculate totals -> create order -> reduce stock ->
- * clear cart. Any failure aborts the whole transaction, so a customer never
- * ends up with stock deducted but no order, or an order with stale prices.
- */
+
 export async function performCheckout(
   identity: CartIdentity,
   input: CheckoutInput,
 ): Promise<IStoreOrder> {
+ 
+  if (input.paymentMethod === "mpesa" && !identity.userId) {
+    throw new CartError("Please sign in to pay with M-Pesa", 401);
+  }
+
+  
   const filter = identity.userId ? { user: identity.userId } : { sessionId: identity.sessionId };
 
   const session = await mongoose.startSession();
@@ -101,6 +102,7 @@ export async function performCheckout(
             total,
             status: "pending",
             paymentStatus: "pending",
+            paymentMethod: input.paymentMethod,
             customer: input.customer,
             shippingAddress: input.shippingAddress,
           },

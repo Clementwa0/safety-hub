@@ -13,6 +13,10 @@ export const STORE_PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded"] 
 
 export type StorePaymentStatus = (typeof STORE_PAYMENT_STATUSES)[number];
 
+export const STORE_PAYMENT_METHODS = ["mpesa", "cod"] as const;
+
+export type StorePaymentMethod = (typeof STORE_PAYMENT_METHODS)[number];
+
 export interface StoreOrderItem {
   product?: string;
   name: string;
@@ -36,6 +40,15 @@ export interface StoreOrder {
   total: number;
   status: StoreOrderStatus;
   paymentStatus: StorePaymentStatus;
+  paymentMethod: StorePaymentMethod;
+  mpesa?: {
+    phone?: string;
+    checkoutRequestId?: string;
+    resultDesc?: string;
+    receiptNumber?: string;
+    transactionDate?: string;
+    requestedAt?: string;
+  };
   customer: { name: string; email: string; phone: string };
   shippingAddress: { address: string; city: string; country: string };
   createdAt: string;
@@ -45,6 +58,7 @@ export interface StoreOrder {
 export interface CheckoutInput {
   customer: { name: string; email: string; phone: string };
   shippingAddress: { address: string; city: string; country: string };
+  paymentMethod: StorePaymentMethod;
 }
 
 export interface AdminStoreOrderQuery {

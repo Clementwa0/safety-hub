@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
+import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
+import { orderBelongsToCustomer } from "@/lib/storefront/ownership";
 import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
 
 interface RouteContext {
@@ -22,12 +24,23 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       return apiError("Order not found", [], 404);
     }
 
+    const customer = await resolveStorefrontCustomer();
+
+    if (customer) {
+      if (!orderBelongsToCustomer(order, customer.id)) {
+        return apiError("You do not have permission to view this order", [], 403);
+      }
+
+      return apiSuccess(serializeDoc(order), "Order loaded");
+    }
+
     const identity = await resolveCartIdentity(request);
 
-    // A customer must only ever see their own order — never another
-    // customer's, even by guessing/incrementing the URL.
+    const modelMismatch =
+      Boolean(order.userModel) && Boolean(identity.userModel) && order.userModel !== identity.userModel;
+
     const owns =
-      (identity.userId && order.user && String(order.user) === identity.userId) ||
+      (identity.userId && order.user && !modelMismatch && String(order.user) === identity.userId) ||
       (identity.sessionId && order.sessionId && order.sessionId === identity.sessionId);
 
     if (!owns) {

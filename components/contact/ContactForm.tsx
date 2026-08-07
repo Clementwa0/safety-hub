@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { FaPaperPlane, FaUser, FaEnvelope, FaPhone, FaPen, FaCommentDots } from "react-icons/fa6";
 import { Loader2 } from "lucide-react";
@@ -58,9 +59,15 @@ const initialFormState: ContactFormState = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ContactForm() {
+  const searchParams = useSearchParams();
+  const prefilledSubject = searchParams.get("subject") ?? "";
+
   const [agree, setAgree] = useState(false);
   const [sending, setSending] = useState(false);
-  const [form, setForm] = useState<ContactFormState>(initialFormState);
+  const [form, setForm] = useState<ContactFormState>({
+    ...initialFormState,
+    subject: prefilledSubject,
+  });
 
   const update =
     (field: keyof ContactFormState) =>

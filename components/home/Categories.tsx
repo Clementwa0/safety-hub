@@ -5,6 +5,7 @@ import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { FaArrowRight } from "react-icons/fa6";
 
 import { CategoryGrid } from "../category";
+import { requestQuoteLink } from "../common";
 
 const containerVariants: Variants = {
   hidden: {},
@@ -98,7 +99,7 @@ export default function Categories() {
             </div>
 
             <Link
-              href="/bulk-orders"
+              href={requestQuoteLink.href}
               className="group inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary/90 hover:shadow-md"
             >
               Request Bulk Quote

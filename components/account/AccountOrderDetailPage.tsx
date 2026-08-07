@@ -1,38 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import { FaArrowLeft } from "react-icons/fa6";
+import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { ArrowLeft } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Loading } from "@/components/shared/Loading";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatKES } from "@/lib/format";
 import { storeOrderService } from "@/services/store-order.service";
 import type { StoreOrder } from "@/types/store-order";
-import { StoreOrderStatusBadge, StorePaymentStatusBadge } from "@/components/checkout/StoreOrderStatusBadge";
-import { OrderProgressTracker } from "@/components/checkout/OrderProgressTracker";
 
 export default function AccountOrderDetailPage() {
   const params = useParams<{ id: string }>();
+  const orderId = params?.id;
+  const { status } = useSession();
   const [order, setOrder] = useState<StoreOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+
+    if (status !== "authenticated" || !orderId) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
+    setError(null);
 
     storeOrderService
-      .getById(params.id)
+      .getById(orderId)
       .then((result) => {
         if (!cancelled) setOrder(result);
       })
       .catch((caught) => {
-        if (!cancelled) setError(caught instanceof Error ? caught.message : "Could not load order");
+        if (!cancelled) {
+          setError(caught instanceof Error ? caught.message : "Could not load this order");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -41,124 +48,103 @@ export default function AccountOrderDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [params.id]);
+  }, [orderId, status]);
 
-  if (loading) {
-    return <Loading label="Loading order..." className="py-24" />;
-  }
-
-  if (error || !order) {
+  if (status === "loading" || loading) {
     return (
-      <div className="container mx-auto max-w-lg px-4 py-16">
-        <EmptyState
-          title="We couldn't find that order"
-          description={error ?? "It may not belong to this browser session."}
-          action={
-            <Button nativeButton={false} render={<Link href="/account/orders" />}>
-              Back to My Orders
-            </Button>
-          }
-        />
+      <div className="space-y-6" aria-hidden>
+        <Skeleton className="h-8 w-48 rounded-xl" />
+        <Skeleton className="h-96 rounded-2xl" />
       </div>
     );
   }
 
+  
+
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="space-y-6">
       <Link
         href="/account/orders"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-primary"
+        className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
-        <FaArrowLeft className="h-4 w-4" />
-        Back to My Orders
+        <ArrowLeft className="size-4" aria-hidden />
+        Back to orders
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Order #{order.orderNumber}</h1>
-          <p className="text-sm text-muted-foreground">Placed on {formatDate(new Date(order.createdAt))}</p>
+      {error || !order ? (
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 text-sm text-destructive">
+          {error ?? "Order not found"}
         </div>
-        <div className="flex items-center gap-2">
-          <StoreOrderStatusBadge status={order.status} />
-          <StorePaymentStatusBadge status={order.paymentStatus} />
-        </div>
-      </div>
+      ) : (
+        <>
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold tracking-tight text-foreground">
+                Order #{order.orderNumber}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Placed {formatDate(new Date(order.createdAt))}
+              </p>
+            </div>
+            <OrderStatusBadge status={order.status} />
+          </header>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_0.9fr]">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Order Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <OrderProgressTracker status={order.status} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Order Items</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_2px_8px_rgba(15,45,82,0.05)]">
+            <h2 className="border-b border-border px-5 py-4 text-sm font-semibold text-foreground">
+              Items
+            </h2>
+            <ul className="divide-y divide-border">
               {order.items.map((item, index) => (
-                <div key={`${item.product ?? item.name}-${index}`} className="flex items-center justify-between gap-3">
+                <li
+                  key={`${item.sku ?? item.name}-${index}`}
+                  className="flex items-center justify-between gap-4 px-5 py-4"
+                >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatKES(item.price)} × {item.quantity}
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {item.quantity} × {formatKES(item.price)}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-semibold">{formatKES(item.subtotal)}</p>
-                </div>
+                  <span className="shrink-0 text-sm font-medium text-foreground tabular-nums">
+                    {formatKES(item.subtotal)}
+                  </span>
+                </li>
               ))}
-            </CardContent>
-          </Card>
-        </div>
+            </ul>
+            <dl className="space-y-2 border-t border-border px-5 py-4 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <dt>Subtotal</dt>
+                <dd className="tabular-nums">{formatKES(order.subtotal)}</dd>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <dt>Shipping</dt>
+                <dd className="tabular-nums">{formatKES(order.shippingFee)}</dd>
+              </div>
+              <div className="flex justify-between text-base font-semibold text-foreground">
+                <dt>Total</dt>
+                <dd className="tabular-nums">{formatKES(order.total)}</dd>
+              </div>
+            </dl>
+          </section>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Shipping Address</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1 text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">{order.customer.name}</p>
-              <p>{order.shippingAddress.address}</p>
-              <p>
+          <section className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_2px_8px_rgba(15,45,82,0.05)]">
+              <h2 className="text-sm font-semibold text-foreground">Delivery address</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {order.shippingAddress.address}
+                <br />
                 {order.shippingAddress.city}, {order.shippingAddress.country}
               </p>
-              <p className="pt-2">{order.customer.email}</p>
-              <p>{order.customer.phone}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Payment Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">{formatKES(order.subtotal)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="font-medium">
-                  {order.shippingFee === 0 ? "Free" : formatKES(order.shippingFee)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">VAT</span>
-                <span className="font-medium">{formatKES(order.tax)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between text-base font-bold">
-                <span>Total</span>
-                <span className="text-secondary">{formatKES(order.total)}</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_2px_8px_rgba(15,45,82,0.05)]">
+              <h2 className="text-sm font-semibold text-foreground">Payment</h2>
+              <p className="mt-2 text-sm capitalize text-muted-foreground">
+                {order.paymentMethod} — {order.paymentStatus}
+              </p>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

@@ -3,44 +3,31 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-/**
- * Sort keys are intentionally limited to what the storefront can actually
- * implement correctly against real product fields (name, price, createdAt).
- * Don't add options here without a matching, correct comparator in
- * ShopPage's sort switch.
- */
-export type SortKey = "featured" | "newest" | "price-asc" | "price-desc" | "az";
+import type {
+  ArrayFilterKey,
+  Availability,
+  FilterState,
+  OfferKey,
+  PriceRange,
+  SortKey,
+  ViewMode,
+} from "@/types/shop";
 
-export interface FilterState {
-  search: string;
-  category: string[];
-  brand: string[];
-  availability: ("in-stock" | "out-of-stock")[];
-  featured: boolean;
-  newOnly: boolean;
-  onSale: boolean;
-  priceRange: {
-    min: number;
-    max: number;
-  };
-  sort: SortKey;
-}
-
-export const PRICE_BOUNDS = { min: 0, max: 100000 };
+const DEFAULT_PRICE_RANGE: PriceRange = { min: 0, max: 100000 };
 
 const DEFAULT_FILTERS: FilterState = {
   search: "",
   category: [],
   brand: [],
   availability: [],
-  featured: false,
-  newOnly: false,
-  onSale: false,
-  priceRange: { ...PRICE_BOUNDS },
+  offers: [],
+  priceRange: { ...DEFAULT_PRICE_RANGE },
   sort: "featured",
+  view: "grid",
 };
 
 const SORT_KEYS: SortKey[] = ["featured", "newest", "price-asc", "price-desc", "az"];
+const VIEW_MODES: ViewMode[] = ["grid", "list"];
 
 function parseCsv(value: string | null): string[] {
   if (!value) return [];
@@ -54,11 +41,18 @@ function parseFiltersFromParams(params: URLSearchParams): FilterState {
   const sortParam = params.get("sort");
   const sort = SORT_KEYS.includes(sortParam as SortKey) ? (sortParam as SortKey) : "featured";
 
+  const viewParam = params.get("view");
+  const view = VIEW_MODES.includes(viewParam as ViewMode) ? (viewParam as ViewMode) : "grid";
+
   const minPrice = params.get("minPrice");
   const maxPrice = params.get("maxPrice");
 
   const availability = parseCsv(params.get("availability")).filter(
-    (v): v is "in-stock" | "out-of-stock" => v === "in-stock" || v === "out-of-stock"
+    (v): v is Availability => v === "in-stock" || v === "out-of-stock"
+  );
+
+  const offers = parseCsv(params.get("offers")).filter(
+    (v): v is OfferKey => v === "featured" || v === "new" || v === "sale"
   );
 
   return {
@@ -66,14 +60,13 @@ function parseFiltersFromParams(params: URLSearchParams): FilterState {
     category: parseCsv(params.get("category")),
     brand: parseCsv(params.get("brand")),
     availability,
-    featured: params.get("featured") === "1",
-    newOnly: params.get("new") === "1",
-    onSale: params.get("sale") === "1",
+    offers,
     priceRange: {
-      min: minPrice ? Math.max(PRICE_BOUNDS.min, Number(minPrice) || 0) : PRICE_BOUNDS.min,
-      max: maxPrice ? Math.min(PRICE_BOUNDS.max, Number(maxPrice) || PRICE_BOUNDS.max) : PRICE_BOUNDS.max,
+      min: minPrice ? Math.max(DEFAULT_PRICE_RANGE.min, Number(minPrice) || 0) : DEFAULT_PRICE_RANGE.min,
+      max: maxPrice ? Math.min(DEFAULT_PRICE_RANGE.max, Number(maxPrice) || DEFAULT_PRICE_RANGE.max) : DEFAULT_PRICE_RANGE.max,
     },
     sort,
+    view,
   };
 }
 
@@ -84,126 +77,131 @@ function filtersToParams(filters: FilterState): URLSearchParams {
   if (filters.category.length) params.set("category", filters.category.join(","));
   if (filters.brand.length) params.set("brand", filters.brand.join(","));
   if (filters.availability.length) params.set("availability", filters.availability.join(","));
-  if (filters.featured) params.set("featured", "1");
-  if (filters.newOnly) params.set("new", "1");
-  if (filters.onSale) params.set("sale", "1");
-  if (filters.priceRange.min > PRICE_BOUNDS.min) params.set("minPrice", String(filters.priceRange.min));
-  if (filters.priceRange.max < PRICE_BOUNDS.max) params.set("maxPrice", String(filters.priceRange.max));
+  if (filters.offers.length) params.set("offers", filters.offers.join(","));
+  if (filters.priceRange.min > DEFAULT_PRICE_RANGE.min) params.set("minPrice", String(filters.priceRange.min));
+  if (filters.priceRange.max < DEFAULT_PRICE_RANGE.max) params.set("maxPrice", String(filters.priceRange.max));
   if (filters.sort !== "featured") params.set("sort", filters.sort);
+  if (filters.view !== "grid") params.set("view", filters.view);
 
   return params;
 }
 
-/**
- * Shop filter state, kept in sync with the URL (`?category=...&brand=...`)
- * so the shop page stays shareable and reload-safe. Reads the initial
- * state from the URL on mount and pushes every change back into it with
- * `router.replace` (no history entries, no scroll jump).
- */
-export function useShopFilters() {
+export interface UseShopFiltersResult {
+  filters: FilterState;
+  updateFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
+  toggleArrayFilter: (key: ArrayFilterKey, value: string) => void;
+  setArrayFilter: (key: ArrayFilterKey, values: string[]) => void;
+  clearFilters: () => void;
+  activeFilterCount: number;
+  hasActiveFilters: boolean;
+}
+
+export function useShopFilters(): UseShopFiltersResult {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [filters, setFilters] = useState<FilterState>(() => parseFiltersFromParams(searchParams));
+  const [filters, setFilters] = useState<FilterState>(() =>
+    parseFiltersFromParams(searchParams)
+  );
 
-  // If the URL changes from outside this hook (back/forward nav, a link
-  // like `/shop?category=Helmets`), re-sync local state from it.
-  const lastParamsString = useRef(searchParams.toString());
+  const lastParams = useRef(searchParams.toString());
   useEffect(() => {
     const current = searchParams.toString();
-    if (current !== lastParamsString.current) {
-      lastParamsString.current = current;
+    if (current !== lastParams.current) {
+      lastParams.current = current;
       setFilters(parseFiltersFromParams(searchParams));
     }
   }, [searchParams]);
 
   const syncUrl = useCallback(
     (next: FilterState) => {
-      const params = filtersToParams(next);
-      const queryString = params.toString();
-      lastParamsString.current = queryString;
-      router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+      const query = filtersToParams(next).toString();
+      lastParams.current = query;
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [pathname, router]
   );
 
-  // Debounce URL writes for free-text search so we're not replacing the
-  // URL on every keystroke, while the visible product list still updates
-  // instantly from local state.
-  const urlSyncTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scheduleUrlSync = useCallback(
-    (next: FilterState, immediate = false) => {
-      if (urlSyncTimeout.current) clearTimeout(urlSyncTimeout.current);
+  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleSync = useCallback(
+    (next: FilterState, immediate: boolean) => {
+      if (timeout.current) clearTimeout(timeout.current);
       if (immediate) {
         syncUrl(next);
         return;
       }
-      urlSyncTimeout.current = setTimeout(() => syncUrl(next), 400);
+      timeout.current = setTimeout(() => syncUrl(next), 400);
     },
     [syncUrl]
   );
 
-  useEffect(() => {
-    return () => {
-      if (urlSyncTimeout.current) clearTimeout(urlSyncTimeout.current);
-    };
-  }, []);
+  useEffect(
+    () => () => {
+      if (timeout.current) clearTimeout(timeout.current);
+    },
+    []
+  );
 
-  const updateFilter = useCallback(
-    <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
+  const updateFilter = useCallback<UseShopFiltersResult["updateFilter"]>(
+    (key, value) => {
       setFilters((prev) => {
         const next = { ...prev, [key]: value };
-        scheduleUrlSync(next, key !== "search");
+        scheduleSync(next, key !== "search");
         return next;
       });
     },
-    [scheduleUrlSync]
+    [scheduleSync]
+  );
+
+  const setArrayFilter = useCallback(
+    (key: ArrayFilterKey, values: string[]) => {
+      setFilters((prev) => {
+        const next = { ...prev, [key]: values } as FilterState;
+        scheduleSync(next, true);
+        return next;
+      });
+    },
+    [scheduleSync]
   );
 
   const toggleArrayFilter = useCallback(
-    (key: "category" | "brand" | "availability", value: string) => {
+    (key: ArrayFilterKey, value: string) => {
       setFilters((prev) => {
-        const exists = prev[key].includes(value as never);
-        const next = {
-          ...prev,
-          [key]: exists ? prev[key].filter((item) => item !== value) : [...prev[key], value],
-        };
-        scheduleUrlSync(next, true);
+        const current = prev[key] as string[];
+        const values = current.includes(value)
+          ? current.filter((item) => item !== value)
+          : [...current, value];
+        const next = { ...prev, [key]: values } as FilterState;
+        scheduleSync(next, true);
         return next;
       });
     },
-    [scheduleUrlSync]
-  );
-
-  const clearArrayFilter = useCallback(
-    (key: "category" | "brand" | "availability") => {
-      setFilters((prev) => {
-        const next = { ...prev, [key]: [] };
-        scheduleUrlSync(next, true);
-        return next;
-      });
-    },
-    [scheduleUrlSync]
+    [scheduleSync]
   );
 
   const clearFilters = useCallback(() => {
-    const next = { ...DEFAULT_FILTERS };
-    setFilters(next);
-    scheduleUrlSync(next, true);
-  }, [scheduleUrlSync]);
+    setFilters((prev) => {
+      const next: FilterState = {
+        ...DEFAULT_FILTERS,
+        priceRange: { ...DEFAULT_PRICE_RANGE },
+        sort: prev.sort,
+        view: prev.view,
+      };
+      scheduleSync(next, true);
+      return next;
+    });
+  }, [scheduleSync]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     count += filters.category.length;
     count += filters.brand.length;
     count += filters.availability.length;
+    count += filters.offers.length;
     if (filters.search) count++;
-    if (filters.featured) count++;
-    if (filters.newOnly) count++;
-    if (filters.onSale) count++;
-    if (filters.priceRange.min > PRICE_BOUNDS.min) count++;
-    if (filters.priceRange.max < PRICE_BOUNDS.max) count++;
+    if (filters.priceRange.min > DEFAULT_PRICE_RANGE.min) count++;
+    if (filters.priceRange.max < DEFAULT_PRICE_RANGE.max) count++;
     return count;
   }, [filters]);
 
@@ -211,7 +209,7 @@ export function useShopFilters() {
     filters,
     updateFilter,
     toggleArrayFilter,
-    clearArrayFilter,
+    setArrayFilter,
     clearFilters,
     activeFilterCount,
     hasActiveFilters: activeFilterCount > 0,

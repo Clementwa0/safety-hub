@@ -1,20 +1,20 @@
 import { apiError, apiSuccess } from "@/lib/api";
-import { auth } from "@/lib/customer-auth";
+import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
 
 export async function GET() {
   try {
-    const session = await auth();
+    const customer = await resolveStorefrontCustomer();
 
-    if (!session?.user?.id) {
+    if (!customer) {
       return apiError("Not signed in", [], 401);
     }
 
     return apiSuccess(
       {
-        id: session.user.id,
-        name: session.user.name ?? null,
-        email: session.user.email ?? null,
-        image: session.user.image ?? null,
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        image: customer.image,
       },
       "Authenticated",
     );

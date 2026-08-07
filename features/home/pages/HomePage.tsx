@@ -1,11 +1,12 @@
-import { Hero, Categories, FeaturedProducts, CTA } from "@/components/home";
+import { Hero, Categories, FeaturedProducts, NewArrivals, CTA } from "@/components/home";
 
 export default function HomePage() {
   return (
     <>
-      <Categories />
+    <Categories />
       <Hero />
       <FeaturedProducts />
+      <NewArrivals />
       <CTA />
     </>
   );

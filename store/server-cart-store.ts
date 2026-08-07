@@ -1,24 +1,30 @@
+// store/server-cart-store.ts
 import { create } from "zustand";
 import { storeCartService } from "@/services/store-cart.service";
 import type { StoreCart } from "@/types/store-cart";
 
-const EMPTY_CART: StoreCart = { id: "", items: [], itemCount: 0, subtotal: 0 };
-
-interface ServerCartStore {
+interface ServerCartState {
   cart: StoreCart;
   loading: boolean;
   mutating: boolean;
-  error: string | null;
+  error: Error | null;
   hasLoaded: boolean;
   fetchCart: () => Promise<void>;
-  addItem: (productId: string, quantity?: number) => Promise<void>;
-  updateItem: (productId: string, quantity: number) => Promise<void>;
-  removeItem: (productId: string) => Promise<void>;
-  clear: () => Promise<void>;
+  addItem: (productId: string, quantity?: number) => Promise<StoreCart>;
+  updateItem: (productId: string, quantity: number) => Promise<StoreCart>;
+  removeItem: (productId: string) => Promise<StoreCart>;
+  clear: () => Promise<StoreCart>;
 }
 
-export const useServerCartStore = create<ServerCartStore>((set, get) => ({
-  cart: EMPTY_CART,
+const initialCart: StoreCart = {
+  id: "",
+  items: [],
+  itemCount: 0,
+  subtotal: 0,
+};
+
+export const useServerCartStore = create<ServerCartState>((set) => ({
+  cart: initialCart,
   loading: false,
   mutating: false,
   error: null,
@@ -30,43 +36,55 @@ export const useServerCartStore = create<ServerCartStore>((set, get) => ({
       const cart = await storeCartService.get();
       set({ cart, loading: false, hasLoaded: true });
     } catch (error) {
-      set({
+      set({ 
+        error: error instanceof Error ? error : new Error("Failed to load cart"), 
         loading: false,
         hasLoaded: true,
-        error: error instanceof Error ? error.message : "Failed to load cart",
       });
     }
   },
 
-  addItem: async (productId, quantity = 1) => {
+  addItem: async (productId: string, quantity = 1) => {
     set({ mutating: true, error: null });
     try {
-      const cart = await storeCartService.addItem(productId, quantity);
-      set({ cart, mutating: false });
+      const updatedCart = await storeCartService.addItem(productId, quantity);
+      set({ cart: updatedCart, mutating: false });
+      return updatedCart;
     } catch (error) {
-      set({ mutating: false, error: error instanceof Error ? error.message : "Failed to add item" });
+      set({ 
+        error: error instanceof Error ? error : new Error("Failed to add item"), 
+        mutating: false 
+      });
       throw error;
     }
   },
 
-  updateItem: async (productId, quantity) => {
+  updateItem: async (productId: string, quantity: number) => {
     set({ mutating: true, error: null });
     try {
-      const cart = await storeCartService.updateItem(productId, quantity);
-      set({ cart, mutating: false });
+      const updatedCart = await storeCartService.updateItem(productId, quantity);
+      set({ cart: updatedCart, mutating: false });
+      return updatedCart;
     } catch (error) {
-      set({ mutating: false, error: error instanceof Error ? error.message : "Failed to update quantity" });
+      set({ 
+        error: error instanceof Error ? error : new Error("Failed to update item"), 
+        mutating: false 
+      });
       throw error;
     }
   },
 
-  removeItem: async (productId) => {
+  removeItem: async (productId: string) => {
     set({ mutating: true, error: null });
     try {
-      const cart = await storeCartService.removeItem(productId);
-      set({ cart, mutating: false });
+      const updatedCart = await storeCartService.removeItem(productId);
+      set({ cart: updatedCart, mutating: false });
+      return updatedCart;
     } catch (error) {
-      set({ mutating: false, error: error instanceof Error ? error.message : "Failed to remove item" });
+      set({ 
+        error: error instanceof Error ? error : new Error("Failed to remove item"), 
+        mutating: false 
+      });
       throw error;
     }
   },
@@ -74,10 +92,14 @@ export const useServerCartStore = create<ServerCartStore>((set, get) => ({
   clear: async () => {
     set({ mutating: true, error: null });
     try {
-      const cart = await storeCartService.clear();
-      set({ cart, mutating: false });
+      const updatedCart = await storeCartService.clear();
+      set({ cart: updatedCart, mutating: false });
+      return updatedCart;
     } catch (error) {
-      set({ mutating: false, error: error instanceof Error ? error.message : "Failed to clear cart" });
+      set({ 
+        error: error instanceof Error ? error : new Error("Failed to clear cart"), 
+        mutating: false 
+      });
       throw error;
     }
   },

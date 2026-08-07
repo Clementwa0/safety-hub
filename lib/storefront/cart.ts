@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { CartModel, type ICart } from "@/lib/models/Cart";
+import { CartModel, type ICart, type ICartItem } from "@/lib/models/Cart";
 import { ProductModel, type IProduct } from "@/lib/models/Product";
 import { calculateSubtotal } from "@/lib/storefront/pricing";
 import type { CartIdentity } from "@/lib/storefront/session";
@@ -13,6 +13,14 @@ export class CartError extends Error {
 }
 
 function identityFilter(identity: CartIdentity) {
+  // NOTE: unlike StoreOrder, Cart's uniqueness is enforced by a unique
+  // index on `user` ALONE (see `lib/models/Cart.ts` — "One cart per
+  // authenticated user"), not a compound `{ user, userModel }` index.
+  // Querying by `userModel` here as well can miss an existing cart (e.g.
+  // one written before this field existed) and cause a duplicate-key
+  // error on create, so the lookup intentionally matches the index: by
+  // `user` alone. `userModel` is still recorded on create/below so the
+  // cart's owner type is known for `.populate()` and other reads.
   if (identity.userId) return { user: identity.userId };
   if (identity.sessionId) return { sessionId: identity.sessionId };
   throw new CartError("No cart identity available", 400);
@@ -174,7 +182,10 @@ export async function addItemToCart(
   if (existing) {
     existing.quantity = newQuantity;
   } else {
-    cart.items.push({ product: new mongoose.Types.ObjectId(productId), quantity });
+    // The schema declares `{ _id: false }` for cart items, so there's no
+    // real `id` field on a pushed item — this cast is only to satisfy
+    // Mongoose 9's `DocumentArray.push()` typing, not a behavior change.
+    cart.items.push({ product: new mongoose.Types.ObjectId(productId), quantity } as ICartItem);
   }
 
   await cart.save();

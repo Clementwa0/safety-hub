@@ -1,4 +1,5 @@
 export interface StoreCartItem {
+  id: string; // Unique cart item ID
   productId: string;
   name: string;
   slug: string;
