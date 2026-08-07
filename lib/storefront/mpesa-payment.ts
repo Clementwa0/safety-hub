@@ -12,12 +12,12 @@ export class OrderAccessError extends Error {
   }
 }
 
-/** Only the order's own customer (or the guest session that placed it) may
- *  trigger or check on its M-Pesa payment — never inferred from the order
- *  id alone. */
 function assertOwnership(order: IStoreOrder, identity: CartIdentity) {
+  const modelMismatch =
+    Boolean(order.userModel) && Boolean(identity.userModel) && order.userModel !== identity.userModel;
+
   const owns =
-    (identity.userId && order.user && String(order.user) === identity.userId) ||
+    (identity.userId && order.user && !modelMismatch && String(order.user) === identity.userId) ||
     (identity.sessionId && order.sessionId && order.sessionId === identity.sessionId);
 
   if (!owns) {
@@ -36,12 +36,6 @@ async function loadOwnedOrder(orderId: string, identity: CartIdentity): Promise<
   return order;
 }
 
-/**
- * Sends (or re-sends) the STK push for an order the customer placed with
- * `paymentMethod: "mpesa"`. Safe to call again after a failed/cancelled
- * attempt — each call overwrites the previous CheckoutRequestID so status
- * checks always look at the latest attempt.
- */
 export async function triggerMpesaStkPush(
   orderId: string,
   identity: CartIdentity,
@@ -82,13 +76,6 @@ export async function triggerMpesaStkPush(
   return order;
 }
 
-/**
- * Returns the order's current payment status, actively polling Safaricom
- * if the async callback doesn't seem to have arrived yet (a few seconds
- * have passed since the push was sent and we're still "pending"). This is
- * what keeps the checkout success page's polling loop moving even when the
- * callback URL is unreachable (e.g. local dev without a tunnel).
- */
 export async function getMpesaPaymentStatus(orderId: string, identity: CartIdentity): Promise<IStoreOrder> {
   const order = await loadOwnedOrder(orderId, identity);
 
@@ -98,10 +85,7 @@ export async function getMpesaPaymentStatus(orderId: string, identity: CartIdent
 
   const requestedAt = order.mpesa.requestedAt ? new Date(order.mpesa.requestedAt).getTime() : 0;
   const elapsed = Date.now() - requestedAt;
-
-  // Give the async callback a head start before we start polling Safaricom
-  // ourselves — most callbacks land within a couple of seconds.
-  if (elapsed < 5000) {
+if (elapsed < 5000) {
     return order;
   }
 
@@ -123,9 +107,7 @@ export async function getMpesaPaymentStatus(orderId: string, identity: CartIdent
       await order.save();
     }
   } catch (error) {
-    // A query failure doesn't mean the payment failed — just that we
-    // couldn't check right now. Leave the order pending and let the next
-    // poll (or the callback) resolve it.
+   
     console.error("[mpesa] Status query failed:", error instanceof MpesaError ? error.message : error);
   }
 
@@ -149,12 +131,7 @@ export interface DarajaCallbackPayload {
   };
 }
 
-/**
- * Applies the result Safaricom posts to `/api/mpesa/callback` once the
- * customer has responded to the STK prompt (or it times out/gets
- * cancelled). Looks the order up by CheckoutRequestID — there's no
- * customer session on this request, Safaricom calls it server-to-server.
- */
+
 export async function applyMpesaCallback(payload: DarajaCallbackPayload): Promise<void> {
   const callback = payload?.Body?.stkCallback;
   if (!callback?.CheckoutRequestID) return;
@@ -162,9 +139,6 @@ export async function applyMpesaCallback(payload: DarajaCallbackPayload): Promis
   const order = await StoreOrderModel.findOne({ "mpesa.checkoutRequestId": callback.CheckoutRequestID });
   if (!order) return;
 
-  // The callback can arrive after we've already resolved the payment via
-  // the polling fallback (`getMpesaPaymentStatus`) — don't let a late
-  // duplicate flip a settled order back around.
   if (order.paymentStatus !== "pending") return;
 
   if (callback.ResultCode === 0) {

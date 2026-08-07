@@ -1,6 +1,5 @@
-// lib/storefront/cart.ts
 import mongoose from "mongoose";
-import { CartModel, type ICart } from "@/lib/models/Cart";
+import { CartModel, type ICart, type ICartItem } from "@/lib/models/Cart";
 import { ProductModel, type IProduct } from "@/lib/models/Product";
 import { calculateSubtotal } from "@/lib/storefront/pricing";
 import type { CartIdentity } from "@/lib/storefront/session";
@@ -14,6 +13,14 @@ export class CartError extends Error {
 }
 
 function identityFilter(identity: CartIdentity) {
+  // NOTE: unlike StoreOrder, Cart's uniqueness is enforced by a unique
+  // index on `user` ALONE (see `lib/models/Cart.ts` — "One cart per
+  // authenticated user"), not a compound `{ user, userModel }` index.
+  // Querying by `userModel` here as well can miss an existing cart (e.g.
+  // one written before this field existed) and cause a duplicate-key
+  // error on create, so the lookup intentionally matches the index: by
+  // `user` alone. `userModel` is still recorded on create/below so the
+  // cart's owner type is known for `.populate()` and other reads.
   if (identity.userId) return { user: identity.userId };
   if (identity.sessionId) return { sessionId: identity.sessionId };
   throw new CartError("No cart identity available", 400);
@@ -26,6 +33,8 @@ export async function getOrCreateCart(identity: CartIdentity): Promise<ICart> {
   if (!cart) {
     cart = await CartModel.create({
       ...filter,
+      // `userModel` is only meaningful when `user` is set (identity.userId);
+      // omitted entirely for guest carts.
       ...(identity.userId ? { userModel: identity.userModel } : {}),
       items: [],
     });
@@ -34,6 +43,7 @@ export async function getOrCreateCart(identity: CartIdentity): Promise<ICart> {
   return cart;
 }
 
+/** Loads the cart's products in one query, keyed by product id string. */
 async function loadProductsForCart(cart: ICart): Promise<Map<string, IProduct>> {
   const ids = cart.items.map((item) => item.product);
   if (ids.length === 0) return new Map();
@@ -43,7 +53,6 @@ async function loadProductsForCart(cart: ICart): Promise<Map<string, IProduct>> 
 }
 
 export interface SerializedCartItem {
-  id: string;
   productId: string;
   name: string;
   slug: string;
@@ -65,35 +74,21 @@ export interface SerializedCart {
   subtotal: number;
 }
 
-// Helper to generate unique IDs during serialization (fallback)
-const generateItemId = (productId: string): string => {
-  return `${productId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-};
-
+/**
+ * Serializes a cart for the client, reading CURRENT product price/stock/status
+ * from the database every time (never trusting anything cached on the cart
+ * document itself). Items whose product was deleted or archived are flagged
+ * `unavailable` rather than silently dropped, so the UI can tell the shopper
+ * what happened instead of the item just vanishing.
+ */
 export async function serializeCart(cart: ICart): Promise<SerializedCart> {
   const products = await loadProductsForCart(cart);
-
-  // Track used IDs to ensure uniqueness
-  const usedIds = new Set<string>();
 
   const items: SerializedCartItem[] = cart.items.map((item) => {
     const product = products.get(String(item.product));
 
-    // Use the item's ID if it exists, otherwise generate one
-    let itemId = (item as any).id;
-    if (!itemId) {
-      itemId = generateItemId(String(item.product));
-    }
-
-    // Ensure uniqueness
-    while (usedIds.has(itemId)) {
-      itemId = generateItemId(String(item.product));
-    }
-    usedIds.add(itemId);
-
     if (!product) {
       return {
-        id: itemId,
         productId: String(item.product),
         name: "Product no longer available",
         slug: "",
@@ -119,7 +114,6 @@ export async function serializeCart(cart: ICart): Promise<SerializedCart> {
         : "";
 
     return {
-      id: itemId,
       productId: String(product._id),
       name: product.name,
       slug: product.slug,
@@ -185,19 +179,13 @@ export async function addItemToCart(
 
   await assertAddable(product, newQuantity);
 
-  // Generate a unique ID for new items
-  const generateId = (): string => {
-    return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
-
   if (existing) {
     existing.quantity = newQuantity;
   } else {
-    cart.items.push({
-      id: generateId(),
-      product: new mongoose.Types.ObjectId(productId),
-      quantity,
-    });
+    // The schema declares `{ _id: false }` for cart items, so there's no
+    // real `id` field on a pushed item — this cast is only to satisfy
+    // Mongoose 9's `DocumentArray.push()` typing, not a behavior change.
+    cart.items.push({ product: new mongoose.Types.ObjectId(productId), quantity } as ICartItem);
   }
 
   await cart.save();

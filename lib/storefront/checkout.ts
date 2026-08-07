@@ -13,26 +13,17 @@ export interface CheckoutInput {
   paymentMethod: "mpesa" | "cod";
 }
 
-/**
- * Runs the full Cart -> Order pipeline inside a single MongoDB transaction:
- * validate cart -> validate products -> validate stock -> validate prices
- * (server-read only) -> calculate totals -> create order -> reduce stock ->
- * clear cart. Any failure aborts the whole transaction, so a customer never
- * ends up with stock deducted but no order, or an order with stale prices.
- */
+
 export async function performCheckout(
   identity: CartIdentity,
   input: CheckoutInput,
 ): Promise<IStoreOrder> {
-  // M-Pesa requires an account so we have somewhere to send the payment
-  // prompt/receipt and so support can trace a payment back to a customer.
-  // The checkout UI already gates this by sending the shopper to sign in
-  // first, but that's just UX — re-check here since this is the actual
-  // trust boundary.
+ 
   if (input.paymentMethod === "mpesa" && !identity.userId) {
     throw new CartError("Please sign in to pay with M-Pesa", 401);
   }
 
+  
   const filter = identity.userId ? { user: identity.userId } : { sessionId: identity.sessionId };
 
   const session = await mongoose.startSession();
