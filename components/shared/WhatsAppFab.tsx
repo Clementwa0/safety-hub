@@ -10,24 +10,34 @@ export default function WhatsAppFab() {
   );
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 group">
+    <div className="fixed bottom-8 right-8 z-50 group">
+      {/* Pulse Animation Ring */}
+      <div className="absolute inset-0 animate-ping rounded-full bg-green-400 opacity-60"></div>
+      
+      {/* Main Button */}
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Chat with us on WhatsApp"
-        className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lift transition-all duration-300 hover:scale-110 hover:shadow-2xl active:scale-95"
+        className="relative flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-green-600 p-4 shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl group-hover:shadow-2xl"
       >
-        {/* Pulse */}
-        <span className="absolute inset-0 animate-ping rounded-full bg-[#25D366] opacity-25" />
-
         {/* WhatsApp Icon */}
-        <FaWhatsapp className="relative z-10 h-8 w-8" />
+        <FaWhatsapp className="relative z-10 h-8 w-8 text-white" />
+        
+        {/* "Order Now" Text Overlay - Integrated */}
+        <span className="relative z-10 mt-1 text-[10px] font-bold uppercase tracking-wider text-white opacity-90 transition-opacity duration-300 group-hover:opacity-100">
+          Order Now
+        </span>
+        
+        {/* Inner Glow Effect */}
+        <div className="absolute inset-0 rounded-2xl bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10"></div>
       </a>
 
-      {/* Tooltip */}
-      <div className="pointer-events-none absolute right-20 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-card px-3 py-2 text-sm font-medium shadow-card opacity-0 transition-all duration-300 group-hover:opacity-100">
-        Chat with us
+      {/* Tooltip - Positioned to the left */}
+      <div className="pointer-events-none absolute right-full top-1/2 mr-4 -translate-y-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-xl opacity-0 transition-all duration-300 group-hover:opacity-100">
+        Chat with us on WhatsApp
+        {/* Tooltip Arrow */}
+        <div className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
       </div>
     </div>
   );
