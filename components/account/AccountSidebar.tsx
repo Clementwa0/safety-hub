@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Home, Package, User, LogOut } from "lucide-react";
+import { Home, Package, User, MapPin, LogOut } from "lucide-react";
 
 interface AccountSidebarProps {
   onNavigate?: () => void;
@@ -14,6 +14,7 @@ interface AccountSidebarProps {
 const navItems = [
   { label: "Overview", href: "/account", icon: Home },
   { label: "Orders", href: "/account/orders", icon: Package },
+  { label: "Addresses", href: "/account/addresses", icon: MapPin },
   { label: "Profile", href: "/account/profile", icon: User },
 ];
 

@@ -20,3 +20,5 @@ export interface CreateAddressInput {
   country: string;
   isDefault?: boolean;
 }
+
+export type UpdateAddressInput = Partial<CreateAddressInput>;

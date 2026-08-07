@@ -21,7 +21,7 @@ export default function AccountMenu() {
     return (
       <Button
         variant="outline"
-        className="hidden h-10 rounded-full lg:inline-flex"
+        className="hidden h-10 rounded-sm lg:inline-flex"
         onClick={() => signIn("google", { callbackUrl: "/account" })}
       >
         Sign in
@@ -42,7 +42,7 @@ export default function AccountMenu() {
       <DropdownMenuTrigger>
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary/10 lg:h-11 lg:w-11"
+          className="flex h-10 w-10 items-center justify-center rounded-sm bg-muted text-foreground transition hover:bg-secondary/10 lg:h-11 lg:w-11"
           aria-label="Open account menu"
         >
           <Avatar className="size-10">

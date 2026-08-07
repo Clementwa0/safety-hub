@@ -56,9 +56,9 @@ export default function AccountProfile() {
     setSaving(true);
 
     try {
-      //const updated = await accountService.updateMe({ phone: phone.trim() });
-      //setProfile(updated);
-      //setPhone(updated.phone ?? "");
+      const updated = await accountService.updateProfile({ phone: phone.trim() });
+      setProfile((prev) => (prev ? { ...prev, phone: updated.phone } : prev));
+      setPhone(updated.phone ?? "");
       toast.success("Profile updated");
     } catch (caught) {
       toast.error(caught instanceof Error ? caught.message : "Could not update your profile");
