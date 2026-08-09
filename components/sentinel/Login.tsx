@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -16,7 +17,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { apiRequest } from '@/lib/http'
 import { AUTH } from '@/lib/routes'
 
 export default function LoginPage () {
@@ -34,12 +34,16 @@ export default function LoginPage () {
     setError(null)
 
     try {
-      await apiRequest<{
-        user: { id: string; name: string; email: string; role: string }
-      }>('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
+      const result = await signIn('sentinel-credentials', {
+        email,
+        password,
+        redirect: false
       })
+
+      if (!result || result.error) {
+        setError('Invalid email or password')
+        return
+      }
 
       router.replace(AUTH.SENTINEL_ROOT)
       router.refresh()
@@ -146,13 +150,6 @@ export default function LoginPage () {
 
                   <span>Remember me</span>
                 </label>
-
-                <Link
-                  href='/forgot-password'
-                  className='text-sm text-sky-600 hover:underline'
-                >
-                  Forgot password?
-                </Link>
               </div>
 
               {error ? (
