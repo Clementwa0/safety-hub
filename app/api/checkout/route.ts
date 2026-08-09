@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
+import { apiError, apiSuccess, serializeStoreOrderForCustomer } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
 import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const order = await performCheckout(identity, checkoutInput);
 
-    const response = apiSuccess(serializeDoc(order.toObject()), "Order placed");
+    const response = apiSuccess(serializeStoreOrderForCustomer(order.toObject()), "Order placed");
     persistCartIdentity(response, identity);
     return response;
   } catch (error) {

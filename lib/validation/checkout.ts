@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { CheckoutInput, StorePaymentMethod } from "@/types/store-order";
+import type { CheckoutInput, StorePaymentMethod } from "@/types/storefront/store-order";
 
 /**
  * Flat checkout form schema for React Hook Form (`zodResolver`).

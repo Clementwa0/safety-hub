@@ -4,41 +4,33 @@ import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/a
 import { connectToDatabase } from "@/lib/db";
 import { QuotationModel } from "@/lib/models/Quotation";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
+import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
+import { findOrCreateCustomer } from "@/lib/server/customers";
+import { createWithDocumentNumber } from "@/lib/server/documentNumber";
 
-const lineItemSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional(),
-  quantity: z.number().int().positive(),
-  unitPrice: z.number().nonnegative(),
-  taxRate: z.number().nonnegative().optional(),
-  discount: z.number().nonnegative().optional(),
-});
-
-const customerInputSchema = z.union([
-  z.string().trim().min(1),
-  z.object({
-    name: z.string().trim().min(1),
-    email: z.string().trim().email().optional().or(z.literal("")),
-    phone: z.string().trim().optional(),
-    company: z.string().trim().optional(),
-    address: z.string().trim().optional(),
-  }),
-]);
-
-const quotationSchema = z.object({
-  customer: customerInputSchema,
-  items: z.array(lineItemSchema),
-  status: z.enum(["draft", "sent", "accepted", "rejected", "expired"]).optional(),
-  issueDate: z.number().optional(),
-  validUntil: z.number(),
-  notes: z.string().trim().optional(),
-  terms: z.string().trim().optional(),
-});
+const quotationSchema = z
+  .object({
+    customer: customerInputSchema,
+    items: z.array(lineItemSchema),
+    status: z.enum(["draft", "sent", "accepted", "rejected", "expired"]).optional(),
+    issueDate: z.number().optional(),
+    validUntil: z.number(),
+    notes: z.string().trim().optional(),
+    terms: z.string().trim().optional(),
+  })
+  // issueDate defaults to "now" below if omitted, so an omitted issueDate
+  // is checked against Date.now() here too - a validUntil in the past
+  // relative to today must be rejected even when the caller doesn't send
+  // issueDate at all.
+  .refine((data) => isDateOrderValid(data.issueDate ?? Date.now(), data.validUntil), {
+    message: "validUntil must be after issueDate",
+    path: ["validUntil"],
+  });
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -74,7 +66,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -95,17 +87,10 @@ export async function POST(request: NextRequest) {
         return apiError("Customer not found", [], 404);
       }
     } else {
-      customer = await CustomerModel.create({
-        name: parsed.data.customer.name,
-        email: parsed.data.customer.email || undefined,
-        phone: parsed.data.customer.phone || undefined,
-        company: parsed.data.customer.company || undefined,
-        address: parsed.data.customer.address || undefined,
-      });
+      customer = await findOrCreateCustomer(parsed.data.customer);
     }
 
-    const number = `QUO-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`;
-    const quotation = await QuotationModel.create({
+    const quotation = await createWithDocumentNumber(QuotationModel, "QUO", (number) => ({
       number,
       customer: customer._id,
       items: parsed.data.items,
@@ -114,7 +99,7 @@ export async function POST(request: NextRequest) {
       validUntil: new Date(parsed.data.validUntil),
       notes: parsed.data.notes,
       terms: parsed.data.terms,
-    });
+    }));
 
     return apiSuccess(serializeDoc(quotation.toObject()), "Quotation created");
   } catch (error) {

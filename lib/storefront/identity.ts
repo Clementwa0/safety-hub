@@ -1,5 +1,4 @@
-import { getAuthenticatedUser } from "@/lib/auth";
-import { auth as getCustomerAuthSession } from "@/lib/customer-auth";
+import { auth } from "@/lib/auth";
 
 export interface StorefrontCustomerIdentity {
   id: string;
@@ -14,27 +13,17 @@ export interface SentinelUserIdentity {
 }
 
 /**
- * Resolves the signed-in storefront customer for this request — and ONLY
- * the storefront customer.
+ * Resolves the signed-in user as a storefront customer identity — i.e.
+ * "who is this person for account/order purposes", regardless of role.
+ * Post-consolidation there's exactly one signed-in identity per browser
+ * (one Auth.js session), so this simply reads it; a staff/admin user
+ * browsing the storefront resolves to their own account here too, same
+ * as a plain customer would.
  *
- * This never falls back to, or is influenced by, a Sentinel staff/admin
- * session. Every customer-facing account/order endpoint (account
- * overview, "my orders", order detail, address book, guest-order linking,
- * etc.) must resolve identity through this helper rather than through
- * `resolveCartIdentity()` in `lib/storefront/session.ts`. That helper
- * intentionally checks a Sentinel staff session *first* — the right
- * precedence for the cart/checkout flow, where a staff member shopping
- * should get their own staff-linked cart — but it is the wrong precedence
- * for the account dashboard: a staff member who also has a storefront
- * customer account signed in in the same browser must still see *their
- * own customer* data on `/account/*`, never data resolved against their
- * staff id.
- *
- * Returns `null` if there is no signed-in storefront customer, regardless
- * of whether a Sentinel staff session exists.
+ * Returns `null` if there is no signed-in user at all.
  */
 export async function resolveStorefrontCustomer(): Promise<StorefrontCustomerIdentity | null> {
-  const session = await getCustomerAuthSession();
+  const session = await auth();
 
   if (!session?.user?.id) {
     return null;
@@ -49,22 +38,19 @@ export async function resolveStorefrontCustomer(): Promise<StorefrontCustomerIde
 }
 
 /**
- * Resolves the signed-in Sentinel staff/admin user for this request — and
- * ONLY the Sentinel identity. Never resolves, or falls back to, a
- * storefront customer session.
- *
- * Thin, purpose-specific wrapper around `getAuthenticatedUser()` (the
- * existing JWT-based Sentinel resolver in `lib/auth.ts`), kept here so
- * Sentinel-only call sites have the same explicit, single-purpose shape as
- * `resolveStorefrontCustomer()` and so the two identity systems are never
- * casually interchanged.
+ * Resolves the signed-in user as a Sentinel identity, ONLY if their role
+ * is staff or admin. Returns `null` for a signed-out visitor or a signed-in
+ * plain customer — callers that need Sentinel authorization should
+ * generally prefer requireStaff()/requireAdmin() from lib/auth/permissions
+ * over this, which exists mainly for read-only "is there a staff session"
+ * checks (e.g. lib/storefront/session.ts's cart identity resolution).
  */
 export async function resolveSentinelUser(): Promise<SentinelUserIdentity | null> {
-  const user = await getAuthenticatedUser();
+  const session = await auth();
 
-  if (!user) {
+  if (!session?.user?.id || (session.user.role !== "staff" && session.user.role !== "admin")) {
     return null;
   }
 
-  return { id: String(user._id), role: String(user.role ?? "staff") };
+  return { id: session.user.id, role: session.user.role };
 }

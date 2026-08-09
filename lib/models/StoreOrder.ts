@@ -53,17 +53,10 @@ export interface IStoreOrderItem {
   subtotal: number;
 }
 
-export type StoreOrderUserModel = "User" | "StorefrontCustomer";
-
 export interface IStoreOrder extends Document {
   orderNumber: string;
+  /** Refs `StorefrontCustomer` — the single identity collection post-unification. */
   user?: mongoose.Types.ObjectId;
-  /**
-   * Which model `user` refers to — `"User"` for a staff/admin account,
-   * `"StorefrontCustomer"` for a signed-in storefront customer. See
-   * `lib/models/Cart.ts` for the same pattern and rationale.
-   */
-  userModel?: StoreOrderUserModel;
   sessionId?: string;
 
   items: IStoreOrderItem[];
@@ -75,24 +68,11 @@ export interface IStoreOrder extends Document {
 
   status: StoreOrderStatus;
   paymentStatus: StorePaymentStatus;
-  /** Payment method the customer chose at checkout. M-Pesa requires the
-   *  customer to be signed in (enforced client-side and re-validated on the
-   *  server in `performCheckout`); Cash on Delivery is available to guests. */
+  /** Payment method the customer chose at checkout. Both M-Pesa and Cash
+   *  on Delivery are available to guests as well as signed-in customers -
+   *  a guest's order/payment ownership is tracked via `sessionId` below
+   *  exactly the way a signed-in customer's is tracked via `user`. */
   paymentMethod: StorePaymentMethod;
-
-  /** Populated only for `paymentMethod: "mpesa"` orders — tracks the STK
-   *  push lifecycle so the storefront can poll for and the callback route
-   *  can record the outcome. */
-  mpesa?: {
-    phone?: string;
-    merchantRequestId?: string;
-    checkoutRequestId?: string;
-    resultCode?: string;
-    resultDesc?: string;
-    receiptNumber?: string;
-    transactionDate?: string;
-    requestedAt?: Date;
-  };
 
   customer: {
     name: string;
@@ -131,8 +111,7 @@ const storeOrderSchema = new Schema<IStoreOrder>(
   {
     orderNumber: { type: String, required: true, trim: true },
 
-    user: { type: Schema.Types.ObjectId, refPath: "userModel" },
-    userModel: { type: String, enum: ["User", "StorefrontCustomer"] },
+    user: { type: Schema.Types.ObjectId, ref: "StorefrontCustomer" },
     sessionId: { type: String, trim: true },
 
     items: {
@@ -166,23 +145,6 @@ const storeOrderSchema = new Schema<IStoreOrder>(
       default: "cod",
     },
 
-    mpesa: {
-      type: new Schema(
-        {
-          phone: { type: String, trim: true },
-          merchantRequestId: { type: String, trim: true },
-          checkoutRequestId: { type: String, trim: true },
-          resultCode: { type: String, trim: true },
-          resultDesc: { type: String, trim: true },
-          receiptNumber: { type: String, trim: true },
-          transactionDate: { type: String, trim: true },
-          requestedAt: { type: Date },
-        },
-        { _id: false },
-      ),
-      required: false,
-    },
-
     customer: {
       name: { type: String, required: true, trim: true },
       email: { type: String, required: true, trim: true, lowercase: true },
@@ -203,16 +165,17 @@ const storeOrderSchema = new Schema<IStoreOrder>(
 );
 
 storeOrderSchema.index({ orderNumber: 1 }, { unique: true });
+// (user, createdAt): every ownership-scoped query (customerOrderFilter,
+// the store-orders list/detail routes) filters by `user` then sorts by
+// `createdAt` — this index satisfies both from the index alone. There's
+// only one identity model now, so no second discriminator field is
+// needed alongside `user`.
 storeOrderSchema.index({ user: 1, createdAt: -1 });
 storeOrderSchema.index({ sessionId: 1, createdAt: -1 });
 storeOrderSchema.index({ status: 1, createdAt: -1 });
 storeOrderSchema.index({ paymentStatus: 1 });
 storeOrderSchema.index({ "customer.email": 1 });
 storeOrderSchema.index({ "customer.name": "text" });
-storeOrderSchema.index(
-  { "mpesa.checkoutRequestId": 1 },
-  { unique: true, partialFilterExpression: { "mpesa.checkoutRequestId": { $exists: true } } },
-);
 
 export const StoreOrderModel: Model<IStoreOrder> =
   mongoose.models.StoreOrder ||

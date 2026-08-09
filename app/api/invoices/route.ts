@@ -4,49 +4,35 @@ import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/a
 import { connectToDatabase } from "@/lib/db";
 import { InvoiceModel } from "@/lib/models/Invoice";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
+import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
+import { findOrCreateCustomer } from "@/lib/server/customers";
+import { createWithDocumentNumber } from "@/lib/server/documentNumber";
 
-const lineItemSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional(),
-  quantity: z.number().int().positive(),
-  unitPrice: z.number().nonnegative(),
-  taxRate: z.number().nonnegative().optional(),
-  discount: z.number().nonnegative().optional(),
-});
-
-// InvoiceForm (components/sentinel/invoices/InvoiceForm.tsx) always submits
-// `customer` as a full object from `CustomerFields`, never a bare id
-// string - the same mismatch that broke Orders. This schema previously
-// only accepted `z.string()`, so every direct invoice create/update failed
-// Zod validation. Mirror the union Quotations already use.
-const customerInputSchema = z.union([
-  z.string().trim().min(1),
-  z.object({
-    name: z.string().trim().min(1),
-    email: z.string().trim().email().optional().or(z.literal("")),
-    phone: z.string().trim().optional(),
-    company: z.string().trim().optional(),
-    address: z.string().trim().optional(),
-  }),
-]);
-
-const invoiceSchema = z.object({
-  customer: customerInputSchema,
-  items: z.array(lineItemSchema),
-  status: z.enum(["draft", "unpaid", "partially_paid", "paid", "overdue", "cancelled"]).optional(),
-  issueDate: z.number().optional(),
-  dueDate: z.number(),
-  amountPaid: z.number().nonnegative().optional(),
-  notes: z.string().trim().optional(),
-  terms: z.string().trim().optional(),
-  quotationId: z.string().trim().optional(),
-  orderId: z.string().trim().optional(),
-});
+const invoiceSchema = z
+  .object({
+    customer: customerInputSchema,
+    items: z.array(lineItemSchema),
+    status: z.enum(["draft", "unpaid", "partially_paid", "paid", "overdue", "cancelled"]).optional(),
+    issueDate: z.number().optional(),
+    dueDate: z.number(),
+    amountPaid: z.number().nonnegative().optional(),
+    notes: z.string().trim().optional(),
+    terms: z.string().trim().optional(),
+    quotationId: z.string().trim().optional(),
+    orderId: z.string().trim().optional(),
+  })
+  // issueDate defaults to "now" below if omitted, so check against
+  // Date.now() in that case too - see the identical comment on
+  // quotationSchema in app/api/quotations/route.ts.
+  .refine((data) => isDateOrderValid(data.issueDate ?? Date.now(), data.dueDate), {
+    message: "dueDate must be after issueDate",
+    path: ["dueDate"],
+  });
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -82,7 +68,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -103,17 +89,10 @@ export async function POST(request: NextRequest) {
         return apiError("Customer not found", [], 404);
       }
     } else {
-      customer = await CustomerModel.create({
-        name: parsed.data.customer.name,
-        email: parsed.data.customer.email || undefined,
-        phone: parsed.data.customer.phone || undefined,
-        company: parsed.data.customer.company || undefined,
-        address: parsed.data.customer.address || undefined,
-      });
+      customer = await findOrCreateCustomer(parsed.data.customer);
     }
 
-    const number = `INV-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`;
-    const invoice = await InvoiceModel.create({
+    const invoice = await createWithDocumentNumber(InvoiceModel, "INV", (number) => ({
       number,
       customer: customer._id,
       items: parsed.data.items,
@@ -125,7 +104,7 @@ export async function POST(request: NextRequest) {
       terms: parsed.data.terms,
       quotationId: parsed.data.quotationId,
       orderId: parsed.data.orderId,
-    });
+    }));
 
     return apiSuccess(serializeDoc(invoice.toObject()), "Invoice created");
   } catch (error) {

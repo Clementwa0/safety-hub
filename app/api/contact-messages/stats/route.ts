@@ -1,11 +1,11 @@
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { CONTACT_MESSAGE_STATUSES, ContactMessageModel } from "@/lib/models/ContactMessage";
 
 export async function GET() {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

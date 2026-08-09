@@ -18,12 +18,14 @@ export async function performCheckout(
   identity: CartIdentity,
   input: CheckoutInput,
 ): Promise<IStoreOrder> {
- 
-  if (input.paymentMethod === "mpesa" && !identity.userId) {
-    throw new CartError("Please sign in to pay with M-Pesa", 401);
-  }
+  // M-Pesa is available to guests as well as signed-in customers. Order
+  // ownership already falls back to the guest session cookie whenever
+  // there's no signed-in userId (see `identity.sessionId` below). M-Pesa
+  // orders are paid manually to the Paybill/Till shown on the checkout
+  // page (see `MpesaPaymentCard`) — there is no STK push or automated
+  // callback; staff mark `paymentStatus` as paid from the admin panel
+  // once they see the payment come through.
 
-  
   const filter = identity.userId ? { user: identity.userId } : { sessionId: identity.sessionId };
 
   const session = await mongoose.startSession();
@@ -93,7 +95,6 @@ export async function performCheckout(
           {
             orderNumber,
             user: identity.userId,
-            userModel: identity.userId ? identity.userModel : undefined,
             sessionId: identity.sessionId,
             items: orderItems,
             subtotal,

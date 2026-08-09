@@ -1,34 +1,22 @@
-import type { StoreOrderUserModel } from "@/lib/models/StoreOrder";
-
 export function ownerFilter(
   userId: string,
-  userModel: StoreOrderUserModel,
   extra: Record<string, unknown> = {},
 ): Record<string, unknown> {
-  return { ...extra, user: userId, userModel };
+  return { ...extra, user: userId };
 }
 
 export function customerOrderFilter(
   customerId: string,
   extra: Record<string, unknown> = {},
 ): Record<string, unknown> {
-  // Matches orders explicitly owned by a StorefrontCustomer, and legacy
-  // orders where `userModel` was never backfilled (missing/null). Querying
-  // for `null` in MongoDB matches both explicit null and a missing field.
-  // "User" (staff) is never matched. Run `scripts/audit-order-ownership.ts
-  // --fix` to backfill legacy orders so this can later be tightened to an
-  // exact match.
-  return { ...extra, user: customerId, userModel: { $in: ["StorefrontCustomer", null] } };
+  // There's a single identity model now, so `user` alone (no second
+  // discriminator field) is enough to scope to this customer's orders.
+  return { ...extra, user: customerId };
 }
 
-
 export function orderBelongsToCustomer(
-  order: { user?: unknown; userModel?: string | null },
+  order: { user?: unknown },
   customerId: string,
 ): boolean {
-  return (
-    order.userModel !== "User" &&
-    order.user != null &&
-    String(order.user) === customerId
-  );
+  return order.user != null && String(order.user) === customerId;
 }

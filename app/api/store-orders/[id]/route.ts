@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import type { NextRequest } from "next/server";
-import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
+import { apiError, apiSuccess, serializeStoreOrderForCustomer } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
 import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
@@ -31,23 +31,20 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         return apiError("You do not have permission to view this order", [], 403);
       }
 
-      return apiSuccess(serializeDoc(order), "Order loaded");
+      return apiSuccess(serializeStoreOrderForCustomer(order), "Order loaded");
     }
 
     const identity = await resolveCartIdentity(request);
 
-    const modelMismatch =
-      Boolean(order.userModel) && Boolean(identity.userModel) && order.userModel !== identity.userModel;
-
     const owns =
-      (identity.userId && order.user && !modelMismatch && String(order.user) === identity.userId) ||
+      (identity.userId && order.user && String(order.user) === identity.userId) ||
       (identity.sessionId && order.sessionId && order.sessionId === identity.sessionId);
 
     if (!owns) {
       return apiError("Order not found", [], 404);
     }
 
-    const response = apiSuccess(serializeDoc(order), "Order loaded");
+    const response = apiSuccess(serializeStoreOrderForCustomer(order), "Order loaded");
     persistCartIdentity(response, identity);
     return response;
   } catch (error) {

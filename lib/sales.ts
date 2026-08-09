@@ -1,4 +1,4 @@
-import type { DocumentTotals, LineItem } from "@/types/sales";
+import type { DocumentTotals, LineItem } from "@/types/sentinel/sales";
 
 export function createLineItem(overrides: Partial<LineItem> = {}): LineItem {
   return {

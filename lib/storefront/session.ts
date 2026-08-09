@@ -1,18 +1,14 @@
 import { randomUUID } from "crypto";
 import type { NextRequest, NextResponse } from "next/server";
-import { getAuthenticatedUser } from "@/lib/auth";
-import { auth as getCustomerAuthSession } from "@/lib/customer-auth";
-import type { CartUserModel } from "@/lib/models/Cart";
+import { auth } from "@/lib/auth";
 import { CART_SESSION_COOKIE } from "@/lib/storefront/constants";
 
 export { CART_SESSION_COOKIE };
 const CART_SESSION_MAX_AGE = 60 * 60 * 24 * 90; // 90 days
 
 export interface CartIdentity {
-  /** Set when the request comes from an authenticated (staff/admin) user, or a signed-in storefront customer. */
+  /** Set when there is any signed-in user — staff, admin, or storefront customer alike. */
   userId?: string;
-  /** Which model `userId` refers to — only meaningful when `userId` is set. */
-  userModel?: CartUserModel;
   /** Set for guest carts, identified by an opaque cookie value. */
   sessionId?: string;
   /** True when a session cookie had to be minted for this request. */
@@ -22,44 +18,27 @@ export interface CartIdentity {
 /**
  * Resolves who a cart/order request belongs to.
  *
- * Three possible identities, checked in this order:
+ * Post-unification there is exactly one sign-in mechanism and one session
+ * per browser, so this just reads it — a signed-in user (whether their
+ * role is customer, staff, or admin) owns the cart/order under their own
+ * id, with no precedence question between a "staff session" and a
+ * "customer session" left to resolve, because there's only ever one.
  *
- *  1. A signed-in storefront customer account (`lib/customer-auth.ts`,
- *     Auth.js database session) — always takes precedence when present.
- *     A customer must always shop as themselves, even in a browser that
- *     also happens to hold a Sentinel staff session (e.g. a staff member
- *     who is also a customer, testing on the same machine, or simply
- *     forgot to sign out of the admin portal). Storefront order ownership
- *     must never silently fall back to a staff identity.
- *  2. A logged-in Sentinel staff/admin user (`lib/auth.ts`, JWT in the
- *     `auth_token` cookie), only when there is no storefront customer
- *     session — covers a staff member browsing the storefront who has no
- *     customer account of their own; their cart is keyed to their staff
- *     user id so the two systems stay consistent with each other.
- *  3. Otherwise, a guest, identified by a long-lived, httpOnly session
- *     cookie — this remains the default, zero-friction path for anyone who
- *     hasn't created an account, and is completely unaffected by either of
- *     the above.
+ * Falls back to a guest, identified by a long-lived, httpOnly session
+ * cookie, when nobody is signed in.
  *
- * Previously this checked the staff session first, which meant a browser
- * holding both a Sentinel staff session and a storefront customer session
- * had every cart/checkout/order action silently attributed to the staff
- * account instead of the customer's own account — orders were created
- * with `userModel: "User"` and then never matched the customer's own
- * `resolveStorefrontCustomer()`-based order queries, appearing as
- * "permission denied" on every order. The precedence below fixes that.
+ * (This used to check a separate storefront-customer session first and a
+ * separate Sentinel staff session second, specifically so a browser
+ * holding both never had orders silently attributed to the staff account
+ * instead of the customer's own — see git history on this file. Full
+ * session unification removes the second session entirely, so that
+ * precedence logic no longer applies.)
  */
 export async function resolveCartIdentity(request: NextRequest): Promise<CartIdentity> {
-  const customerSession = await getCustomerAuthSession();
+  const session = await auth();
 
-  if (customerSession?.user?.id) {
-    return { userId: customerSession.user.id, userModel: "StorefrontCustomer", isNewSession: false };
-  }
-
-  const staffUser = await getAuthenticatedUser();
-
-  if (staffUser) {
-    return { userId: String(staffUser._id), userModel: "User", isNewSession: false };
+  if (session?.user?.id) {
+    return { userId: session.user.id, isNewSession: false };
   }
 
   const existing = request.cookies.get(CART_SESSION_COOKIE)?.value;

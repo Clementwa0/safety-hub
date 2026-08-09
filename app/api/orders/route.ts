@@ -4,34 +4,10 @@ import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/a
 import { connectToDatabase } from "@/lib/db";
 import { OrderModel } from "@/lib/models/Order";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireAdmin } from "@/lib/auth";
-
-const lineItemSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional(),
-  quantity: z.number().int().positive(),
-  unitPrice: z.number().nonnegative(),
-  taxRate: z.number().nonnegative().optional(),
-  discount: z.number().nonnegative().optional(),
-});
-
-// OrderForm (components/sentinel/orders/OrderForm.tsx) always submits
-// `customer` as a full object typed from `CustomerFields`
-// ({ name, email?, phone?, company?, address? }), never as a bare id
-// string. This schema previously only accepted `z.string()`, so every
-// order create/update from the actual UI failed Zod validation with
-// "Validation failed" and nothing was ever saved. Quotations already
-// solved this correctly - mirror that union here.
-const customerInputSchema = z.union([
-  z.string().trim().min(1),
-  z.object({
-    name: z.string().trim().min(1),
-    email: z.string().trim().email().optional().or(z.literal("")),
-    phone: z.string().trim().optional(),
-    company: z.string().trim().optional(),
-    address: z.string().trim().optional(),
-  }),
-]);
+import { requireStaff } from "@/lib/auth";
+import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
+import { findOrCreateCustomer } from "@/lib/server/customers";
+import { createWithDocumentNumber } from "@/lib/server/documentNumber";
 
 const orderSchema = z.object({
   customer: customerInputSchema,
@@ -44,7 +20,7 @@ const orderSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -80,7 +56,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -101,17 +77,10 @@ export async function POST(request: NextRequest) {
         return apiError("Customer not found", [], 404);
       }
     } else {
-      customer = await CustomerModel.create({
-        name: parsed.data.customer.name,
-        email: parsed.data.customer.email || undefined,
-        phone: parsed.data.customer.phone || undefined,
-        company: parsed.data.customer.company || undefined,
-        address: parsed.data.customer.address || undefined,
-      });
+      customer = await findOrCreateCustomer(parsed.data.customer);
     }
 
-    const number = `ORD-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`;
-    const order = await OrderModel.create({
+    const order = await createWithDocumentNumber(OrderModel, "ORD", (number) => ({
       number,
       customer: customer._id,
       items: parsed.data.items,
@@ -119,7 +88,7 @@ export async function POST(request: NextRequest) {
       notes: parsed.data.notes,
       quotationId: parsed.data.quotationId,
       invoiceId: parsed.data.invoiceId,
-    });
+    }));
 
     return apiSuccess(serializeDoc(order.toObject()), "Order created");
   } catch (error) {

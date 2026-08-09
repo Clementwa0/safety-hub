@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
+import { apiError, apiSuccess, serializeStoreOrderForCustomer } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
 import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
@@ -17,17 +17,17 @@ export async function GET(request: NextRequest) {
         .sort("-createdAt")
         .lean();
 
-      return apiSuccess(orders.map((order) => serializeDoc(order)), "Orders loaded");
+      return apiSuccess(orders.map((order) => serializeStoreOrderForCustomer(order)), "Orders loaded");
     }
 
     const identity = await resolveCartIdentity(request);
     const filter = identity.userId
-      ? { user: identity.userId, userModel: identity.userModel }
+      ? { user: identity.userId }
       : { sessionId: identity.sessionId };
 
     const orders = await StoreOrderModel.find(filter).sort("-createdAt").lean();
 
-    const response = apiSuccess(orders.map((order) => serializeDoc(order)), "Orders loaded");
+    const response = apiSuccess(orders.map((order) => serializeStoreOrderForCustomer(order)), "Orders loaded");
     persistCartIdentity(response, identity);
     return response;
   } catch (error) {

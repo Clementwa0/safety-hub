@@ -4,29 +4,9 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { OrderModel } from "@/lib/models/Order";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireAdmin } from "@/lib/auth";
-
-const lineItemSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional(),
-  quantity: z.number().int().positive(),
-  unitPrice: z.number().nonnegative(),
-  taxRate: z.number().nonnegative().optional(),
-  discount: z.number().nonnegative().optional(),
-});
-
-// Same mismatch as the POST route: OrderForm always sends a full customer
-// object, never a bare id string. Accept the same union Quotations use.
-const customerInputSchema = z.union([
-  z.string().trim().min(1),
-  z.object({
-    name: z.string().trim().min(1),
-    email: z.string().trim().email().optional().or(z.literal("")),
-    phone: z.string().trim().optional(),
-    company: z.string().trim().optional(),
-    address: z.string().trim().optional(),
-  }),
-]);
+import { requireStaff } from "@/lib/auth";
+import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
+import { findOrCreateCustomer } from "@/lib/server/customers";
 
 const orderSchema = z.object({
   customer: customerInputSchema.optional(),
@@ -39,7 +19,7 @@ const orderSchema = z.object({
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -60,7 +40,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -88,13 +68,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         }
         order.customer = customer._id;
       } else {
-        const customer = await CustomerModel.create({
-          name: parsed.data.customer.name,
-          email: parsed.data.customer.email || undefined,
-          phone: parsed.data.customer.phone || undefined,
-          company: parsed.data.customer.company || undefined,
-          address: parsed.data.customer.address || undefined,
-        });
+        const customer = await findOrCreateCustomer(parsed.data.customer);
         order.customer = customer._id;
       }
     }
@@ -110,7 +84,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

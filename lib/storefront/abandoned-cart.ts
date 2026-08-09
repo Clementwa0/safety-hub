@@ -8,7 +8,6 @@ import { StorefrontCustomerModel } from "@/lib/models/StorefrontCustomer";
 import { formatKES } from "@/lib/format";
 
 const DEFAULT_THRESHOLD_HOURS = 24;
-const CUSTOMER_MODEL = "StorefrontCustomer";
 const BATCH_LIMIT = 30; // Prevents function timeout by capping per run
 const CHUNK_SIZE = 5;    // Number of emails to send concurrently
 
@@ -67,7 +66,6 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
 
   // Added .limit(BATCH_LIMIT) to ensure we don't exceed Vercel max execution time
   const staleCarts = await CartModel.find({
-    userModel: CUSTOMER_MODEL,
     user: { $exists: true },
     "items.0": { $exists: true },
     updatedAt: { $lte: cutoff },
@@ -120,8 +118,14 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
     ),
   ].map((id) => new mongoose.Types.ObjectId(id));
 
+  // Post-unification, `Cart.user` can point at a staff/admin account too
+  // (there's only one identity model). Restrict to role: "customer" here
+  // so staff/admin carts are never sent this marketing email — a cart
+  // whose owner isn't in this map falls through the existing
+  // `!customer?.email` skip below, same as it always did.
   const customers = await StorefrontCustomerModel.find({
     _id: { $in: customerIds },
+    role: "customer",
   }).lean();
 
   const customerMap = new Map(

@@ -9,6 +9,13 @@ export const maxDuration = 60;
 /**
  * Triggers the abandoned-cart reminder email sweep. Intended to be called
  * on a schedule by a scheduler such as Vercel Cron.
+ *
+ * Auth is via the `Authorization: Bearer <CRON_SECRET>` header ONLY. A
+ * `?secret=` query-string fallback used to also be accepted, but query
+ * strings routinely end up in server access logs, proxy logs, and browser
+ * history — any of which could leak the secret. Vercel Cron (and any other
+ * sane scheduler) sends the secret as a header, so there's no legitimate
+ * caller that needs the query-string form.
  */
 export async function GET(request: NextRequest) {
   const configuredSecret = process.env.CRON_SECRET;
@@ -18,9 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   const authHeader = request.headers.get("authorization");
-  const headerSecret = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  const querySecret = request.nextUrl.searchParams.get("secret");
-  const providedSecret = headerSecret || querySecret;
+  const providedSecret = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
   if (providedSecret !== configuredSecret) {
     return apiError("Unauthorized", [], 401);

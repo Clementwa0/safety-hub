@@ -7,11 +7,9 @@ export interface ICartItem {
   quantity: number;
 }
 
-export type CartUserModel = "User" | "StorefrontCustomer";
-
 export interface ICart extends Document {
+  /** Refs `StorefrontCustomer` — the single identity collection post-unification. */
   user?: mongoose.Types.ObjectId;
-  userModel?: CartUserModel;
   sessionId?: string;
   items: ICartItem[];
   abandonedEmailSentAt?: Date;
@@ -55,12 +53,7 @@ const cartSchema = new Schema<ICart>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      refPath: "userModel",
-      default: undefined,
-    },
-    userModel: {
-      type: String,
-      enum: ["User", "StorefrontCustomer"],
+      ref: "StorefrontCustomer",
       default: undefined,
     },
     sessionId: {

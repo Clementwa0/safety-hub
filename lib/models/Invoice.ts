@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
 
 export interface IInvoiceLineItem {
+  productId?: string;
   name: string;
   description?: string;
   quantity: number;
@@ -30,6 +31,7 @@ const invoiceSchema = new Schema<IInvoice>(
     number: { type: String, required: true, unique: true, trim: true },
     customer: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
     items: [{
+      productId: { type: String },
       name: { type: String, required: true },
       description: { type: String },
       quantity: { type: Number, required: true, min: 1 },

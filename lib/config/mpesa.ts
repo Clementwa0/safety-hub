@@ -1,11 +1,10 @@
 /**
  * Presentation-facing M-Pesa configuration for the storefront checkout.
  *
- * This controls what the `MpesaPaymentCard` shows to shoppers — Paybill vs
- * Till, and the business number/name printed on the card. It is
- * intentionally separate from the server-side Daraja STK Push credentials
- * in `lib/mpesa.ts` (consumer key/secret, shortcode, passkey), which stay
- * server-only and are never exposed to the browser.
+ * This controls what `MpesaPaymentCard` shows to shoppers — Paybill vs
+ * Till, and the business number/name printed on the card. Customers pay
+ * manually to this Paybill/Till and staff confirm the payment from the
+ * admin panel; there is no STK push or Daraja integration.
  *
  * Values are read from `NEXT_PUBLIC_*` env vars so they're safe to bundle
  * into client code. Override them in `.env` — do not hardcode business

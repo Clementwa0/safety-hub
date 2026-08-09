@@ -45,7 +45,6 @@ export async function linkGuestOrdersToCustomer(
         {
           $set: {
             user: new mongoose.Types.ObjectId(customerId),
-            userModel: "StorefrontCustomer",
           },
         },
         { session },

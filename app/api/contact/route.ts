@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { z } from "zod";
 
 import { connectToDatabase } from "@/lib/db";
 import { ContactMessageModel } from "@/lib/models/ContactMessage";
+import { apiError, apiSuccess } from "@/lib/api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,8 +34,15 @@ export async function POST(request: Request) {
     const parsed = contactSchema.safeParse(body);
 
     if (!parsed.success) {
-      const errorMessage = parsed.error.issues[0]?.message || "Invalid form submission.";
-      return NextResponse.json({ ok: false, error: errorMessage }, { status: 400 });
+      // Same envelope every other API route uses (apiError/apiSuccess from
+      // lib/api.ts) - this route previously returned its own bespoke
+      // `{ ok, error }` shape with only the first validation issue, so the
+      // shared http client's error-detail handling never applied to it.
+      return apiError(
+        "Validation failed",
+        parsed.error.issues.map((issue) => issue.message),
+        400,
+      );
     }
 
     const { name, email, phone, subject, message } = parsed.data;
@@ -131,16 +138,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json(
-      {
-        ok: true,
-        message: emailSent
-          ? "Message sent successfully."
-          : "Your message was received. We'll get back to you soon.",
-        id: String(saved._id),
-        emailSent,
-      },
-      { status: 200 },
+    return apiSuccess(
+      { id: String(saved._id), emailSent },
+      emailSent
+        ? "Message sent successfully."
+        : "Your message was received. We'll get back to you soon.",
     );
   } catch (error) {
     const message =
@@ -148,6 +150,6 @@ export async function POST(request: Request) {
         ? error.message
         : "Unable to save your message. Please try again later.";
     console.error("[contact] Failed to save contact message:", error);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    return apiError(message, [], 500);
   }
 }

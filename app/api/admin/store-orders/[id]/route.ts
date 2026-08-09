@@ -4,9 +4,10 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
 import { ProductModel } from "@/lib/models/Product";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { updateStoreOrderSchema } from "@/lib/storefront/validation";
 import { validateStatusTransition } from "@/lib/storefront/order-status";
+import { validatePaymentStatusTransition } from "@/lib/storefront/payment-status";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -14,7 +15,7 @@ interface RouteContext {
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -39,7 +40,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -89,7 +90,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           }
         }
 
-        if (parsed.data.paymentStatus) {
+        if (parsed.data.paymentStatus && parsed.data.paymentStatus !== order.paymentStatus) {
+          const paymentTransitionError = validatePaymentStatusTransition(
+            order.paymentStatus,
+            parsed.data.paymentStatus,
+          );
+          if (paymentTransitionError) {
+            throw new Error(`__TRANSITION__${paymentTransitionError}`);
+          }
+
           order.paymentStatus = parsed.data.paymentStatus;
         }
 

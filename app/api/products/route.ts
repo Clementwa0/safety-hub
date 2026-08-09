@@ -4,13 +4,13 @@ import { apiError, apiSuccess, getPaginationParams, serializeProduct } from "@/l
 import { connectToDatabase } from "@/lib/db";
 import { ProductModel } from "@/lib/models/Product";
 import { CategoryModel } from "@/lib/models/Category";
-import { requireAdmin } from "@/lib/auth";
-import { productSchema } from "@/lib/schemas/product";
-import { slugify } from "@/lib/validations";
+import { requireStaff } from "@/lib/auth";
+import { productSchema } from "@/lib/validation/product";
+import { slugify } from "@/lib/validation";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     const isAdmin = Boolean(user);
 
     const { searchParams } = new URL(request.url);
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

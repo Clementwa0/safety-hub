@@ -7,7 +7,7 @@ import { customerOrderFilter } from "@/lib/storefront/ownership";
 import type {
   AccountOverview,
   AccountOverviewOrder,
-} from "@/types/account";
+} from "@/types/storefront/account";
 
 export async function GET() {
   try {

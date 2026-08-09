@@ -3,7 +3,7 @@ import { cache } from "react";
 import { connectToDatabase } from "@/lib/db";
 import { ProductModel } from "@/lib/models/Product";
 import { CategoryModel } from "@/lib/models/Category";
-import { normalizeProduct } from "@/services/product.service";
+import { normalizeProduct } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
 import type { CategoryWithCount } from "@/types/category";
 
@@ -63,6 +63,44 @@ export const getProductsByCategoryId = cache(
     await connectToDatabase();
 
     const filter: Record<string, unknown> = { category: categoryId };
+    if (status && status !== "all") {
+      filter.status = status;
+    }
+
+    const products = await ProductModel.find(filter)
+      .populate("category", "name slug")
+      .sort("-createdAt")
+      .lean();
+
+    return products.map((product) => {
+      const populatedCategory = product.category as unknown as
+        | { _id: unknown; name: string; slug: string }
+        | null
+        | undefined;
+
+      return normalizeProduct({
+        ...product,
+        _id: String((product as { _id: unknown })._id),
+        category: populatedCategory?.name ?? "Safety Equipment",
+      } as unknown as Product & { _id?: string; [key: string]: unknown });
+    });
+  },
+);
+
+/**
+ * Fetches active-by-default public products flagged either `featured` or
+ * `isNewArrival`. Used by the dedicated `/featured` and `/new-arrivals`
+ * landing pages — never query products by these flags directly elsewhere,
+ * always go through here so category names stay populated consistently.
+ */
+export const getProductsByFlag = cache(
+  async (
+    flag: "featured" | "isNewArrival",
+    status: string = "active",
+  ): Promise<Product[]> => {
+    await connectToDatabase();
+
+    const filter: Record<string, unknown> = { [flag]: true };
     if (status && status !== "all") {
       filter.status = status;
     }
