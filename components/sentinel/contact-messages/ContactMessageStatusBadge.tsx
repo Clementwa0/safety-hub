@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { ContactMessageStatus } from "@/types/contact-message";
+import type { ContactMessageStatus } from "@/types/sentinel/contact-message";
 
 const STATUS_CONFIG = {
   new: {

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatKES } from "@/lib/format";
-import { adminStoreOrderService } from "@/services/admin-store-order.service";
+import { adminStoreOrderService } from "@/services/sentinel/admin-store-order.service";
 import {
   STORE_ORDER_STATUSES,
   STORE_PAYMENT_STATUSES,
@@ -29,7 +29,7 @@ import {
   type StoreOrderStats,
   type StoreOrderStatus,
   type StorePaymentStatus,
-} from "@/types/store-order";
+} from "@/types/storefront/store-order";
 
 const PAGE_SIZE = 10;
 

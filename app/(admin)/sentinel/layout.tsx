@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { AdminLayout } from "@/components/layouts";
+import { SentinelLayout } from "@/components/layouts";
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return <AdminLayout>{children}</AdminLayout>;
+  return <SentinelLayout>{children}</SentinelLayout>;
 }

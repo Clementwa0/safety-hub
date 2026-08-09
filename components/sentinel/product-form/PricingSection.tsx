@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { formatKES } from "@/lib/format";
 import { getDiscountPercent } from "@/types/product";
-import type { ProductFormInput } from "@/lib/schemas/product";
+import type { ProductFormInput } from "@/lib/validation/product";
 import { FieldError } from "./FieldError";
 
 export function PricingSection() {

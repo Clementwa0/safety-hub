@@ -20,9 +20,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { categoryService } from "@/services/category.service";
+import { categoryService } from "@/services/shared/category.service";
 import type { CategoryWithCount } from "@/types/category";
-import type { ProductFormInput } from "@/lib/schemas/product";
+import type { ProductFormInput } from "@/lib/validation/product";
 import { FieldError } from "./FieldError";
 
 export function BasicInfoSection() {

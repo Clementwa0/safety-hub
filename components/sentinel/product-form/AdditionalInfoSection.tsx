@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { ProductFormInput } from "@/lib/schemas/product";
+import type { ProductFormInput } from "@/lib/validation/product";
 
 export function AdditionalInfoSection() {
   const { control, register } = useFormContext<ProductFormInput>();

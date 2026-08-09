@@ -15,7 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ContactMessageStatusBadge } from "@/components/sentinel/contact-messages/ContactMessageStatusBadge";
 import { formatDate } from "@/lib/format";
-import type { ContactMessage, ContactMessageStatus } from "@/types/contact-message";
+import type { ContactMessage, ContactMessageStatus } from "@/types/sentinel/contact-message";
 
 interface ContactMessageDetailDialogProps {
   open: boolean;

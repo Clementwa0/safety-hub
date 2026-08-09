@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { formatDate, formatKES } from "@/lib/format";
 import { computeTotals, lineItemTotal } from "@/lib/sales";
-import type { Customer, LineItem } from "@/types/sales";
+import type { Customer, LineItem } from "@/types/sentinel/sales";
 
 interface DocumentPreviewProps {
   documentType: string;

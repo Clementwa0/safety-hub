@@ -15,7 +15,7 @@ import {
 import { OrderStatusBadge } from "@/components/sentinel/sales/StatusBadge";
 import { formatDate, formatKES } from "@/lib/format";
 import { computeTotals } from "@/lib/sales";
-import type { Order } from "@/types/order";
+import type { Order } from "@/types/sentinel/order";
 
 interface OrderTableProps {
   orders: Order[];

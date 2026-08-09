@@ -17,8 +17,8 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { invoiceService } from "@/services/invoice.service";
-import { INVOICE_STATUSES, type Invoice } from "@/types/invoice";
+import { invoiceService } from "@/services/sentinel/invoice.service";
+import { INVOICE_STATUSES, type Invoice } from "@/types/sentinel/invoice";
 import { usePagination } from "@/hooks/usePagination";
 
 export default function AdminInvoicesPage() {

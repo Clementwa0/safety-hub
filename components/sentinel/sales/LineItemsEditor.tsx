@@ -15,9 +15,9 @@ import {
 } from "@/components/ui/select";
 import { formatKES } from "@/lib/format";
 import { computeTotals, createLineItem, lineItemTotal } from "@/lib/sales";
-import { productService } from "@/services/product.service";
+import { productService } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
-import type { LineItem } from "@/types/sales";
+import type { LineItem } from "@/types/sentinel/sales";
 
 interface LineItemsEditorProps {
   items: LineItem[];

@@ -18,8 +18,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatKES } from "@/lib/format";
-import { categoryService } from "@/services/category.service";
-import { productService } from "@/services/product.service";
+import { categoryService } from "@/services/shared/category.service";
+import { productService } from "@/services/shared/product.service";
 import type { CategoryWithCount } from "@/types/category";
 import type { Product } from "@/types/product";
 

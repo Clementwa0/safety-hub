@@ -23,13 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
-import { contactMessageService } from "@/services/contact-message.service";
+import { contactMessageService } from "@/services/sentinel/contact-message.service";
 import {
   CONTACT_MESSAGE_STATUSES,
   type ContactMessage,
   type ContactMessageStats,
   type ContactMessageStatus,
-} from "@/types/contact-message";
+} from "@/types/sentinel/contact-message";
 
 const PAGE_SIZE = 10;
 

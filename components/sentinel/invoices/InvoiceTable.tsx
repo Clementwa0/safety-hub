@@ -6,8 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { InvoiceStatusBadge } from "@/components/sentinel/sales/StatusBadge";
 import { formatKES, formatDate } from "@/lib/format";
 import { computeDocumentTotals } from "@/lib/sales";
-import { invoiceService } from "@/services/invoice.service";
-import type { Invoice } from "@/types/invoice";
+import { invoiceService } from "@/services/sentinel/invoice.service";
+import type { Invoice } from "@/types/sentinel/invoice";
 
 type Props = { invoices: Invoice[]; onDelete: (inv: Invoice) => void };
 

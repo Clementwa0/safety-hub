@@ -21,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { orderService } from "@/services/order.service";
-import { ORDER_STATUSES, type Order } from "@/types/order";
+import { orderService } from "@/services/sentinel/order.service";
+import { ORDER_STATUSES, type Order } from "@/types/sentinel/order";
 import { usePagination } from "@/hooks/usePagination";
 
 export default function AdminOrdersPage() {

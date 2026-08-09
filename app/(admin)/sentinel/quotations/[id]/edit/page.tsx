@@ -8,8 +8,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { quotationService } from "@/services/quotation.service";
-import type { Quotation } from "@/types/quotation";
+import { quotationService } from "@/services/sentinel/quotation.service";
+import type { Quotation } from "@/types/sentinel/quotation";
 
 export default function EditQuotationPage() {
   const params = useParams<{ id: string }>();

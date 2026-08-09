@@ -12,9 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { invoiceService } from "@/services/invoice.service";
-import { INVOICE_STATUSES, type Invoice, type InvoiceStatus } from "@/types/invoice";
-import type { Customer, LineItem } from "@/types/sales";
+import { invoiceService } from "@/services/sentinel/invoice.service";
+import { INVOICE_STATUSES, type Invoice, type InvoiceStatus } from "@/types/sentinel/invoice";
+import type { Customer, LineItem } from "@/types/sentinel/sales";
 import { toDateInputValue, fromDateInputValue } from "@/lib/format";
 
 const EMPTY_CUSTOMER: Customer = { name: "", email: "", phone: "", company: "", address: "" };

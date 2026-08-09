@@ -17,8 +17,8 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { quotationService } from "@/services/quotation.service";
-import { QUOTATION_STATUSES, type Quotation } from "@/types/quotation";
+import { quotationService } from "@/services/sentinel/quotation.service";
+import { QUOTATION_STATUSES, type Quotation } from "@/types/sentinel/quotation";
 import { usePagination } from "@/hooks/usePagination";
 
 export default function AdminQuotationsPage() {

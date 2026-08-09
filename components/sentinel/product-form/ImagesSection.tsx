@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ImageUrlInput } from "@/components/shared/ImageUrlInput";
-import type { ProductFormInput } from "@/lib/schemas/product";
+import type { ProductFormInput } from "@/lib/validation/product";
 import { FieldError } from "./FieldError";
 
 export function ImagesSection() {

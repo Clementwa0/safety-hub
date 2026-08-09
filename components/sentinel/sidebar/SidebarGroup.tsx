@@ -11,7 +11,7 @@ import {
 
 import SidebarItem from "./SidebarItem";
 import { sentinelNavigation, type NavigationItem } from "./navigation";
-import { contactMessageService } from "@/services/contact-message.service";
+import { contactMessageService } from "@/services/sentinel/contact-message.service";
 
 interface AppSidebarGroupProps {
   collapsed: boolean;

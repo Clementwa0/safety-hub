@@ -8,8 +8,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { invoiceService } from "@/services/invoice.service";
-import type { Invoice } from "@/types/invoice";
+import { invoiceService } from "@/services/sentinel/invoice.service";
+import type { Invoice } from "@/types/sentinel/invoice";
 
 export default function EditInvoicePage() {
   const params = useParams<{ id: string }>();

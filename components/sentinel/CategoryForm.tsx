@@ -17,8 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUrlInput } from "@/components/shared/ImageUrlInput";
-import { categoryService } from "@/services/category.service";
-import { hasErrors, validateCategory, type ValidationErrors } from "@/lib/validations";
+import { categoryService } from "@/services/shared/category.service";
+import { hasErrors, validateCategory, type ValidationErrors } from "@/lib/validation";
 import type { AdminCategory, CategoryInput } from "@/types/category";
 
 interface CategoryFormProps {

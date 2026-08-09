@@ -1,9 +1,9 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { OrderStatus } from "@/types/order";
-import type { QuotationStatus } from "@/types/quotation";
-import type { InvoiceStatus } from "@/types/invoice";
+import type { OrderStatus } from "@/types/sentinel/order";
+import type { QuotationStatus } from "@/types/sentinel/quotation";
+import type { InvoiceStatus } from "@/types/sentinel/invoice";
 
 type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
 

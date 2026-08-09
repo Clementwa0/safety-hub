@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { ProductFormInput } from "@/lib/schemas/product";
+import type { ProductFormInput } from "@/lib/validation/product";
 
 export function OptionsSection() {
   const { control } = useFormContext<ProductFormInput>();

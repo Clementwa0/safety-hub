@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PRODUCT_STATUSES, PRODUCT_STATUS_LABELS } from "@/types/product";
-import type { ProductFormInput } from "@/lib/schemas/product";
+import type { ProductFormInput } from "@/lib/validation/product";
 import { FieldError } from "./FieldError";
 
 export function InventorySection() {

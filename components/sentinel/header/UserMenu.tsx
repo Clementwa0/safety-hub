@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import {
   HelpCircle,
   LogOut,
@@ -9,10 +8,10 @@ import {
 } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
+import { signOut, useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { apiRequest } from '@/lib/http'
 import { AUTH } from '@/lib/routes'
 
 import {
@@ -23,25 +22,10 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 
-interface UserProfile {
-  id: string
-  name: string
-  email: string
-  role: string
-  createdAt?: string
-}
-
 const UserMenu = () => {
   const router = useRouter()
-  const [user, setUser] = useState<UserProfile | null>(null)
-
-  useEffect(() => {
-    void apiRequest<{ user: UserProfile }>('/api/auth/me').then((payload) => {
-      setUser(payload.user)
-    }).catch(() => {
-      setUser(null)
-    })
-  }, [])
+  const { data: session } = useSession()
+  const user = session?.user
 
   const initials =
     user?.name
@@ -51,14 +35,12 @@ const UserMenu = () => {
       .toUpperCase() ?? 'U'
 
   const handleLogout = async () => {
-    try {
-      await apiRequest('/api/auth/logout', { method: 'POST' })
-    } catch {
-      // Ignore logout errors and continue with local redirect.
-    }
+    const name = user?.name
+
+    await signOut({ redirect: false })
 
     toast.success('Logged out successfully', {
-      description: `Goodbye ${user?.name ?? 'there'}!`
+      description: `Goodbye ${name ?? 'there'}!`
     })
 
     router.push(AUTH.LOGIN)

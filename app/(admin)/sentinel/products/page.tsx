@@ -19,8 +19,8 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { TableSkeleton } from "@/components/shared/Loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { categoryService } from "@/services/category.service";
-import { productService, type BulkProductAction } from "@/services/product.service";
+import { categoryService } from "@/services/shared/category.service";
+import { productService, type BulkProductAction } from "@/services/shared/product.service";
 import type { Product, ProductStatus } from "@/types/product";
 import type { CategoryWithCount } from "@/types/category";
 

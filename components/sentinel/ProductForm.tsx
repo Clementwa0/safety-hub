@@ -9,8 +9,8 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { productService } from "@/services/product.service";
-import { productSchema, type ProductFormInput, type ProductFormValues } from "@/lib/schemas/product";
+import { productService } from "@/services/shared/product.service";
+import { productSchema, type ProductFormInput, type ProductFormValues } from "@/lib/validation/product";
 import type { Product } from "@/types/product";
 
 import { BasicInfoSection } from "./product-form/BasicInfoSection";

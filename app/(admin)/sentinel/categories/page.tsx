@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { TableSkeleton } from "@/components/shared/Loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { categoryService } from "@/services/category.service";
+import { categoryService } from "@/services/shared/category.service";
 import type { AdminCategory, CategoryWithCount } from "@/types/category";
 
 export default function AdminCategoriesPage() {

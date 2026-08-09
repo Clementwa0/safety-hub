@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { QuotationStatusBadge } from "@/components/sentinel/sales/StatusBadge";
 import { formatKES, formatDate } from "@/lib/format";
 import { computeDocumentTotals } from "@/lib/sales";
-import type { Quotation } from "@/types/quotation";
+import type { Quotation } from "@/types/sentinel/quotation";
 
 type Props = { quotations: Quotation[]; onDelete: (q: Quotation) => void; onDuplicate: (q: Quotation) => void };
 

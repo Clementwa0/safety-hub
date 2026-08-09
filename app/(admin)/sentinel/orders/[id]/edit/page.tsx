@@ -8,8 +8,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { orderService } from "@/services/order.service";
-import type { Order } from "@/types/order";
+import { orderService } from "@/services/sentinel/order.service";
+import type { Order } from "@/types/sentinel/order";
 
 export default function EditOrderPage() {
   const params = useParams<{ id: string }>();

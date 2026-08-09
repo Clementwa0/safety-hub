@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { invoiceService } from "@/services/invoice.service";
-import { INVOICE_STATUSES, type Invoice, type InvoiceStatus } from "@/types/invoice";
+import { invoiceService } from "@/services/sentinel/invoice.service";
+import { INVOICE_STATUSES, type Invoice, type InvoiceStatus } from "@/types/sentinel/invoice";
 import { formatKES } from "@/lib/format";
 
 export default function InvoiceViewPage() {

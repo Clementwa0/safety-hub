@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { productService } from "@/services/product.service";
+import { productService } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
 
 export default function EditProductPage() {

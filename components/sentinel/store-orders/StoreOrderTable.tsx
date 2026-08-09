@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { StoreOrderStatusBadge, StorePaymentStatusBadge } from "@/components/checkout/StoreOrderStatusBadge";
 import { formatDate, formatKES } from "@/lib/format";
-import type { StoreOrder } from "@/types/store-order";
+import type { StoreOrder } from "@/types/storefront/store-order";
 
 interface StoreOrderTableProps {
   orders: StoreOrder[];

@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PRODUCT_STATUSES, PRODUCT_STATUS_LABELS, type ProductStatus } from "@/types/product";
-import type { BulkProductAction } from "@/services/product.service";
+import type { BulkProductAction } from "@/services/shared/product.service";
 
 interface BulkActionsBarProps {
   count: number;

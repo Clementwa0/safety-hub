@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { quotationService } from "@/services/quotation.service";
-import { QUOTATION_STATUSES, type Quotation, type QuotationStatus } from "@/types/quotation";
+import { quotationService } from "@/services/sentinel/quotation.service";
+import { QUOTATION_STATUSES, type Quotation, type QuotationStatus } from "@/types/sentinel/quotation";
 
 export default function QuotationViewPage() {
   const params = useParams<{ id: string }>();

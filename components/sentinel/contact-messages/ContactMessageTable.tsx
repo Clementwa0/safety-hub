@@ -14,7 +14,7 @@ import {
 import { ContactMessageStatusBadge } from "@/components/sentinel/contact-messages/ContactMessageStatusBadge";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { ContactMessage } from "@/types/contact-message";
+import type { ContactMessage } from "@/types/sentinel/contact-message";
 
 interface ContactMessageTableProps {
   messages: ContactMessage[];

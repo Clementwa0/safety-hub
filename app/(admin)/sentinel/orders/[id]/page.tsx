@@ -21,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { orderService } from "@/services/order.service";
-import { ORDER_STATUSES, type Order, type OrderStatus } from "@/types/order";
+import { orderService } from "@/services/sentinel/order.service";
+import { ORDER_STATUSES, type Order, type OrderStatus } from "@/types/sentinel/order";
 
 export default function OrderViewPage() {
   const params = useParams<{ id: string }>();

@@ -24,9 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { orderService } from "@/services/order.service";
-import { ORDER_STATUSES, type Order, type OrderInput, type OrderStatus } from "@/types/order";
-import type { Customer, LineItem } from "@/types/sales";
+import { orderService } from "@/services/sentinel/order.service";
+import { ORDER_STATUSES, type Order, type OrderInput, type OrderStatus } from "@/types/sentinel/order";
+import type { Customer, LineItem } from "@/types/sentinel/sales";
 import { createLineItem } from "@/lib/sales";
 
 const EMPTY_CUSTOMER: Customer = { name: "" };

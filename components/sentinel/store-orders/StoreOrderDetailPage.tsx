@@ -21,14 +21,14 @@ import {
 } from "@/components/ui/select";
 import { StoreOrderStatusBadge, StorePaymentStatusBadge } from "@/components/checkout/StoreOrderStatusBadge";
 import { formatDate, formatKES } from "@/lib/format";
-import { adminStoreOrderService } from "@/services/admin-store-order.service";
+import { adminStoreOrderService } from "@/services/sentinel/admin-store-order.service";
 import { validateStatusTransition } from "@/lib/storefront/order-status";
 import {
   STORE_PAYMENT_STATUSES,
   type StoreOrder,
   type StoreOrderStatus,
   type StorePaymentStatus,
-} from "@/types/store-order";
+} from "@/types/storefront/store-order";
 
 const STATUS_ACTIONS: { label: string; target: StoreOrderStatus }[] = [
   { label: "Confirm", target: "confirmed" },
