@@ -123,9 +123,14 @@ export default function ContactForm() {
 
       const body = await response.json().catch(() => null);
 
-      if (!response.ok) {
-        const errorMessage =
-          body?.error || body?.message || "Could not send your message. Please try again later.";
+      if (!response.ok || !body?.success) {
+        // Same envelope every other API route returns
+        // ({ success, message, errors }) - surface the validation details
+        // (e.g. "A valid email address is required") instead of just the
+        // generic top-level message.
+        const errorMessage = body?.errors?.length
+          ? `${body.message || "Validation failed"}: ${body.errors.join(", ")}`
+          : body?.message || "Could not send your message. Please try again later.";
         toast.error(errorMessage);
         return;
       }

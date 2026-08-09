@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { productService } from "@/services/product.service";
+import { productService } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
 
 interface UseProductReturn {

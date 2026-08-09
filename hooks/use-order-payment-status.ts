@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { storeOrderService } from "@/services/store-order.service";
-import type { StoreOrder, StorePaymentStatus } from "@/types/store-order";
+import { storeOrderService } from "@/services/storefront/store-order.service";
+import type { StoreOrder, StorePaymentStatus } from "@/types/storefront/store-order";
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLL_DURATION_MS = 10 * 60 * 1000; // 10 minutes

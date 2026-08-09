@@ -9,11 +9,7 @@ import type {
   SortKey,
   SortOption,
   ViewMode,
-} from "@/types/shop";
-
-/* -------------------------------------------------------------------------- */
-/* Constants                                                                   */
-/* -------------------------------------------------------------------------- */
+} from "@/types/storefront/shop";
 
 export const PRICE_BOUNDS: PriceRange = { min: 0, max: 100_000 };
 
@@ -57,10 +53,6 @@ export const PRICE_PRESETS: { label: string; range: PriceRange }[] = [
   { label: "10,000+", range: { min: 10_000, max: PRICE_BOUNDS.max } },
 ];
 
-/* -------------------------------------------------------------------------- */
-/* Formatting                                                                  */
-/* -------------------------------------------------------------------------- */
-
 const currencyFormatter = new Intl.NumberFormat("en-KE", {
   style: "currency",
   currency: CURRENCY,
@@ -86,10 +78,6 @@ export function clampPrice(value: number): number {
 export function isDefaultPriceRange(range: PriceRange): boolean {
   return range.min <= PRICE_BOUNDS.min && range.max >= PRICE_BOUNDS.max;
 }
-
-/* -------------------------------------------------------------------------- */
-/* URL (de)serialisation                                                       */
-/* -------------------------------------------------------------------------- */
 
 const SORT_KEYS = SORT_OPTIONS.map((option) => option.value);
 const OFFER_KEYS = OFFER_OPTIONS.map((option) => option.value);
@@ -149,10 +137,6 @@ export function filtersToParams(filters: FilterState): URLSearchParams {
   return params;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Option builders                                                             */
-/* -------------------------------------------------------------------------- */
-
 function countBy(products: Product[], pick: (p: Product) => string | undefined) {
   const counts = new Map<string, number>();
   for (const product of products) {
@@ -176,10 +160,6 @@ export function buildCategoryOptions(products: Product[]): FilterOption[] {
 export function buildBrandOptions(products: Product[]): FilterOption[] {
   return toOptions(countBy(products, (p) => p.brand));
 }
-
-/* -------------------------------------------------------------------------- */
-/* Filtering + sorting                                                         */
-/* -------------------------------------------------------------------------- */
 
 export function isOnSale(product: Product): boolean {
   return (
@@ -257,10 +237,6 @@ export function applyFilters(
 ): Product[] {
   return sortProducts(filterProducts(products, filters), filters.sort);
 }
-
-/* -------------------------------------------------------------------------- */
-/* Active filter derivation                                                    */
-/* -------------------------------------------------------------------------- */
 
 export function countActiveFilters(filters: FilterState): number {
   return (

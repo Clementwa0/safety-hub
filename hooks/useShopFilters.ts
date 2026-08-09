@@ -11,7 +11,7 @@ import type {
   PriceRange,
   SortKey,
   ViewMode,
-} from "@/types/shop";
+} from "@/types/storefront/shop";
 
 const DEFAULT_PRICE_RANGE: PriceRange = { min: 0, max: 100000 };
 

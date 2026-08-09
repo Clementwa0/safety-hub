@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { productService } from "@/services/product.service";
+import { productService } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
 
 const DEBOUNCE_MS = 300;
