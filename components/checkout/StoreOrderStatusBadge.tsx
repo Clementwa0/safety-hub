@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { StoreOrderStatus, StorePaymentStatus } from "@/types/store-order";
+import type { StoreOrderStatus, StorePaymentStatus } from "@/types/storefront/store-order";
 
 type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
 

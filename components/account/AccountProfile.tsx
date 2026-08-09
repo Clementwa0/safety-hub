@@ -9,8 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { accountService } from "@/services/account.service";
-import type { AccountMe } from "@/types/account";
+import { accountService } from "@/services/storefront/account.service";
+import type { AccountMe } from "@/types/storefront/account";
 
 export default function AccountProfile() {
   const { status } = useSession();

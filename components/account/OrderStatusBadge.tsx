@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { StoreOrderStatus } from "@/types/store-order";
+import type { StoreOrderStatus } from "@/types/storefront/store-order";
 
 const STATUS_STYLES: Record<StoreOrderStatus, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",

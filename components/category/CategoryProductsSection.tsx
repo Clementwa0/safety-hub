@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FaBox } from "react-icons/fa6";
 
 import type { Product } from "@/types/product";
-import type { SortKey } from "@/types/shop";
+import type { SortKey } from "@/types/storefront/shop";
 import ProductCard from "@/components/products/components/Product-Card";
 import { cn } from "@/lib/utils";
 

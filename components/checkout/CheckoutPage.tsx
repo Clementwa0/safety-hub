@@ -21,10 +21,10 @@ import EmptyCart from "@/components/cart/EmptyCart";
 import { formatKES } from "@/lib/format";
 import { MPESA_CONFIG, getMpesaNumberLabel } from "@/lib/config/mpesa";
 import { useCart } from "@/hooks/useCart";
-import { storeOrderService } from "@/services/store-order.service";
-import { accountService } from "@/services/account.service";
-import { checkoutFormSchema, toCheckoutInput, type CheckoutFormValues } from "@/lib/schemas/checkout";
-import type { StorePaymentMethod } from "@/types/store-order";
+import { storeOrderService } from "@/services/storefront/store-order.service";
+import { accountService } from "@/services/storefront/account.service";
+import { checkoutFormSchema, toCheckoutInput, type CheckoutFormValues } from "@/lib/validation/checkout";
+import type { StorePaymentMethod } from "@/types/storefront/store-order";
 import {
   buildWhatsAppOrderMessage,
   generateWhatsAppReference,

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
 import { formatDate, formatKES } from "@/lib/format";
-import type { AccountOverviewOrder } from "@/types/account";
+import type { AccountOverviewOrder } from "@/types/storefront/account";
 
 interface RecentOrdersProps {
   orders: AccountOverviewOrder[];

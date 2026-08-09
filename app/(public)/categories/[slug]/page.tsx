@@ -53,7 +53,6 @@ export async function generateStaticParams() {
   }
 }
 
-// Generate metadata for each category
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
 
@@ -178,7 +177,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         ]}
       />
 
-      {/* Category Hero */}
       <section className="border-b border-border bg-white">
         <div className="container mx-auto px-4 py-8 sm:py-10 lg:px-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
@@ -210,7 +208,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
       </section>
 
-      {/* Products Section */}
       <section className="mx-auto px-4 py-12 sm:py-16">
         <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <Link
@@ -246,11 +243,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
       </section>
 
-      {/* Info Section */}
       <section className="border-y border-border bg-white py-12 sm:py-16">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid gap-8 md:grid-cols-3 md:gap-10">
-            {/* Buying Guide */}
             <div className="rounded-2xl border border-gray-100 bg-slate-50/60 p-6">
               <h3 className="text-lg font-bold text-primary">Buying Guide</h3>
               <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
@@ -269,7 +264,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </ul>
             </div>
 
-            {/* Applications */}
             <div className="rounded-2xl border border-gray-100 bg-slate-50/60 p-6">
               <h3 className="text-lg font-bold text-primary">Applications</h3>
               <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
@@ -282,7 +276,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </ul>
             </div>
 
-            {/* Safety Standards */}
             <div className="rounded-2xl border border-gray-100 bg-slate-50/60 p-6">
               <h3 className="text-lg font-bold text-primary">Safety Standards</h3>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -307,7 +300,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
       </section>
 
-      {/* Related Categories */}
       {categoriesWithCount.filter((item) => item.name !== category).length > 0 && (
         <section className="container mx-auto px-4 py-12 sm:py-16 lg:px-8">
           <div className="flex items-end justify-between">

@@ -8,9 +8,9 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatKES, formatDate } from "@/lib/format";
-import { storeOrderService } from "@/services/store-order.service";
+import { storeOrderService } from "@/services/storefront/store-order.service";
 import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
-import type { StoreOrder } from "@/types/store-order";
+import type { StoreOrder } from "@/types/storefront/store-order";
 
 export default function AccountOrdersPage() {
   const { data: session, status } = useSession();

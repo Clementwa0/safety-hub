@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { FilterOption, FilterState } from "@/types/shop";
+import type { FilterOption, FilterState } from "@/types/storefront/shop";
 import type { UseShopFiltersResult } from "@/hooks/useShopFilters";
 
 import { FilterOptionList } from "./FilterOptionList";

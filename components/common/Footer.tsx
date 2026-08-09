@@ -15,7 +15,7 @@ import {
   toCategoryLinks,
   type CategoryLink,
 } from ".";
-import { categoryService } from "@/services/category.service";
+import { categoryService } from "@/services/shared/category.service";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();

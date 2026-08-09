@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AddressFormDialog } from "@/components/account/AddressFormDialog";
-import { addressService } from "@/services/address.service";
-import type { Address } from "@/types/address";
-import type { AddressFormValues } from "@/lib/schemas/address";
+import { addressService } from "@/services/storefront/address.service";
+import type { Address } from "@/types/storefront/address";
+import type { AddressFormValues } from "@/lib/validation/address";
 
 export default function AccountAddresses() {
   const { status } = useSession();

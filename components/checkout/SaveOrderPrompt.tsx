@@ -6,8 +6,8 @@ import { FaGoogle, FaEnvelope, FaXmark, FaCircleCheck } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { accountService } from "@/services/account.service";
-import type { StoreOrder } from "@/types/store-order";
+import { accountService } from "@/services/storefront/account.service";
+import type { StoreOrder } from "@/types/storefront/store-order";
 
 interface SaveOrderPromptProps {
   order: StoreOrder;
@@ -32,7 +32,7 @@ export default function SaveOrderPrompt({ order }: SaveOrderPromptProps) {
     typeof window !== "undefined" ? window.location.href : `/checkout/success?order=${order.orderNumber}`;
 
   // Once signed in (e.g. after returning from the Google/email flow), link
-  // this and any other guest orders to the account. `lib/customer-auth.ts`
+  // this and any other guest orders to the account. `lib/auth/config.ts`
   // already does this server-side on every sign-in — this is a client-side
   // fallback/confirmation so the UI can reflect it immediately without a
   // page reload.

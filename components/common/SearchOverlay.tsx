@@ -90,8 +90,6 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
                 aria-label="Clear search"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
               </button>
             )}
@@ -123,25 +121,6 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
                       </CommandItem>
                     ))}
                   </CommandGroup>
-
-                  {/* Popular Categories 
-                  <CommandGroup heading="Popular Categories">
-                    {["Helmets", "Gloves", "Boots", "Safety Vests", "Eye Protection"].map((category) => (
-                      <CommandItem
-                        key={category}
-                        value={category}
-                        onSelect={() => {
-                          onOpenChange(false);
-                          router.push(`/categories/${category.toLowerCase()}`);
-                        }}
-                        className="group cursor-pointer gap-3 py-2.5 hover:bg-primary/5"
-                      >
-                        <span className="text-sm">{category}</span>
-                        <span className="ml-auto text-xs text-muted-foreground/60">Browse</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                  */}
                   <div className="border-t border-border/50 p-4 text-center">
                     <p className="text-xs text-muted-foreground/60">
                       ⌘K or Ctrl+K to search anytime
@@ -237,16 +216,6 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
               )}
             </AnimatePresence>
           </CommandList>
-
-          {/* Keyboard shortcuts hint */}
-          <div className="absolute bottom-4 right-4 hidden items-center gap-2 text-xs text-muted-foreground/40 sm:flex">
-            <kbd className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
-            <span>or</span>
-            <kbd className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]">CtrlK</kbd>
-            <span className="mx-1">•</span>
-            <kbd className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-mono text-[10px]">ESC</kbd>
-            <span>to close</span>
-          </div>
         </Command>
       </div>
     </CommandDialog>

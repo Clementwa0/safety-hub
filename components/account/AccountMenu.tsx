@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,8 @@ export default function AccountMenu() {
       <Button
         variant="outline"
         className="hidden h-10 rounded-sm lg:inline-flex"
-        onClick={() => signIn("google", { callbackUrl: "/account" })}
+        nativeButton={false}
+        render={<Link href="/account/sign-in" />}
       >
         Sign in
       </Button>

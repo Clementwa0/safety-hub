@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCart } from "@/hooks/useCart";
-import { addressService } from "@/services/address.service";
+import { addressService } from "@/services/storefront/address.service";
 import {
   buildWhatsAppOrderMessage,
   generateWhatsAppReference,

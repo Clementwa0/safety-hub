@@ -1,6 +1,6 @@
 import { FaCheck } from "react-icons/fa6";
 import { cn } from "@/lib/utils";
-import type { StoreOrderStatus } from "@/types/store-order";
+import type { StoreOrderStatus } from "@/types/storefront/store-order";
 
 const STEPS: { key: StoreOrderStatus; label: string }[] = [
   { key: "pending", label: "Order Placed" },

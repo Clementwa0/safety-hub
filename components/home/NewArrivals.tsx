@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa6";
 
-import { productService } from "@/services/product.service";
+import { productService } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
 import ProductCard from "../products/components/Product-Card";
 
@@ -61,7 +61,7 @@ if (!loading && products.length === 0) {
           </div>
 
           <Link
-            href="/shop?sort=newest"
+            href="/new-arrivals"
             className="group inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-secondary"
           >
             See All

@@ -12,7 +12,7 @@ import {
   formatPriceRange,
 } from "@/lib/shopFilters";
 import { cn } from "@/lib/utils";
-import type { PriceRange } from "@/types/shop";
+import type { PriceRange } from "@/types/storefront/shop";
 
 export interface PriceFilterProps {
   value: PriceRange;

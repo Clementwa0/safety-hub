@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { ActiveFilterChip, SortKey, ViewMode } from "@/types/shop";
+import { ActiveFilterChip, SortKey, ViewMode } from "@/types/storefront/shop";
 import { SORT_OPTIONS } from "@/lib/shopFilters";
 
 export interface ShopToolbarProps {

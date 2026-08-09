@@ -6,7 +6,7 @@ import { Check, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { FilterOption } from "@/types/shop";
+import type { FilterOption } from "@/types/storefront/shop";
 
 export interface FilterOptionListProps {
   /** Accessible group label (visually hidden). */

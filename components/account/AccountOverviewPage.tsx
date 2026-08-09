@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccountSummaryCard } from "@/components/account/AccountSummaryCard";
 import { RecentOrders } from "@/components/account/RecentOrders";
-import { accountService } from "@/services/account.service";
-import type { AccountOverview } from "@/types/account";
+import { accountService } from "@/services/storefront/account.service";
+import type { AccountOverview } from "@/types/storefront/account";
 
 function OverviewSkeleton() {
   return (

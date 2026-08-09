@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { FaMagnifyingGlass } from "react-icons/fa6";
 import { AlertTriangle } from "lucide-react";
 
-import { productService } from "@/services/product.service";
+import { productService } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
 import ProductGrid from "@/components/products/components/ProductGrid";
 import { Breadcrumb } from "@/components/shared/ui-bits";

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa6";
 
-import { productService } from "@/services/product.service";
+import { productService } from "@/services/shared/product.service";
 import ProductCard, { type ProductCardItem } from "@/components/shared/ProductCard";
 
 export default function FeaturedProducts() {
@@ -74,7 +74,7 @@ export default function FeaturedProducts() {
           </div>
 
           <Link
-            href="/shop?featured=1"
+            href="/featured"
             className="group inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-secondary"
           >
             See All

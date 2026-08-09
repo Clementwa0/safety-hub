@@ -5,10 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FaChevronRight, FaStar } from "react-icons/fa6";
 
-/* -------------------------------------------------------------------------- */
-/*                               Section Header                               */
-/* -------------------------------------------------------------------------- */
-
 interface SectionHeaderProps {
   eyebrow?: string;
   title: string;
@@ -86,10 +82,6 @@ export function SectionHeader({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                  Counter                                   */
-/* -------------------------------------------------------------------------- */
-
 interface CounterProps {
   to: number;
   suffix?: string;
@@ -153,10 +145,6 @@ export function Counter({
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/*                                Breadcrumb                                  */
-/* -------------------------------------------------------------------------- */
 
 export interface BreadcrumbItem {
   label: string;
@@ -229,10 +217,6 @@ export function Breadcrumb({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                              Badge Component                               */
-/* -------------------------------------------------------------------------- */
-
 interface BadgeProps {
   children: React.ReactNode;
   variant?: "default" | "secondary" | "outline";
@@ -269,10 +253,6 @@ export function Badge({
     </span>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/*                             Stats Card Component                           */
-/* -------------------------------------------------------------------------- */
 
 interface StatsCardProps {
   label: string;
@@ -336,10 +316,6 @@ export function StatsCard({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                Section Wrapper                             */
-/* -------------------------------------------------------------------------- */
-
 interface SectionWrapperProps {
   children: React.ReactNode;
   className?: string;
@@ -372,10 +348,6 @@ export function SectionWrapper({
     </section>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/*                                Empty State                                 */
-/* -------------------------------------------------------------------------- */
 
 interface EmptyStateProps {
   icon?: React.ReactNode;

@@ -17,8 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { addressFormSchema, EMPTY_ADDRESS_FORM, type AddressFormValues } from "@/lib/schemas/address";
-import type { Address } from "@/types/address";
+import { addressFormSchema, EMPTY_ADDRESS_FORM, type AddressFormValues } from "@/lib/validation/address";
+import type { Address } from "@/types/storefront/address";
 
 interface AddressFormDialogProps {
   open: boolean;

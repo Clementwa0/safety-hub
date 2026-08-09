@@ -158,8 +158,7 @@ export default function CheckoutSuccessPage() {
                     <p className="text-sm font-semibold text-success">Payment Confirmed</p>
                     <p className="mt-0.5 text-xs text-success/80">
                       Your M-Pesa payment has been received successfully
-                      {justConfirmed ? " (just now)" : ""}
-                      {order.mpesa?.receiptNumber ? ` — receipt ${order.mpesa.receiptNumber}` : ""}.
+                      {justConfirmed ? " (just now)" : ""}.
                     </p>
                   </div>
                 </div>
@@ -169,7 +168,7 @@ export default function CheckoutSuccessPage() {
                   <div>
                     <p className="text-sm font-semibold text-destructive">Payment Failed</p>
                     <p className="mt-0.5 text-xs text-destructive/80">
-                      {order.mpesa?.resultDesc || "Your M-Pesa payment wasn't completed."}
+                      Your M-Pesa payment wasn&apos;t completed.
                     </p>
                   </div>
                 </div>

@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import Logo from "@/public/logo/logo.png";
+import Logo from "@/public/logo.png";
 import { COMPANY } from "@/lib/constants";
 import { DropdownItem, navLinks } from "..";
 

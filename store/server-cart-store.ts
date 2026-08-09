@@ -1,7 +1,7 @@
 // store/server-cart-store.ts
 import { create } from "zustand";
-import { storeCartService } from "@/services/store-cart.service";
-import type { StoreCart } from "@/types/store-cart";
+import { storeCartService } from "@/services/storefront/store-cart.service";
+import type { StoreCart } from "@/types/storefront/store-cart";
 
 interface ServerCartState {
   cart: StoreCart;

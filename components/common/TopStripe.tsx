@@ -2,7 +2,6 @@ import {
   RiCustomerService2Fill,
   RiMailFill,
   RiPhoneFill,
-  RiShieldCheckFill,
   RiTimeFill,
   RiTruckFill,
 } from "react-icons/ri";
@@ -17,12 +16,10 @@ const SITE = {
 
 export default function TopStripe() {
   return (
-    <div className="hidden lg:block border-b border-slate-800 bg-slate-900 text-slate-200">
-      <div className="container mx-auto flex h-10 items-center justify-between px-4">
-        {/* Left */}
-        <div className="flex items-center gap-6 text-xs">
-          <span className="flex items-center gap-1.5">
-            <RiShieldCheckFill className="text-sm text-emerald-400" />
+    <div className="hidden border-b border-border/40 bg-primary text-white md:block">
+      <div className="mx-auto flex h-9 w-full max-w-[1440px] items-center justify-between px-4 text-xs sm:px-6 lg:px-8">
+        <div className="flex items-center gap-6">
+          <span className="font-medium">
             Certified PPE Supplier
           </span>
 
@@ -37,8 +34,7 @@ export default function TopStripe() {
           </span>
         </div>
 
-        {/* Right */}
-        <div className="flex items-center gap-6 text-xs">
+        <div className="flex items-center gap-6">
           <a
             href={`tel:${SITE.phone}`}
             className="flex items-center gap-1.5 transition-colors hover:text-orange-400"

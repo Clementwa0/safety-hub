@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { categoryService } from "@/services/category.service";
+import { categoryService } from "@/services/shared/category.service";
 import type { CategoryWithCount } from "@/types/category";
 import { createCategoryLink } from "@/components/common/links";
 import { CategoryCard } from "./CategoryCard";

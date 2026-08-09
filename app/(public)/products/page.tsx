@@ -1,4 +1,4 @@
-import { ProductsPage } from "@/features/products";
+import { ProductsPage } from "@/features/catalog/products";
 
 export default function Page() {
   return <ProductsPage />;

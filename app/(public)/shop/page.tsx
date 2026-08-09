@@ -12,8 +12,8 @@ import {
 } from "@/components/shop";
 import { Button } from "@/components/ui/button";
 import { useShopFilters } from "@/hooks/useShopFilters";
-import { productService } from "@/services/product.service";
-import { categoryService } from "@/services/category.service";
+import { productService } from "@/services/shared/product.service";
+import { categoryService } from "@/services/shared/category.service";
 import {
   applyFilters,
   buildBrandOptions,
@@ -22,7 +22,7 @@ import {
   isOnSale,
 } from "@/lib/shopFilters";
 import { cn } from "@/lib/utils";
-import type { Product, ViewMode } from "@/types/shop";
+import type { Product, ViewMode } from "@/types/storefront/shop";
 import type { CategoryWithCount } from "@/types/category";
 import ProductCard from "@/components/shared/ProductCard";
 import type { ProductCardItem } from "@/components/shared/ProductCard";

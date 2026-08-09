@@ -9,8 +9,8 @@ import { ArrowLeft } from "lucide-react";
 import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatKES } from "@/lib/format";
-import { storeOrderService } from "@/services/store-order.service";
-import type { StoreOrder } from "@/types/store-order";
+import { storeOrderService } from "@/services/storefront/store-order.service";
+import type { StoreOrder } from "@/types/storefront/store-order";
 
 export default function AccountOrderDetailPage() {
   const params = useParams<{ id: string }>();

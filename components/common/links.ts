@@ -21,10 +21,6 @@ import {
 
 import { COMPANY } from "@/lib/constants";
 
-/* -------------------------------------------------------------------------- */
-/*                                   Types                                    */
-/* -------------------------------------------------------------------------- */
-
 export type DropdownItem = {
   label: string;
   href: string;
@@ -58,10 +54,6 @@ export interface ContactInfo {
   href?: string;
   icon: IconType;
 }
-
-/* -------------------------------------------------------------------------- */
-/*                               Helper Functions                             */
-/* -------------------------------------------------------------------------- */
 
 export function createCategoryLink(slug: string): string {
   return `/categories/${slug}`;
@@ -109,10 +101,6 @@ export function toCategoryLinks(
   }));
 }
 
-/* -------------------------------------------------------------------------- */
-/*                             Navigation Links                               */
-/* -------------------------------------------------------------------------- */
-
 export const navLinks: NavLink[] = [
   {
     label: "Home",
@@ -121,6 +109,10 @@ export const navLinks: NavLink[] = [
   {
     label: "Shop",
     href: "/shop",
+    dropdown: [
+      { label: "New Arrivals", href: "/new-arrivals" },
+      { label: "Featured Products", href: "/featured" },
+    ],
   },
   {
     label: "Categories",
@@ -129,12 +121,8 @@ export const navLinks: NavLink[] = [
     // since categories now live in the DB, not here.
   },
   {
-    label: "New Arrivals",
-    href: "/shop?sort=newest",
-  },
-  {
-    label: "Featured",
-    href: "/shop?featured=1",
+    label: "Services",
+    href: "/services",
   },
   {
     label: "About Us",
@@ -160,10 +148,6 @@ export const requestQuoteLink: LinkItem = {
   label: "Request a Quote",
   href: "/contact?subject=Request%20a%20Quote",
 };
-
-/* -------------------------------------------------------------------------- */
-/*                                Footer Links                                */
-/* -------------------------------------------------------------------------- */
 
 export const quickLinks: FooterLink[] = [
   {
@@ -199,11 +183,11 @@ export const shopLinks: FooterLink[] = [
   },
   {
     label: "New Arrivals",
-    href: "/shop?sort=newest",
+    href: "/new-arrivals",
   },
   {
     label: "Featured Products",
-    href: "/shop?featured=1",
+    href: "/featured",
   },
 ];
 
@@ -254,10 +238,6 @@ export const legalLinks: FooterLink[] = [
   },
 ];
 
-/* -------------------------------------------------------------------------- */
-/*                               Social Links                                 */
-/* -------------------------------------------------------------------------- */
-
 export const socialLinks: SocialLink[] = [
   {
     label: "Facebook",
@@ -275,10 +255,6 @@ export const socialLinks: SocialLink[] = [
     icon: FaLinkedinIn,
   },
 ];
-
-/* -------------------------------------------------------------------------- */
-/*                                Animations                                  */
-/* -------------------------------------------------------------------------- */
 
 export const containerVariants = {
   hidden: {
