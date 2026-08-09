@@ -1,5 +1,6 @@
 allowBuilds:
   esbuild: false
+  mongodb-memory-server: true
   sharp: false
   unrs-resolver: false
 ignoredBuiltDependencies:
