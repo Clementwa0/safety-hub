@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Home, Package, User, MapPin, LogOut } from "lucide-react";
@@ -20,7 +21,7 @@ const navItems = [
 
 export function AccountSidebarContent({ onNavigate }: AccountSidebarProps) {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { data: session, status } = useCustomerSession();
   const signedIn = status === "authenticated" && !!session?.user;
   const name = session?.user?.name ?? "Customer";
   const email = session?.user?.email ?? "No email available";

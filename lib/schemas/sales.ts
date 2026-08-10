@@ -32,6 +32,14 @@ export const lineItemSchema = z.object({
   // to compute line/document totals.
   taxRate: z.number().min(0).max(100).default(0),
   discount: z.number().min(0).max(100).default(0),
+  // Optional client override of the fulfillment plan (e.g. the staff
+  // member knows a "available" line actually needs procurement due to
+  // lead time). `availableAtQuote` is deliberately NOT accepted here -
+  // it's always computed server-side from live stock in
+  // lib/server/availability.ts and any client-sent value is silently
+  // stripped (the default Zod object behavior for unrecognized keys),
+  // so a client can never fake its own availability snapshot.
+  fulfillmentPlan: z.enum(["available", "partial", "procurement"]).optional(),
 });
 
 export type LineItemDTO = z.infer<typeof lineItemSchema>;

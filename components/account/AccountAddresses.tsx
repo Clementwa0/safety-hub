@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { Plus, MapPin, Phone, Pencil, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,7 +16,7 @@ import type { Address } from "@/types/storefront/address";
 import type { AddressFormValues } from "@/lib/validation/address";
 
 export default function AccountAddresses() {
-  const { status } = useSession();
+  const { status } = useCustomerSession();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);

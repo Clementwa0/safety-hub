@@ -1,6 +1,6 @@
 "use client";
 
-import ProductForm from "@/components/sentinel/ProductForm";
+import ProductForm from "@/components/sentinel/product/ProductForm";
 import { PageHeader } from "@/components/shared/PageHeader";
 
 export default function NewProductPage() {

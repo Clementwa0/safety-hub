@@ -17,7 +17,7 @@ export interface MpesaPaymentCardProps {
   total: number;
   /** Paybill or Till, drives copy and step-by-step instructions. */
   paymentType: MpesaPaymentType;
-  /** The order's real `orderNumber` — used as the M-Pesa account reference. */
+  /** Order number once generated, otherwise a temporary reference/placeholder. */
   accountReference: string;
   /** The Paybill or Till number to pay to. */
   businessNumber: string;
@@ -26,11 +26,11 @@ export interface MpesaPaymentCardProps {
   className?: string;
 }
 
-type CopyField = "business" | "account" | "amount" | "all";
+type CopyField = "business" | "account" | "all";
 
 const STEP_COPY: Record<MpesaPaymentType, { menu: string; number: string }> = {
-  paybill: { menu: "Choose Paybill.", number: "Enter the Business/Paybill Number." },
-  till: { menu: "Choose Buy Goods and Services.", number: "Enter the Business/Till Number." },
+  paybill: { menu: "Choose Paybill.", number: "Enter the Business Number." },
+  till: { menu: "Choose Buy Goods and Services.", number: "Enter the Till Number." },
 };
 
 function buildInstructions(type: MpesaPaymentType): string[] {
@@ -40,10 +40,10 @@ function buildInstructions(type: MpesaPaymentType): string[] {
     "Select Lipa na M-Pesa.",
     copy.menu,
     copy.number,
-    "Enter the Order Number shown above as the Account Number.",
+    "Enter the Account Number shown below.",
     "Enter the exact amount displayed.",
     "Complete the payment with your M-Pesa PIN.",
-    "Wait for payment confirmation.",
+    "Click Place Order.",
   ];
 }
 
@@ -90,16 +90,13 @@ function CopyField({
   value,
   fieldKey,
   copiedField,
-  copyLabel,
   onCopy,
 }: {
   label: string;
   value: string;
   fieldKey: CopyField;
   copiedField: CopyField | null;
-  /** Short lowercase-first noun used in toast copy, e.g. "Order number". */
-  copyLabel: string;
-  onCopy: (value: string, copyLabel: string, field: CopyField) => void;
+  onCopy: (value: string, label: string, field: CopyField) => void;
 }) {
   const justCopied = copiedField === fieldKey;
 
@@ -121,8 +118,8 @@ function CopyField({
           type="button"
           variant="outline"
           size="icon"
-          onClick={() => onCopy(value, copyLabel, fieldKey)}
-          aria-label={`Copy ${copyLabel.toLowerCase()}`}
+          onClick={() => onCopy(value, label, fieldKey)}
+          aria-label={`Copy ${label.toLowerCase()}`}
           className={cn("shrink-0", justCopied && "border-success text-success")}
         >
           {justCopied ? <FaCheck className="h-3.5 w-3.5" /> : <FaCopy className="h-3.5 w-3.5" />}
@@ -144,19 +141,18 @@ export function MpesaPaymentCard({
   const formattedAmount = formatKES(total);
   const typeLabel = getMpesaTypeLabel(paymentType);
   const numberLabel = getMpesaNumberLabel(paymentType);
-  const businessCopyLabel = paymentType === "till" ? "Till number" : "Paybill number";
   const instructions = buildInstructions(paymentType);
 
-  const handleCopy = async (value: string, copyLabel: string, field: CopyField) => {
+  const handleCopy = async (value: string, label: string, field: CopyField) => {
     const succeeded = await copyToClipboard(value);
     if (succeeded) {
       setCopiedField(field);
-      toast.success(`${copyLabel} copied`);
+      toast.success(`${label} copied`);
       window.setTimeout(() => {
         setCopiedField((current) => (current === field ? null : current));
       }, 2000);
     } else {
-      toast.error(`Couldn't copy ${copyLabel.toLowerCase()}. Please copy it manually.`);
+      toast.error(`Couldn't copy ${label.toLowerCase()}. Please copy it manually.`);
     }
   };
 
@@ -189,8 +185,8 @@ export function MpesaPaymentCard({
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <FaCircleInfo className="mt-0.5 h-3 w-3 shrink-0 text-success" aria-hidden="true" />
               <span>
-                Use the details below to complete your payment on your phone — we&apos;ll match it to this order
-                automatically using the order number as the account reference.
+                Complete this payment on your phone before you place the order — we&apos;ll match it to your order
+                using the account number below.
               </span>
             </p>
           </div>
@@ -204,17 +200,15 @@ export function MpesaPaymentCard({
               label={numberLabel}
               value={businessNumber}
               fieldKey="business"
-              copyLabel={businessCopyLabel}
               copiedField={copiedField}
-              onCopy={(value, copyLabel, field) => void handleCopy(value, copyLabel, field)}
+              onCopy={(value, label, field) => void handleCopy(value, label, field)}
             />
             <CopyField
               label="Account Number"
               value={accountReference}
               fieldKey="account"
-              copyLabel="Order number"
               copiedField={copiedField}
-              onCopy={(value, copyLabel, field) => void handleCopy(value, copyLabel, field)}
+              onCopy={(value, label, field) => void handleCopy(value, label, field)}
             />
           </div>
 
@@ -225,27 +219,11 @@ export function MpesaPaymentCard({
               <p className="text-xs font-medium text-muted-foreground">Amount to pay</p>
               <p className="text-xl font-bold text-success">{formattedAmount}</p>
             </div>
-            <div className="flex items-center gap-2">
-              {businessName && (
-                <p className="text-xs text-muted-foreground">
-                  {typeLabel} · {businessName}
-                </p>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => void handleCopy(formattedAmount, "Amount", "amount")}
-                aria-label="Copy amount"
-                className={cn("shrink-0", copiedField === "amount" && "border-success text-success")}
-              >
-                {copiedField === "amount" ? (
-                  <FaCheck className="h-3.5 w-3.5" />
-                ) : (
-                  <FaCopy className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            </div>
+            {businessName && (
+              <p className="text-xs text-muted-foreground">
+                {typeLabel} · {businessName}
+              </p>
+            )}
           </div>
         </div>
 

@@ -2,6 +2,7 @@
 
 import { apiRequest } from "@/lib/http";
 import type { Order, OrderInput, OrderStatus } from "@/types/sentinel/order";
+import type { Invoice } from "@/types/sentinel/invoice";
 
 export interface OrderQuery {
   search?: string;
@@ -28,5 +29,8 @@ export const orderService = {
   },
   async remove(id: string): Promise<void> {
     await apiRequest<void>(`/api/orders/${id}`, { method: "DELETE" });
+  },
+  async convertToInvoice(id: string): Promise<Invoice> {
+    return apiRequest<Invoice>(`/api/orders/${id}/convert-to-invoice`, { method: "POST" });
   },
 };

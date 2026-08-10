@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { Package, Clock, CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ function OverviewSkeleton() {
 }
 
 export default function AccountOverviewPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useCustomerSession();
   const [overview, setOverview] = useState<AccountOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

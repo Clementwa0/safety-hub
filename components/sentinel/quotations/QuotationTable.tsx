@@ -4,11 +4,23 @@ import { Copy, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { QuotationStatusBadge } from "@/components/sentinel/sales/StatusBadge";
+import { FulfillmentBadge } from "@/components/sentinel/sales/FulfillmentBadge";
 import { formatKES, formatDate } from "@/lib/format";
 import { computeDocumentTotals } from "@/lib/sales";
 import type { Quotation } from "@/types/sentinel/quotation";
 
 type Props = { quotations: Quotation[]; onDelete: (q: Quotation) => void; onDuplicate: (q: Quotation) => void };
+
+// Worst-case plan across a quotation's lines: procurement beats partial
+// beats available. A quotation with no stock-tracked lines (all custom
+// items) shows nothing rather than a misleading "available" badge.
+function overallFulfillment(q: Quotation): string | undefined {
+  const plans = q.items.map((item) => item.fulfillmentPlan).filter(Boolean);
+  if (plans.length === 0) return undefined;
+  if (plans.includes("procurement")) return "procurement";
+  if (plans.includes("partial")) return "partial";
+  return "available";
+}
 
 export default function QuotationTable({ quotations, onDelete, onDuplicate }: Props) {
   return (
@@ -19,6 +31,7 @@ export default function QuotationTable({ quotations, onDelete, onDuplicate }: Pr
           <TableHead>Customer</TableHead>
           <TableHead>Issued</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Availability</TableHead>
           <TableHead className="text-right">Total</TableHead>
           <TableHead className="w-[1%] text-right">Actions</TableHead>
         </TableRow>
@@ -26,6 +39,7 @@ export default function QuotationTable({ quotations, onDelete, onDuplicate }: Pr
       <TableBody>
         {quotations.map((q) => {
           const totals = computeDocumentTotals(q.items);
+          const fulfillment = overallFulfillment(q);
           return (
             <TableRow key={q.id}>
               <TableCell className="font-medium">{q.number}</TableCell>
@@ -35,6 +49,9 @@ export default function QuotationTable({ quotations, onDelete, onDuplicate }: Pr
               </TableCell>
               <TableCell>{formatDate(q.issueDate)}</TableCell>
               <TableCell><QuotationStatusBadge status={q.status} /></TableCell>
+              <TableCell>
+                {fulfillment ? <FulfillmentBadge plan={fulfillment} /> : <span className="text-xs text-muted-foreground">—</span>}
+              </TableCell>
               <TableCell className="text-right">{formatKES(totals.total)}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">

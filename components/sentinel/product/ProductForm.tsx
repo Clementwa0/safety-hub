@@ -13,13 +13,13 @@ import { productService } from "@/services/shared/product.service";
 import { productSchema, type ProductFormInput, type ProductFormValues } from "@/lib/validation/product";
 import type { Product } from "@/types/product";
 
-import { BasicInfoSection } from "./product-form/BasicInfoSection";
-import { PricingSection } from "./product-form/PricingSection";
-import { InventorySection } from "./product-form/InventorySection";
-import { ImagesSection } from "./product-form/ImagesSection";
-import { OptionsSection } from "./product-form/OptionsSection";
-import { DetailsSection } from "./product-form/DetailsSection";
-import { AdditionalInfoSection } from "./product-form/AdditionalInfoSection";
+import { BasicInfoSection } from "./components/BasicInfoSection";
+import { PricingSection } from "./components/PricingSection";
+import { InventorySection } from "./components/InventorySection";
+import { ImagesSection } from "./components/ImagesSection";
+import { OptionsSection } from "./components/OptionsSection";
+import { DetailsSection } from "./components/DetailsSection";
+import { AdditionalInfoSection } from "./components/AdditionalInfoSection";
 
 interface ProductFormProps {
   product?: Product;

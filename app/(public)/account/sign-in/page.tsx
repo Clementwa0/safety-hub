@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { FaGoogle, FaFacebook, FaEnvelope, FaCircleCheck, FaTriangleExclamation } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { COMPANY } from "@/lib/constants";
 import { getSafeCallbackUrl } from "@/lib/storefront/safe-redirect";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 
 const DEFAULT_CALLBACK_URL = "/account";
 
@@ -31,7 +32,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { status } = useSession();
+  const { status } = useCustomerSession();
 
   const callbackUrl = getSafeCallbackUrl(searchParams.get("next"), DEFAULT_CALLBACK_URL);
   const errorCode = searchParams.get("error");

@@ -8,6 +8,7 @@ import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/lib/server/customers";
 import { createWithDocumentNumber } from "@/lib/server/documentNumber";
+import { snapshotLineItemAvailability } from "@/lib/server/availability";
 
 const quotationSchema = z
   .object({
@@ -90,10 +91,12 @@ export async function POST(request: NextRequest) {
       customer = await findOrCreateCustomer(parsed.data.customer);
     }
 
+    const items = await snapshotLineItemAvailability(parsed.data.items);
+
     const quotation = await createWithDocumentNumber(QuotationModel, "QUO", (number) => ({
       number,
       customer: customer._id,
-      items: parsed.data.items,
+      items,
       status: parsed.data.status ?? "draft",
       issueDate: parsed.data.issueDate ? new Date(parsed.data.issueDate) : new Date(),
       validUntil: new Date(parsed.data.validUntil),

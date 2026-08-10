@@ -5,14 +5,14 @@ import Link from "next/link";
 import { PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 
-import ProductTable from "@/components/sentinel/ProductTable";
+import ProductTable from "@/components/sentinel/product/ProductTable";
 import {
   EMPTY_PRODUCT_FILTERS,
   hasActiveFilters,
   ProductFilters,
   type ProductFiltersValue,
-} from "@/components/sentinel/products/ProductFilters";
-import { BulkActionsBar } from "@/components/sentinel/products/BulkActionsBar";
+} from "@/components/sentinel/product/components/ProductFilters";
+import { BulkActionsBar } from "@/components/sentinel/product/components/BulkActionsBar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";

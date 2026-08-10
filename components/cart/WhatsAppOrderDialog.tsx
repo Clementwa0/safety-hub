@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { FaWhatsapp } from "react-icons/fa6";
 import { toast } from "sonner";
 
@@ -36,7 +36,7 @@ interface GuestInfoForm {
 const EMPTY_FORM: GuestInfoForm = { name: "", phone: "", address: "" };
 
 export function WhatsAppOrderDialog() {
-  const { data: session } = useSession();
+  const { data: session } = useCustomerSession();
   const { items, itemCount, subtotal, shippingFee, tax, total } = useCart();
 
   const [open, setOpen] = useState(false);

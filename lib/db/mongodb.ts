@@ -1,8 +1,5 @@
-    // import path from "node:path";
-    // import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-// dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 function getMongoDBUri(): string {
   const uri = process.env.MONGODB_URI;

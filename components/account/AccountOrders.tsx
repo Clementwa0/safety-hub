@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
 import type { StoreOrder } from "@/types/storefront/store-order";
 
 export default function AccountOrdersPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useCustomerSession();
   const [orders, setOrders] = useState<StoreOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

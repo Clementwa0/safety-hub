@@ -1,5 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
 
+export type QuotationFulfillmentPlan = "available" | "partial" | "procurement";
+
 export interface IQuotationLineItem {
   productId?: string;
   name: string;
@@ -8,6 +10,13 @@ export interface IQuotationLineItem {
   unitPrice: number;
   taxRate: number;
   discount: number;
+  // Stock snapshot captured at quote time (see lib/server/availability.ts)
+  // - not live inventory. A later stock change (a sale, a restock)
+  // deliberately does not rewrite these once set, so a quotation always
+  // reflects what was actually available when it was quoted. Both are
+  // undefined for custom/one-off lines with no productId.
+  availableAtQuote?: number;
+  fulfillmentPlan?: QuotationFulfillmentPlan;
 }
 
 export interface IQuotation extends Document {
@@ -19,7 +28,12 @@ export interface IQuotation extends Document {
   validUntil: Date;
   notes?: string;
   terms?: string;
-  invoiceId?: mongoose.Types.ObjectId | string;
+  // Set when an accepted quotation is converted to a Sales Order (see
+  // convertQuotationToOrder in app/api/quotations/[id]/route.ts). Stock is
+  // reserved at that point, not before - a quotation on its own never
+  // touches Product.reserved. Quotations no longer convert directly to an
+  // Invoice; that now happens one step later, from the Order.
+  orderId?: mongoose.Types.ObjectId | string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +50,8 @@ const quotationSchema = new Schema<IQuotation>(
       unitPrice: { type: Number, required: true, min: 0 },
       taxRate: { type: Number, default: 0 },
       discount: { type: Number, default: 0 },
+      availableAtQuote: { type: Number },
+      fulfillmentPlan: { type: String, enum: ["available", "partial", "procurement"] },
     }],
     status: {
       type: String,
@@ -46,7 +62,7 @@ const quotationSchema = new Schema<IQuotation>(
     validUntil: { type: Date, required: true },
     notes: { type: String },
     terms: { type: String },
-    invoiceId: { type: Schema.Types.ObjectId, ref: "Invoice" },
+    orderId: { type: Schema.Types.ObjectId, ref: "Order" },
   },
   {
     timestamps: true,

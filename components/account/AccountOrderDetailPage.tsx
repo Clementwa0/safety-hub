@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { ArrowLeft } from "lucide-react";
 
 import { OrderStatusBadge } from "@/components/account/OrderStatusBadge";
@@ -15,7 +15,7 @@ import type { StoreOrder } from "@/types/storefront/store-order";
 export default function AccountOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const orderId = params?.id;
-  const { status } = useSession();
+  const { status } = useCustomerSession();
   const [order, setOrder] = useState<StoreOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

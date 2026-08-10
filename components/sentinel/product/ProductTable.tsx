@@ -136,6 +136,7 @@ export default function ProductTable({
                         src={hasValidImage ? (normalizedImage as string) : null}
                         alt={product.name}
                         fill
+                        preset="thumbnail"
                         sizes="40px"
                         className="object-cover"
                       />

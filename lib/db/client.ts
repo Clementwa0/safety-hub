@@ -1,17 +1,5 @@
 import { MongoClient } from "mongodb";
 
-/**
- * Auth.js's official MongoDB adapter (`@auth/mongodb-adapter`) talks to
- * MongoDB via the native driver's `MongoClient`, not Mongoose. Every other
- * part of this app uses Mongoose (`lib/db.ts`), which manages its own
- * connection lifecycle — the two clients are independent but point at the
- * same `MONGODB_URI`/database, so no new env var is required.
- *
- * This mirrors the official Next.js/Auth.js pattern: cache the client (and
- * the connection promise) on the Node global object in development so hot
- * reloads don't open a new connection on every file save, and use a plain
- * module-level singleton in production.
- */
 
 function getMongoUri(): string {
   const uri = process.env.MONGODB_URI;

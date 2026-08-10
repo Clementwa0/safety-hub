@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { formatKES } from "@/lib/format";
 import { useOrderPaymentStatus } from "@/hooks/use-order-payment-status";
 import SaveOrderPrompt from "@/components/checkout/SaveOrderPrompt";
-import { MpesaPaymentCard } from "@/components/storefront/checkout/MpesaPaymentCard";
+import { MpesaPaymentCard } from "@/components/checkout/MpesaPaymentCard";
 import { MPESA_CONFIG } from "@/lib/config/mpesa";
 
 export default function CheckoutSuccessPage() {

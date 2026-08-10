@@ -4,11 +4,13 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { QuotationModel, type IQuotation } from "@/lib/models/Quotation";
 import { CustomerModel } from "@/lib/models/Customer";
-import { InvoiceModel } from "@/lib/models/Invoice";
+import { OrderModel } from "@/lib/models/Order";
+import { ProductModel } from "@/lib/models/Product";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/lib/server/customers";
 import { createWithDocumentNumber } from "@/lib/server/documentNumber";
+import { snapshotLineItemAvailability } from "@/lib/server/availability";
 
 const quotationSchema = z.object({
   customer: customerInputSchema.optional(),
@@ -88,8 +90,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
     }
 
+    // Items are re-snapshotted against live stock whenever they're
+    // replaced wholesale via PATCH (e.g. the edit form re-submitting the
+    // full line-item list) - a stale availableAtQuote from before the
+    // edit would misrepresent what's available now. A PATCH that doesn't
+    // touch items at all leaves the existing snapshot untouched.
+    const items = parsed.data.items
+      ? await snapshotLineItemAvailability(parsed.data.items)
+      : undefined;
+
     Object.assign(quotation, parsed.data, {
       customer: quotation.customer,
+      items: items ?? quotation.items,
       issueDate: parsed.data.issueDate ? new Date(parsed.data.issueDate) : quotation.issueDate,
       validUntil: parsed.data.validUntil ? new Date(parsed.data.validUntil) : quotation.validUntil,
     });
@@ -125,9 +137,10 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 const postActionSchema = z.object({
   // Present + true only on the "Duplicate" action (see
   // services/sentinel/quotation.service.ts's duplicate() vs
-  // convertToInvoice() — both POST to this same endpoint). Absent/false
-  // means "convert this quotation to an invoice", the original meaning
-  // of a bare POST here.
+  // convertToOrder() — both POST to this same endpoint). Absent/false
+  // means "convert this quotation to a sales order", the original meaning
+  // of a bare POST here (originally converted straight to an Invoice;
+  // see convertQuotationToOrder's docstring for why that changed).
   duplicate: z.boolean().optional(),
 });
 
@@ -147,38 +160,61 @@ async function duplicateQuotation(quotation: IQuotation) {
     validUntil: new Date(now.getTime() + validityMs),
     notes: quotation.notes,
     terms: quotation.terms,
-    // invoiceId intentionally omitted — a duplicate is a fresh quotation,
-    // never linked to the original's (or anyone's) invoice.
+    // orderId intentionally omitted — a duplicate is a fresh quotation,
+    // never linked to the original's (or anyone's) order.
   }));
 
   return apiSuccess(serializeDoc(copy.toObject()), "Quotation duplicated");
 }
 
-async function convertQuotationToInvoice(quotation: IQuotation) {
+/**
+ * Converts an accepted Quotation into a Sales Order (`Order`, status
+ * "confirmed", linked back via `quotationId`) - the step the Revenue
+ * Dashboard's "Sales Order" pipeline stage reads from. This is also the
+ * moment stock gets reserved: `Product.reserved` is incremented per line
+ * so the quantity still shows as on-hand but no longer available to
+ * quote/sell elsewhere, without touching `Product.stock` itself (stock
+ * only decrements later, when the Order is converted to an Invoice - see
+ * POST /api/orders/[id]/convert-to-invoice). A quotation that's merely
+ * drafted or sent never reserves anything.
+ *
+ * Idempotent the same way the old direct-to-invoice conversion was: if
+ * an Order already exists for this quotation, it's returned as-is rather
+ * than reserving stock a second time.
+ */
+async function convertQuotationToOrder(quotation: IQuotation) {
   if (quotation.status !== "accepted") {
-    return apiError("Only accepted quotations can be converted to invoice", [], 400);
+    return apiError("Only accepted quotations can be converted to a sales order", [], 400);
   }
 
-  const existingInvoice = await InvoiceModel.findOne({ quotationId: quotation._id });
-  if (existingInvoice) {
-    return apiSuccess(serializeDoc(existingInvoice.toObject()), "Invoice already exists");
+  const existingOrder = await OrderModel.findOne({ quotationId: quotation._id });
+  if (existingOrder) {
+    return apiSuccess(serializeDoc(existingOrder.toObject()), "Sales order already exists");
   }
 
-  const invoice = await createWithDocumentNumber(InvoiceModel, "INV", (number) => ({
+  const order = await createWithDocumentNumber(OrderModel, "ORD", (number) => ({
     number,
     customer: quotation.customer,
     items: quotation.items,
-    status: "unpaid",
-    issueDate: new Date(),
-    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    amountPaid: 0,
+    status: "confirmed",
+    notes: quotation.notes,
     quotationId: quotation._id,
   }));
 
-  quotation.invoiceId = invoice._id;
+  const reservations = quotation.items
+    .filter((item) => item.productId)
+    .map((item) =>
+      ProductModel.updateOne(
+        { _id: item.productId },
+        { $inc: { reserved: item.quantity } },
+      ),
+    );
+  await Promise.all(reservations);
+
+  quotation.orderId = order._id;
   await quotation.save();
 
-  return apiSuccess(serializeDoc(invoice.toObject()), "Invoice created from quotation");
+  return apiSuccess(serializeDoc(order.toObject()), "Sales order created from quotation");
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -190,7 +226,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
 
-    // Body is optional — convertToInvoice() sends none at all, so an
+    // Body is optional — convertToOrder() sends none at all, so an
     // empty body must not be treated as invalid JSON.
     let body: unknown = {};
     const raw = await request.text();
@@ -216,7 +252,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return parsed.data.duplicate
       ? await duplicateQuotation(quotation)
-      : await convertQuotationToInvoice(quotation);
+      : await convertQuotationToOrder(quotation);
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to process quotation", [], 500);
   }

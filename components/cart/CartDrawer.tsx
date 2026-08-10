@@ -87,6 +87,7 @@ export default function CartDrawer() {
                               src={item.image}
                               alt={item.name}
                               fill
+                              preset="thumbnail"
                               className="object-contain p-1"
                               sizes="48px"
                             />

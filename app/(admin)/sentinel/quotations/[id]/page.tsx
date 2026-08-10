@@ -7,6 +7,7 @@ import { Download, FileCheck2, Pencil, Printer, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import DocumentPreview from "@/components/sentinel/sales/DocumentPreview";
+import { StockAvailabilityPanel } from "@/components/sentinel/sales/StockAvailabilityPanel";
 import { QuotationStatusBadge } from "@/components/sentinel/sales/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
@@ -63,9 +64,9 @@ export default function QuotationViewPage() {
     if (!quotation) return;
     setConverting(true);
     try {
-      const invoice = await quotationService.convertToInvoice(quotation.id);
-      toast.success(`Invoice ${invoice.number} created`);
-      router.push(`/sentinel/invoices/${invoice.id}`);
+      const order = await quotationService.convertToOrder(quotation.id);
+      toast.success(`Sales order ${order.number} created`);
+      router.push(`/sentinel/orders/${order.id}`);
     } catch (c) { toast.error(c instanceof Error ? c.message : "Could not convert"); }
     finally { setConverting(false); }
   };
@@ -107,7 +108,7 @@ export default function QuotationViewPage() {
             </Button>
             {canConvert ? (
               <Button onClick={() => void convert()} disabled={converting}>
-                <FileCheck2 className="h-4 w-4" /> Convert to invoice
+                <FileCheck2 className="h-4 w-4" /> Convert to sales order
               </Button>
             ) : null}
           </div>
@@ -134,6 +135,8 @@ export default function QuotationViewPage() {
           </div>
         </CardHeader>
       </Card>
+
+      <StockAvailabilityPanel items={quotation.items} />
 
       <DocumentPreview
         documentType="Quotation"

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FaArrowLeft, FaLock, FaMobileScreenButton, FaTruck, FaWhatsapp } from "react-icons/fa6";
@@ -77,7 +77,7 @@ const PAYMENT_OPTIONS: {
 export default function CheckoutPage() {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useCustomerSession();
   const { items, itemCount, subtotal, shippingFee, tax, total, loading, refresh } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<CheckoutSelection>("cod");
   const [whatsappPreferredPayment, setWhatsappPreferredPayment] = useState<WhatsAppPreferredPayment>("cod");

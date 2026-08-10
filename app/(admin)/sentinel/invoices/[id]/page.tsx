@@ -3,22 +3,26 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Download, Pencil, Printer } from "lucide-react";
+import { CreditCard, Download, Pencil, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 import DocumentPreview from "@/components/sentinel/sales/DocumentPreview";
 import { InvoiceStatusBadge } from "@/components/sentinel/sales/StatusBadge";
+import { RecordPaymentDialog } from "@/components/sentinel/sales/RecordPaymentDialog";
+import { PaymentHistoryList } from "@/components/sentinel/sales/PaymentHistoryList";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { invoiceService } from "@/services/sentinel/invoice.service";
+import { paymentService } from "@/services/sentinel/payment.service";
 import { INVOICE_STATUSES, type Invoice, type InvoiceStatus } from "@/types/sentinel/invoice";
+import type { Payment, PaymentInput } from "@/types/sentinel/payment";
 import { formatKES } from "@/lib/format";
 
 export default function InvoiceViewPage() {
@@ -31,6 +35,11 @@ export default function InvoiceViewPage() {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
 
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(true);
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [recordingPayment, setRecordingPayment] = useState(false);
+
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true); setError(null);
@@ -39,13 +48,36 @@ export default function InvoiceViewPage() {
     finally { setLoading(false); }
   }, [id]);
 
+  const loadPayments = useCallback(async () => {
+    if (!id) return;
+    setPaymentsLoading(true);
+    try { setPayments(await paymentService.listForInvoice(id)); }
+    catch (c) { toast.error(c instanceof Error ? c.message : "Could not load payment history"); }
+    finally { setPaymentsLoading(false); }
+  }, [id]);
+
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       void load();
+      void loadPayments();
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [load]);
+  }, [load, loadPayments]);
+
+  const recordPayment = async (input: PaymentInput) => {
+    if (!invoice) return;
+    setRecordingPayment(true);
+    try {
+      const result = await paymentService.record(invoice.id, input);
+      setInvoice(result.invoice);
+      setPayments((prev) => [result.payment, ...prev]);
+      setPayDialogOpen(false);
+      toast.success("Payment recorded");
+      router.refresh();
+    } catch (c) { toast.error(c instanceof Error ? c.message : "Could not record payment"); }
+    finally { setRecordingPayment(false); }
+  };
 
   const updateStatus = async (next: InvoiceStatus) => {
     if (!invoice) return;
@@ -87,6 +119,12 @@ export default function InvoiceViewPage() {
             </Button>
             <Button nativeButton={false} render={<Link href={`/sentinel/invoices/${invoice.id}/edit`} />}>
               <Pencil className="h-4 w-4" /> Edit
+            </Button>
+            <Button
+              disabled={invoice.status === "draft" || invoice.status === "cancelled" || invoice.status === "paid"}
+              onClick={() => setPayDialogOpen(true)}
+            >
+              <CreditCard className="h-4 w-4" /> Record payment
             </Button>
           </div>
         }
@@ -133,6 +171,23 @@ export default function InvoiceViewPage() {
             </p>
           </div>
         }
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Payment history</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PaymentHistoryList payments={payments} loading={paymentsLoading} />
+        </CardContent>
+      </Card>
+
+      <RecordPaymentDialog
+        open={payDialogOpen}
+        onOpenChange={setPayDialogOpen}
+        balance={balance}
+        saving={recordingPayment}
+        onSubmit={recordPayment}
       />
     </div>
   );

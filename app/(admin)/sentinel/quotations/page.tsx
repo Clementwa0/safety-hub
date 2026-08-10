@@ -25,6 +25,7 @@ export default function AdminQuotationsPage() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
+  const [availability, setAvailability] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Quotation | null>(null);
@@ -53,9 +54,11 @@ export default function AdminQuotationsPage() {
         q.customer.name.toLowerCase().includes(term) ||
         (q.customer.company?.toLowerCase().includes(term) ?? false);
       const matchesStatus = status === "all" || q.status === status;
-      return matchesSearch && matchesStatus;
+      const matchesAvailability =
+        availability === "all" || q.items.some((item) => item.fulfillmentPlan === availability);
+      return matchesSearch && matchesStatus && matchesAvailability;
     });
-  }, [quotations, search, status]);
+  }, [quotations, search, status, availability]);
 
   const pagination = usePagination(filtered, { pageSize: 10 });
 
@@ -79,7 +82,7 @@ export default function AdminQuotationsPage() {
     } catch (c) { toast.error(c instanceof Error ? c.message : "Could not duplicate"); }
   };
 
-  const hasFilters = Boolean(search) || status !== "all";
+  const hasFilters = Boolean(search) || status !== "all" || availability !== "all";
 
   return (
     <div className="space-y-6">
@@ -98,7 +101,7 @@ export default function AdminQuotationsPage() {
       />
 
       <Card>
-        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_auto]">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-[1fr_auto_auto]">
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search quotations..." className="pl-9" aria-label="Search quotations" />
@@ -114,12 +117,27 @@ export default function AdminQuotationsPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={availability} onValueChange={(v) => typeof v === "string" && setAvailability(v)}>
+            <SelectTrigger className="w-full md:w-52">
+              <SelectValue>
+                <span className="capitalize">
+                  {availability === "all" ? "All availability" : availability}
+                </span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All availability</SelectItem>
+              <SelectItem value="available">Available now</SelectItem>
+              <SelectItem value="partial">Partial stock</SelectItem>
+              <SelectItem value="procurement">Procurement required</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
       <Card>
         <CardContent className="px-0">
-          {loading ? <TableSkeleton rows={6} columns={5} /> :
+          {loading ? <TableSkeleton rows={6} columns={6} /> :
            error ? (
              <div className="p-4"><EmptyState title="Something went wrong" description={error}
                action={<Button variant="outline" onClick={() => void load()}>Try again</Button>} /></div>
@@ -129,7 +147,7 @@ export default function AdminQuotationsPage() {
                title={hasFilters ? "No matching quotations" : "No quotations yet"}
                description={hasFilters ? "Try a different search or clear filters." : "Create your first quotation."}
                action={hasFilters ? (
-                 <Button variant="outline" onClick={() => { setSearch(""); setStatus("all"); }}>Clear filters</Button>
+                 <Button variant="outline" onClick={() => { setSearch(""); setStatus("all"); setAvailability("all"); }}>Clear filters</Button>
                ) : (
                  <Button nativeButton={false} render={<Link href="/sentinel/quotations/new" />}>New quotation</Button>
                )} /></div>

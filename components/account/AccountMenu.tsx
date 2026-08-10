@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,7 @@ import {
 import { LayoutDashboard, Package, User, LogOut } from "lucide-react";
 
 export default function AccountMenu() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useCustomerSession();
   const signedIn = status === "authenticated" && !!session?.user;
 
   if (!signedIn) {

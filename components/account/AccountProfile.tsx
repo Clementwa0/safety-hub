@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,7 +14,7 @@ import { accountService } from "@/services/storefront/account.service";
 import type { AccountMe } from "@/types/storefront/account";
 
 export default function AccountProfile() {
-  const { status } = useSession();
+  const { status } = useCustomerSession();
   const [profile, setProfile] = useState<AccountMe | null>(null);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(true);

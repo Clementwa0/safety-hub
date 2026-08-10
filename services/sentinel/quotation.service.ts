@@ -6,7 +6,7 @@ import type {
   QuotationInput,
   QuotationStatus,
 } from "@/types/sentinel/quotation";
-import type { Invoice } from "@/types/sentinel/invoice";
+import type { Order } from "@/types/sentinel/order";
 import { computeTotals } from "@/lib/sales";
 
 export interface QuotationQuery {
@@ -38,8 +38,8 @@ export const quotationService = {
   async duplicate(id: string): Promise<Quotation> {
     return apiRequest<Quotation>(`/api/quotations/${id}`, { method: "POST", body: JSON.stringify({ duplicate: true }) });
   },
-  async convertToInvoice(id: string): Promise<Invoice> {
-    return apiRequest<Invoice>(`/api/quotations/${id}`, { method: "POST" });
+  async convertToOrder(id: string): Promise<Order> {
+    return apiRequest<Order>(`/api/quotations/${id}`, { method: "POST" });
   },
   async totals(id: string) {
     const quotation = await this.getById(id);

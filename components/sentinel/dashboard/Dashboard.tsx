@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Boxes, Layers, PackagePlus, Wallet } from "lucide-react";
 
 import StatsCard from "@/components/sentinel/StatsCard";
-import ProductTable from "@/components/sentinel/ProductTable";
+import ProductTable from "@/components/sentinel/product/ProductTable";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { TableSkeleton } from "@/components/shared/Loading";

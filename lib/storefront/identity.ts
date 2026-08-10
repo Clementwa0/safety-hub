@@ -14,18 +14,32 @@ export interface SentinelUserIdentity {
 
 /**
  * Resolves the signed-in user as a storefront customer identity — i.e.
- * "who is this person for account/order purposes", regardless of role.
- * Post-consolidation there's exactly one signed-in identity per browser
- * (one Auth.js session), so this simply reads it; a staff/admin user
- * browsing the storefront resolves to their own account here too, same
- * as a plain customer would.
+ * "who is this person for account/order purposes" — but ONLY when their
+ * role is a plain customer.
  *
- * Returns `null` if there is no signed-in user at all.
+ * There's exactly one signed-in identity per browser (one Auth.js
+ * session) post-consolidation, so a staff/admin account signed into the
+ * Sentinel portal is, technically, "signed in" on the storefront too. But
+ * it must never resolve as a customer here: opening the storefront in
+ * another tab and clicking "My Account" must not show that staff/admin's
+ * own account as if they were a shopper. Returns `null` for that case,
+ * same as a signed-out visitor — callers (the /api/account/* routes,
+ * checkout's email-pinning, etc.) already treat `null` as "no customer
+ * session", so a staff/admin browsing the storefront is handled exactly
+ * like a guest for every customer-facing purpose. Order/cart ownership
+ * for a signed-in staff/admin is unaffected — that's `resolveCartIdentity`
+ * in lib/storefront/session.ts, a separate, intentionally broader check.
+ *
+ * The client-side equivalent is `useCustomerSession()` in
+ * hooks/use-customer-session.ts — keep the two in sync.
+ *
+ * Returns `null` if there is no signed-in user, or the signed-in user is
+ * staff/admin.
  */
 export async function resolveStorefrontCustomer(): Promise<StorefrontCustomerIdentity | null> {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session?.user?.id || session.user.role !== "customer") {
     return null;
   }
 

@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ImageUrlInput } from "@/components/shared/ImageUrlInput";
+import { CloudinaryImageField } from "@/components/shared/CloudinaryImageField";
 import type { ProductFormInput } from "@/lib/validation/product";
 import { FieldError } from "./FieldError";
 
@@ -26,7 +26,8 @@ export function ImagesSection() {
       <CardHeader>
         <CardTitle>Product images</CardTitle>
         <CardDescription>
-          Paste a public HTTPS image URL for the main image. Add extra gallery URLs to show more angles.
+          Upload the main product photo, then add gallery images to show more angles. Files go
+          straight to Cloudinary and are resized automatically for each part of the storefront.
         </CardDescription>
       </CardHeader>
 
@@ -35,13 +36,13 @@ export function ImagesSection() {
           control={control}
           name="image"
           render={({ field }) => (
-            <ImageUrlInput
+            <CloudinaryImageField
               id="product-main-image"
               label="Main image"
+              folder="products"
               required
               value={field.value ?? ""}
               onChange={field.onChange}
-              placeholder="https://example.com/images/product.jpg"
             />
           )}
         />
@@ -88,12 +89,12 @@ function GalleryUrlList({
       <div className="flex flex-wrap gap-4">
         {value.map((url, index) => (
           <div key={index} className="w-40">
-            <ImageUrlInput
+            <CloudinaryImageField
               label={undefined}
+              folder="products"
               size="compact"
               value={url}
               onChange={(next) => setAt(index, next)}
-              placeholder="https://example.com/images/gallery.jpg"
             />
             <button
               type="button"
@@ -107,12 +108,13 @@ function GalleryUrlList({
 
         <Button type="button" variant="outline" size="sm" onClick={addRow} className="h-9 self-start">
           <Plus className="mr-1 h-3.5 w-3.5" />
-          Add image URL
+          Add gallery image
         </Button>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Works with Cloudinary, ImageKit, S3, Supabase/Firebase Storage, GitHub raw content, or any public CDN link.
+        Uploads are stored in Cloudinary under safety-hub/products. Existing images hosted elsewhere
+        still work — use "or paste a URL" on any slot.
       </p>
     </div>
   );

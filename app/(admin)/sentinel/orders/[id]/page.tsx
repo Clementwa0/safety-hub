@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Pencil, Printer } from "lucide-react";
+import { FileCheck2, Pencil, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 import DocumentPreview from "@/components/sentinel/sales/DocumentPreview";
@@ -33,6 +33,7 @@ export default function OrderViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [converting, setConverting] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -70,6 +71,20 @@ export default function OrderViewPage() {
     }
   };
 
+  const convert = async () => {
+    if (!order) return;
+    setConverting(true);
+    try {
+      const invoice = await orderService.convertToInvoice(order.id);
+      toast.success(`Invoice ${invoice.number} created`);
+      router.push(`/sentinel/invoices/${invoice.id}`);
+    } catch (caught) {
+      toast.error(caught instanceof Error ? caught.message : "Could not convert");
+    } finally {
+      setConverting(false);
+    }
+  };
+
   if (loading) return <Loading label="Loading order..." />;
   if (error || !order) {
     return (
@@ -79,6 +94,8 @@ export default function OrderViewPage() {
       />
     );
   }
+
+  const canConvert = !order.invoiceId && order.status !== "cancelled";
 
   return (
     <div className="space-y-6">
@@ -103,6 +120,12 @@ export default function OrderViewPage() {
               <Pencil className="h-4 w-4" />
               Edit
             </Button>
+            {canConvert ? (
+              <Button onClick={() => void convert()} disabled={converting}>
+                <FileCheck2 className="h-4 w-4" />
+                Convert to invoice
+              </Button>
+            ) : null}
           </div>
         }
       />

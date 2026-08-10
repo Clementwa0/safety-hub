@@ -50,7 +50,7 @@ export default function CartItem({
       <Link href={unavailable ? "#" : `/products/${productId}`} className="shrink-0">
         <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-gray-100">
           {image ? (
-            <SafeImage src={image} alt={name} fill className="object-contain p-2" sizes="80px" />
+            <SafeImage src={image} alt={name} fill preset="thumbnail" className="object-contain p-2" sizes="80px" />
           ) : null}
         </div>
       </Link>

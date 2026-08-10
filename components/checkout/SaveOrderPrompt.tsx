@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { useCustomerSession } from "@/hooks/use-customer-session";
 import { FaGoogle, FaEnvelope, FaXmark, FaCircleCheck } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ interface SaveOrderPromptProps {
  * checkout.
  */
 export default function SaveOrderPrompt({ order }: SaveOrderPromptProps) {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useCustomerSession();
   const [dismissed, setDismissed] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);

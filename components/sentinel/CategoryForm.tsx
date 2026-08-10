@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageUrlInput } from "@/components/shared/ImageUrlInput";
+import { CloudinaryImageField } from "@/components/shared/CloudinaryImageField";
 import { categoryService } from "@/services/shared/category.service";
 import { hasErrors, validateCategory, type ValidationErrors } from "@/lib/validation";
 import type { AdminCategory, CategoryInput } from "@/types/category";
@@ -149,11 +149,13 @@ export default function CategoryForm({
             ) : null}
           </div>
 
-          <ImageUrlInput
+          <CloudinaryImageField
             id="category-image"
-            label="Image URL (optional)"
+            label="Category image (optional)"
+            folder="categories"
             value={values.image ?? ""}
             onChange={(url) => setField("image", url)}
+            helperText="Upload straight to Cloudinary, or paste an existing image URL. Landscape images (4:3) look best on the category cards."
           />
           {errors.image ? (
             <p className="text-xs text-destructive">{errors.image}</p>

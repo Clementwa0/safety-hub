@@ -7,8 +7,10 @@ vi.mock("@/lib/auth", () => ({ requireStaff: requireStaffMock }));
 
 import { POST } from "@/app/api/quotations/[id]/route";
 import { QuotationModel } from "@/lib/models/Quotation";
-import { InvoiceModel } from "@/lib/models/Invoice";
+import { OrderModel } from "@/lib/models/Order";
 import { CustomerModel } from "@/lib/models/Customer";
+import { ProductModel } from "@/lib/models/Product";
+import { CategoryModel } from "@/lib/models/Category";
 
 beforeAll(startTestDatabase);
 afterEach(clearTestDatabase);
@@ -19,7 +21,20 @@ beforeEach(() => {
   requireStaffMock.mockResolvedValue({ id: "staff-1", role: "staff" });
 });
 
-async function makeQuotation(overrides: Partial<{ status: string }> = {}) {
+async function makeProduct(overrides: Partial<{ stock: number; reserved: number }> = {}) {
+  const category = await CategoryModel.create({ name: `Cat-${Date.now()}-${Math.random()}`, slug: `cat-${Date.now()}-${Math.random()}` });
+  return ProductModel.create({
+    name: "Fire extinguisher",
+    slug: `fire-extinguisher-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    description: "A fire extinguisher",
+    category: category._id,
+    price: 5000,
+    stock: overrides.stock ?? 10,
+    reserved: overrides.reserved ?? 0,
+  });
+}
+
+async function makeQuotation(overrides: Partial<{ status: string; productId: string }> = {}) {
   const customer = await CustomerModel.create({ name: "Acme Ltd", email: "acme@example.com" });
   const issueDate = new Date("2026-01-01T00:00:00.000Z");
   const validUntil = new Date("2026-01-31T00:00:00.000Z"); // 30-day window
@@ -27,7 +42,14 @@ async function makeQuotation(overrides: Partial<{ status: string }> = {}) {
   return QuotationModel.create({
     number: `QUO-TEST-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     customer: customer._id,
-    items: [{ name: "Fire extinguisher", quantity: 2, unitPrice: 5000, taxRate: 0.16, discount: 0 }],
+    items: [{
+      productId: overrides.productId,
+      name: "Fire extinguisher",
+      quantity: 2,
+      unitPrice: 5000,
+      taxRate: 0.16,
+      discount: 0,
+    }],
     status: overrides.status ?? "draft",
     issueDate,
     validUntil,
@@ -47,7 +69,7 @@ async function callPost(id: string, body?: unknown) {
   return POST(postRequest(body), { params: Promise.resolve({ id }) });
 }
 
-describe("POST /api/quotations/[id] — duplicate vs convert-to-invoice", () => {
+describe("POST /api/quotations/[id] — duplicate vs convert-to-order", () => {
   it("REGRESSION: duplicate:true creates a copy instead of converting, even for a draft quotation that could never be converted", async () => {
     const quotation = await makeQuotation({ status: "draft" });
 
@@ -59,12 +81,12 @@ describe("POST /api/quotations/[id] — duplicate vs convert-to-invoice", () => 
     expect(body.message).toBe("Quotation duplicated");
     expect(body.data.status).toBe("draft");
     expect(body.data.id).not.toBe(String(quotation._id));
-    expect(body.data.invoiceId).toBeUndefined();
+    expect(body.data.orderId).toBeUndefined();
 
     // The original must be completely untouched.
     const original = await QuotationModel.findById(quotation._id);
     expect(original?.status).toBe("draft");
-    expect(original?.invoiceId).toBeUndefined();
+    expect(original?.orderId).toBeUndefined();
   });
 
   it("duplicate preserves the customer, items, and notes/terms, resets to draft, and re-anchors the validity window to today", async () => {
@@ -91,21 +113,49 @@ describe("POST /api/quotations/[id] — duplicate vs convert-to-invoice", () => 
     expect(validUntil - issueDate).toBe(30 * 24 * 60 * 60 * 1000);
   });
 
-  it("a bare POST (no body) still converts an accepted quotation to an invoice, unchanged from before", async () => {
+  it("a bare POST (no body) converts an accepted quotation to a sales order, not an invoice", async () => {
     const quotation = await makeQuotation({ status: "accepted" });
 
     const response = await callPost(String(quotation._id));
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.message).toBe("Invoice created from quotation");
-    expect(body.data.status).toBe("unpaid");
+    expect(body.message).toBe("Sales order created from quotation");
+    expect(body.data.status).toBe("confirmed");
 
     const updated = await QuotationModel.findById(quotation._id);
-    expect(String(updated?.invoiceId)).toBe(body.data.id);
+    expect(String(updated?.orderId)).toBe(body.data.id);
 
-    const invoice = await InvoiceModel.findById(body.data.id);
-    expect(invoice).not.toBeNull();
+    const order = await OrderModel.findById(body.data.id);
+    expect(order).not.toBeNull();
+    expect(String(order?.quotationId)).toBe(String(quotation._id));
+  });
+
+  it("reserves stock on the referenced product without touching on-hand stock", async () => {
+    const product = await makeProduct({ stock: 10, reserved: 0 });
+    const quotation = await makeQuotation({ status: "accepted", productId: String(product._id) });
+
+    await callPost(String(quotation._id));
+
+    const updated = await ProductModel.findById(product._id);
+    expect(updated?.stock).toBe(10); // unchanged - reservation isn't a stock decrement
+    expect(updated?.reserved).toBe(2); // the quotation's quantity
+  });
+
+  it("converting the same quotation twice does not double-reserve stock", async () => {
+    const product = await makeProduct({ stock: 10, reserved: 0 });
+    const quotation = await makeQuotation({ status: "accepted", productId: String(product._id) });
+
+    const first = await callPost(String(quotation._id));
+    const firstBody = await first.json();
+    const second = await callPost(String(quotation._id));
+    const secondBody = await second.json();
+
+    expect(secondBody.message).toBe("Sales order already exists");
+    expect(secondBody.data.id).toBe(firstBody.data.id);
+
+    const updated = await ProductModel.findById(product._id);
+    expect(updated?.reserved).toBe(2);
   });
 
   it("rejects converting a non-accepted quotation, same as before", async () => {

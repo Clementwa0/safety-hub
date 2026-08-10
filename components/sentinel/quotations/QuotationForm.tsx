@@ -87,7 +87,7 @@ export default function QuotationForm({ quotation }: { quotation?: Quotation }) 
 
       <Card>
         <CardHeader><CardTitle>Line items</CardTitle></CardHeader>
-        <CardContent><LineItemsEditor items={items} onChange={setItems} /></CardContent>
+        <CardContent><LineItemsEditor items={items} onChange={setItems} stockAware /></CardContent>
       </Card>
 
       <Card>
