@@ -15,23 +15,37 @@ import {
 } from "@/components/ui/select";
 import { formatKES } from "@/lib/format";
 import { computeTotals, createLineItem, lineItemTotal } from "@/lib/sales";
-import { productService } from "@/services/shared/product.service";
+import { productService, type ProductAvailability } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
 import type { LineItem } from "@/types/sentinel/sales";
+import { FulfillmentBadge } from "@/components/sentinel/sales/FulfillmentBadge";
 
 interface LineItemsEditorProps {
   items: LineItem[];
   onChange: (items: LineItem[]) => void;
   error?: string;
+  // Shows live stock availability per line and lets staff pick a
+  // fulfillment plan ("available now" / "needs procurement") when a
+  // requested quantity exceeds what's on hand. Only meaningful for
+  // Quotations - Invoices and Orders reuse this same editor but don't
+  // carry a fulfillmentPlan/availableAtQuote concept, so they omit this.
+  stockAware?: boolean;
 }
 
-export function LineItemsEditor({ items, onChange, error }: LineItemsEditorProps) {
+function planFor(requested: number, available: number): LineItem["fulfillmentPlan"] {
+  if (available >= requested) return "available";
+  if (available > 0) return "partial";
+  return "procurement";
+}
+
+export function LineItemsEditor({ items, onChange, error, stockAware = false }: LineItemsEditorProps) {
   // Previously this read `useAdminStore((state) => state.products)`, a
   // localStorage-only mock store seeded from `data/products.ts`. That meant
   // the "add product" picker offered demo products that don't exist in the
   // real database, so selecting one attached a productId with no matching
   // MongoDB record. Load real products from the API instead.
   const [products, setProducts] = useState<Product[]>([]);
+  const [availability, setAvailability] = useState<Map<string, ProductAvailability>>(new Map());
 
   useEffect(() => {
     void productService
@@ -39,6 +53,25 @@ export function LineItemsEditor({ items, onChange, error }: LineItemsEditorProps
       .then(setProducts)
       .catch(() => setProducts([]));
   }, []);
+
+  // Refetch availability whenever the set of product ids referenced by
+  // the line items changes (not on every quantity keystroke - the
+  // per-line plan is recomputed locally from this cached map, so there's
+  // no need to hit the API again just because a quantity changed).
+  const productIdsKey = stockAware
+    ? Array.from(new Set(items.map((item) => item.productId).filter(Boolean))).sort().join(",")
+    : "";
+
+  useEffect(() => {
+    if (!stockAware || !productIdsKey) {
+      setAvailability(new Map());
+      return;
+    }
+    void productService
+      .getAvailability(productIdsKey.split(","))
+      .then(setAvailability)
+      .catch(() => setAvailability(new Map()));
+  }, [stockAware, productIdsKey]);
 
   const totals = computeTotals(items);
 
@@ -78,9 +111,15 @@ export function LineItemsEditor({ items, onChange, error }: LineItemsEditorProps
           </p>
         ) : null}
 
-        {items.map((item, index) => (
+        {items.map((item, index) => {
+          const entry = item.productId ? availability.get(item.productId) : undefined;
+          const plan = stockAware && entry ? planFor(item.quantity, entry.available) : undefined;
+          const effectivePlan = item.fulfillmentPlan ?? plan;
+          const showWarning = stockAware && entry && plan && plan !== "available";
+
+          return (
+          <div key={item.id} className="space-y-2">
           <div
-            key={item.id}
             className="grid gap-3 rounded-lg border border-border bg-muted/20 p-3 md:grid-cols-12"
           >
             <div className="space-y-1 md:col-span-4">
@@ -186,7 +225,40 @@ export function LineItemsEditor({ items, onChange, error }: LineItemsEditorProps
               </Button>
             </div>
           </div>
-        ))}
+
+          {showWarning ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs">
+              <span>
+                {Math.max(0, item.quantity - (entry?.available ?? 0))} of {item.quantity} unit
+                {item.quantity === 1 ? "" : "s"} exceed{item.quantity === 1 ? "s" : ""} available
+                stock ({entry?.available ?? 0} on hand).
+              </span>
+              <div className="flex items-center gap-2">
+                <FulfillmentBadge plan={effectivePlan} />
+                <Select
+                  value={item.fulfillmentPlan ?? plan}
+                  onValueChange={(value) => {
+                    if (typeof value === "string") {
+                      updateItem(item.id, {
+                        fulfillmentPlan: value as LineItem["fulfillmentPlan"],
+                      });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-7 w-[180px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="partial">Partial - ship what's on hand</SelectItem>
+                    <SelectItem value="procurement">Procurement required</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : null}
+          </div>
+          );
+        })}
       </div>
 
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
