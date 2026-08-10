@@ -26,6 +26,12 @@ export interface IProduct extends Document {
   compareAtPrice?: number;
 
   stock: number;
+  // Units held against accepted-but-not-yet-invoiced Sales Orders (see
+  // lib/server/availability.ts). `stock` is never decremented until an
+  // Order is converted to an Invoice - until then, the quantity is only
+  // "reserved", so it still counts toward on-hand inventory but not
+  // toward what's available to quote/sell again. available = stock - reserved.
+  reserved: number;
   status: ProductStatus;
 
   image: string;
@@ -122,6 +128,13 @@ const productSchema = new Schema<IProduct>(
     },
 
     stock: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+
+    reserved: {
       type: Number,
       required: true,
       min: 0,

@@ -19,11 +19,6 @@ export interface FilterSectionProps {
   children: React.ReactNode;
 }
 
-/**
- * Reusable, accessible accordion shell for one sidebar section.
- * Animation is pure CSS (grid-template-rows) so it works without JS layout
- * measurement and respects `prefers-reduced-motion`.
- */
 export function FilterSection({
   title,
   count = 0,
@@ -48,7 +43,7 @@ export function FilterSection({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-border/70 bg-card/60 shadow-sm backdrop-blur-sm transition-colors duration-200 hover:border-border",
+        "rounded-md border border-border/70 bg-card/60 shadow-sm backdrop-blur-sm transition-colors duration-200 hover:border-border",
         className,
       )}
     >
@@ -59,7 +54,7 @@ export function FilterSection({
           onClick={toggle}
           aria-expanded={isOpen}
           aria-controls={panelId}
-          className="flex w-full items-center gap-2 rounded-2xl px-4 py-3.5 text-left text-sm font-semibold transition-colors duration-200 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="flex w-full items-center gap-2 rounded-md px-4 py-3.5 text-left text-sm font-semibold transition-colors duration-200 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <span className="flex-1 truncate">{title}</span>
           {count > 0 && (

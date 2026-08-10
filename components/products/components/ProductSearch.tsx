@@ -249,6 +249,7 @@ export default function ProductSearch({
                               src={product.image}
                               alt={product.name}
                               fill
+                              preset="thumbnail"
                               className="object-contain p-1"
                             />
                           </div>

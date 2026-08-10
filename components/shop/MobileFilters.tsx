@@ -13,21 +13,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+
 import { cn } from "@/lib/utils";
 
-import { ShopSidebar, type ShopSidebarProps } from "./ShopSidebar";
+import {
+  ShopSidebar,
+  type ShopSidebarProps,
+} from "./ShopSidebar";
 
 export interface MobileFiltersProps extends ShopSidebarProps {
-  /** Number of results the current filters produce, shown on Apply. */
   resultCount: number;
   activeFilterCount: number;
 }
 
-/**
- * Thin mobile wrapper: a floating trigger plus a full-height bottom sheet
- * that renders the *same* `ShopSidebar`. No duplicated filtering logic —
- * filters apply live, and "Apply" simply dismisses the sheet.
- */
 export function MobileFilters({
   resultCount,
   activeFilterCount,
@@ -46,26 +44,32 @@ export function MobileFilters({
               "fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full px-6 shadow-lg lg:hidden",
               className,
             )}
-          />
+          >
+            <SlidersHorizontal
+              className="mr-2 h-4 w-4"
+              aria-hidden="true"
+            />
+
+            Filters
+
+            {activeFilterCount > 0 && (
+              <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 py-0.5 text-xs font-bold">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
         }
-      >
-        <SlidersHorizontal className="size-4" aria-hidden="true" />
-        Filters
-        {activeFilterCount > 0 && (
-          <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-foreground px-1.5 text-[11px] font-semibold text-primary">
-            {activeFilterCount}
-          </span>
-        )}
-      </SheetTrigger>
+      />
 
       <SheetContent
         side="bottom"
         className="flex h-[92dvh] flex-col rounded-t-3xl p-0 sm:max-w-none"
       >
-        <SheetHeader className="border-b border-border/70 px-4 py-4">
-          <SheetTitle>Filters</SheetTitle>
+        <SheetHeader className="border-b border-border/70 px-4 py-4 text-left">
+          <SheetTitle>Filter Products</SheetTitle>
+
           <SheetDescription className="text-xs text-muted-foreground">
-            Results update as you choose.
+            Refine the catalog to find the right safety equipment.
           </SheetDescription>
         </SheetHeader>
 
@@ -75,6 +79,7 @@ export function MobileFilters({
 
         <SheetFooter className="flex-row gap-2 border-t border-border/70 bg-card/80 px-4 py-3 backdrop-blur-sm">
           <Button
+            type="button"
             variant="outline"
             className="flex-1"
             onClick={sidebarProps.clearFilters}
@@ -82,9 +87,14 @@ export function MobileFilters({
           >
             Clear
           </Button>
-          <Button className="flex-[2]" onClick={() => setOpen(false)}>
-            Show {resultCount.toLocaleString()} result
-            {resultCount === 1 ? "" : "s"}
+
+          <Button
+            type="button"
+            className="flex-[2]"
+            onClick={() => setOpen(false)}
+          >
+            Show {resultCount.toLocaleString()}{" "}
+            {resultCount === 1 ? "result" : "results"}
           </Button>
         </SheetFooter>
       </SheetContent>

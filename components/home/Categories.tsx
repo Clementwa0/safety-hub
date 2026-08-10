@@ -5,7 +5,7 @@ import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { FaArrowRight } from "react-icons/fa6";
 
 import { CategoryGrid } from "../category";
-import { requestQuoteLink } from "../common";
+import { requestQuoteLink } from "../common/storefront";
 
 const containerVariants: Variants = {
   hidden: {},

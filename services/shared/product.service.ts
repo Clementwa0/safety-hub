@@ -1,6 +1,13 @@
 import { apiRequest } from "@/lib/http";
 import type { Product, ProductInput, ProductStatus } from "@/types/product";
 
+export interface ProductAvailability {
+  productId: string;
+  stock: number;
+  reserved: number;
+  available: number;
+}
+
 export interface ProductQuery {
   search?: string;
   category?: string;
@@ -170,5 +177,19 @@ export const productService = {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  },
+
+  async getAvailability(productIds: string[]): Promise<Map<string, ProductAvailability>> {
+    const ids = Array.from(new Set(productIds.filter(Boolean)));
+    const result = new Map<string, ProductAvailability>();
+    if (ids.length === 0) return result;
+
+    const payload = await apiRequest<{ items: ProductAvailability[] }>(
+      `/api/products/availability?ids=${ids.map(encodeURIComponent).join(",")}`,
+    );
+    for (const entry of payload.items) {
+      result.set(entry.productId, entry);
+    }
+    return result;
   },
 };

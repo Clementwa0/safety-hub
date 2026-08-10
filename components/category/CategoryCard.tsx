@@ -20,7 +20,7 @@ export function CategoryCard({
   return (
     <Link
       href={href}
-      className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-secondary/30 hover:shadow-xl"
+      className="group overflow-hidden rounded-sm border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-secondary/30 hover:shadow-xl"
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
@@ -28,6 +28,7 @@ export function CategoryCard({
           src={image}
           alt={title}
           fill
+          preset="categoryCard"
           className="object-cover transition-transform duration-700 group-hover:scale-110"
           sizes="(max-width:640px) 100vw,
                  (max-width:1024px) 50vw,

@@ -1,4 +1,3 @@
-// components/shop/ShopSidebar.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ const OFFER_OPTIONS: { value: string; label: string }[] = [
   { value: "sale", label: "On Sale" },
 ];
 
-// ✅ Remove "counts" from the Pick
 export interface ShopSidebarProps
   extends Pick<
     UseShopFiltersResult,

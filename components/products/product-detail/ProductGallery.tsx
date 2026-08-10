@@ -46,6 +46,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
             src={images[currentIndex]}
             alt={`${product.name} - Image ${currentIndex + 1}`}
             fill
+            preset="productHero"
             priority
             className={cn(
               "object-contain transition-transform duration-300",
@@ -146,6 +147,7 @@ export function ProductGallery({ product }: ProductGalleryProps) {
                 src={image}
                 alt={`${product.name} thumbnail ${index + 1}`}
                 fill
+                preset="thumbnail"
                 className="object-cover"
                 sizes="(max-width: 768px) 20vw, 10vw"
               />

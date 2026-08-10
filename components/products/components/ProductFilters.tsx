@@ -46,12 +46,20 @@ export default function ProductFilters({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const scrollTicking = useRef(false);
+
   const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setShowLeftArrow(scrollLeft > 20);
-      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 20);
-    }
+    if (scrollTicking.current) return;
+    scrollTicking.current = true;
+
+    window.requestAnimationFrame(() => {
+      if (scrollContainerRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        setShowLeftArrow(scrollLeft > 20);
+        setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 20);
+      }
+      scrollTicking.current = false;
+    });
   };
 
   const scroll = (direction: "left" | "right") => {
