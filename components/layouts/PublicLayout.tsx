@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Navbar, Footer } from '@/components/common'
+import { Navbar, Footer } from '@/components/common/storefront'
 import WhatsAppFab from '@/components/shared/WhatsAppFab'
 
 export default function PublicLayout ({ children }: { children: ReactNode }) {

@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FaChevronRight, FaStar } from "react-icons/fa6";
 
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
 interface SectionHeaderProps {
   eyebrow?: string;
   title: string;
@@ -26,54 +30,60 @@ export function SectionHeader({
 
   return (
     <div
-      className={`max-w-4xl ${
+      className={`max-w-3xl ${
         centered ? "mx-auto text-center" : "text-left"
       } ${className}`}
     >
+      {/* Eyebrow */}
       {eyebrow && (
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="inline-flex items-center gap-2"
+          viewport={{ once: true, margin: "-30px" }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="inline-flex items-center gap-1.5"
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-secondary ring-1 ring-secondary/20">
-            <FaStar className="h-3 w-3 fill-secondary/30" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-secondary ring-1 ring-secondary/20">
+            <FaStar className="h-2.5 w-2.5 fill-secondary/30" />
             {eyebrow}
           </span>
         </motion.div>
       )}
 
+      {/* Title */}
       <motion.h2
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-        className="mt-5 text-3xl font-extrabold tracking-tight text-primary sm:text-4xl lg:text-5xl"
+        viewport={{ once: true, margin: "-30px" }}
+        transition={{ duration: 0.4, delay: 0.05, ease: "easeOut" }}
+        className={`${
+          eyebrow ? "mt-3" : ""
+        } text-2xl font-extrabold leading-tight tracking-tight text-primary sm:text-3xl lg:text-4xl`}
       >
         {title}
       </motion.h2>
 
+      {/* Divider */}
       {showDivider && (
         <motion.div
           initial={{ width: 0, opacity: 0 }}
-          whileInView={{ width: 80, opacity: 1 }}
+          whileInView={{ width: 56, opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className={`mt-5 h-1.5 rounded-full bg-gradient-to-r from-secondary to-secondary/50 ${
+          transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
+          className={`mt-3 h-1 rounded-full bg-gradient-to-r from-secondary to-secondary/50 ${
             centered ? "mx-auto" : ""
           }`}
         />
       )}
 
+      {/* Subtitle */}
       {subtitle && (
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg lg:text-xl"
+          viewport={{ once: true, margin: "-30px" }}
+          transition={{ duration: 0.4, delay: 0.12, ease: "easeOut" }}
+          className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base"
         >
           {subtitle}
         </motion.p>
@@ -81,6 +91,10 @@ export function SectionHeader({
     </div>
   );
 }
+
+/* =========================================================
+   COUNTER
+========================================================= */
 
 interface CounterProps {
   to: number;
@@ -94,11 +108,14 @@ export function Counter({
   to,
   suffix = "",
   prefix = "",
-  duration = 2000,
+  duration = 1600,
   className = "",
 }: CounterProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, {
+    once: true,
+    margin: "-80px",
+  });
 
   const [count, setCount] = useState(0);
 
@@ -110,7 +127,10 @@ export function Counter({
 
     const animate = (time: number) => {
       const progress = Math.min((time - start) / duration, 1);
+
+      // Smooth ease-out
       const eased = 1 - Math.pow(1 - progress, 4);
+
       setCount(Math.round(to * eased));
 
       if (progress < 1) {
@@ -119,32 +139,42 @@ export function Counter({
     };
 
     frame = requestAnimationFrame(animate);
+
     return () => cancelAnimationFrame(frame);
   }, [isInView, duration, to]);
 
   return (
-    <div ref={ref} className={`inline-flex items-baseline ${className}`}>
+    <div
+      ref={ref}
+      className={`inline-flex items-baseline ${className}`}
+    >
       {prefix && (
-        <span className="mr-1 text-lg font-medium text-muted-foreground">
+        <span className="mr-1 text-sm font-medium text-muted-foreground">
           {prefix}
         </span>
       )}
+
       <motion.span
-        initial={{ scale: 0.5, opacity: 0 }}
+        initial={{ scale: 0.85, opacity: 0 }}
         animate={isInView ? { scale: 1, opacity: 1 } : {}}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-gradient-to-r from-secondary to-secondary/80 bg-clip-text text-4xl font-extrabold text-transparent sm:text-5xl lg:text-6xl"
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="bg-gradient-to-r from-secondary to-secondary/80 bg-clip-text text-3xl font-extrabold text-transparent sm:text-4xl"
       >
         {count.toLocaleString()}
       </motion.span>
+
       {suffix && (
-        <span className="ml-1 text-lg font-medium text-muted-foreground">
+        <span className="ml-1 text-sm font-medium text-muted-foreground">
           {suffix}
         </span>
       )}
     </div>
   );
 }
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
 
 export interface BreadcrumbItem {
   label: string;
@@ -164,50 +194,60 @@ export function Breadcrumb({
   separator,
 }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className={`${className}`}>
-      <ol className="flex flex-wrap items-center gap-1.5">
+    <nav
+      aria-label="Breadcrumb"
+      className={`w-full ${className}`}
+    >
+      <ol className="flex flex-wrap items-center gap-1">
         {items.map((item, index) => {
           const last = index === items.length - 1;
 
           return (
             <motion.li
               key={`${item.label}-${index}`}
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
-              className="flex items-center gap-1.5"
+              transition={{
+                delay: index * 0.06,
+                duration: 0.25,
+              }}
+              className="flex items-center gap-1"
             >
               {item.href && !last ? (
                 <Link
                   href={item.href}
-                  className="group flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-white/70 transition-all hover:bg-white/10 hover:text-white"
+                  className="group flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary sm:text-sm"
                 >
                   {item.icon && (
                     <span className="opacity-70 transition-opacity group-hover:opacity-100">
                       {item.icon}
                     </span>
                   )}
+
                   {item.label}
                 </Link>
               ) : (
                 <span
                   aria-current={last ? "page" : undefined}
-                  className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-semibold ${
+                  className={`flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-semibold sm:text-sm ${
                     last
-                      ? "bg-white/10 text-white"
-                      : "text-white/70"
+                      ? "bg-muted text-primary"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {item.icon && (
-                    <span className="opacity-70">{item.icon}</span>
+                    <span className="opacity-70">
+                      {item.icon}
+                    </span>
                   )}
+
                   {item.label}
                 </span>
               )}
 
               {!last &&
                 (separator || (
-                  <FaChevronRight className="h-3.5 w-3.5 text-white/40" />
+                  <FaChevronRight className="h-3 w-3 text-muted-foreground/50" />
                 ))}
             </motion.li>
           );
@@ -216,6 +256,10 @@ export function Breadcrumb({
     </nav>
   );
 }
+
+/* =========================================================
+   BADGE
+========================================================= */
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -240,9 +284,9 @@ export function Badge({
   };
 
   const sizes = {
-    sm: "px-2.5 py-0.5 text-xs",
-    md: "px-3 py-1 text-xs",
-    lg: "px-4 py-1.5 text-sm",
+    sm: "px-2 py-0.5 text-[10px]",
+    md: "px-2.5 py-1 text-[11px]",
+    lg: "px-3 py-1.5 text-xs",
   };
 
   return (
@@ -253,6 +297,10 @@ export function Badge({
     </span>
   );
 }
+
+/* =========================================================
+   STATS CARD
+========================================================= */
 
 interface StatsCardProps {
   label: string;
@@ -274,25 +322,27 @@ export function StatsCard({
 }: StatsCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-      whileHover={{ y: -4 }}
-      className={`group rounded-2xl border border-border/50 bg-white p-6 shadow-sm transition-all hover:shadow-lg hover:border-secondary/20 ${className}`}
+      transition={{ duration: 0.35 }}
+      whileHover={{ y: -2 }}
+      className={`group rounded-xl border border-border/50 bg-white p-4 shadow-sm transition-all hover:border-secondary/20 hover:shadow-md sm:p-5 ${className}`}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-muted-foreground">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-muted-foreground sm:text-sm">
             {label}
           </p>
-          <p className="mt-2 text-3xl font-bold text-primary">
+
+          <p className="mt-1 text-2xl font-bold text-primary sm:text-3xl">
             {value}
           </p>
+
           {trend && (
-            <div className="mt-2 flex items-center gap-1">
+            <div className="mt-1.5 flex items-center gap-1">
               <span
-                className={`text-xs font-medium ${
+                className={`text-[11px] font-semibold ${
                   trend.positive
                     ? "text-green-600"
                     : "text-red-600"
@@ -300,14 +350,16 @@ export function StatsCard({
               >
                 {trend.positive ? "↑" : "↓"} {trend.value}
               </span>
-              <span className="text-xs text-muted-foreground">
+
+              <span className="text-[11px] text-muted-foreground">
                 vs last month
               </span>
             </div>
           )}
         </div>
+
         {icon && (
-          <div className="rounded-xl bg-secondary/10 p-3 text-secondary transition-colors group-hover:bg-secondary/20">
+          <div className="rounded-lg bg-secondary/10 p-2.5 text-secondary transition-colors group-hover:bg-secondary/20">
             {icon}
           </div>
         )}
@@ -316,38 +368,44 @@ export function StatsCard({
   );
 }
 
+/* =========================================================
+   SECTION WRAPPER
+========================================================= */
+
 interface SectionWrapperProps {
   children: React.ReactNode;
   className?: string;
   id?: string;
-  background?: "white" | "gray" | "primary" | "gradient";
+  compact?: boolean;
 }
 
 export function SectionWrapper({
   children,
   className = "",
   id,
-  background = "white",
+  compact = false,
 }: SectionWrapperProps) {
-  const backgrounds = {
-    white: "bg-white",
-    gray: "bg-slate-50",
-    primary: "bg-primary text-white",
-    gradient:
-      "bg-gradient-to-br from-primary via-primary to-secondary/20 text-white",
-  };
-
   return (
     <section
       id={id}
-      className={`${backgrounds[background]} ${className}`}
+      className={className}
     >
-      <div className="container mx-auto px-4 py-16 sm:py-20 lg:px-8 lg:py-24">
+      <div
+        className={`container mx-auto px-4 lg:px-7 ${
+          compact
+            ? "py-3 sm:py-4"
+            : "py-8 sm:py-10 lg:py-1"
+        }`}
+      >
         {children}
       </div>
     </section>
   );
 }
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -369,28 +427,33 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-border/50 bg-white/50 p-12 text-center backdrop-blur-sm ${className}`}
+      className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/50 bg-white/50 p-8 text-center backdrop-blur-sm sm:p-10 ${className}`}
     >
       {icon && (
-        <div className="mb-6 rounded-2xl bg-secondary/10 p-4 text-secondary">
+        <div className="mb-4 rounded-xl bg-secondary/10 p-3.5 text-secondary">
           {icon}
         </div>
       )}
-      <h3 className="text-xl font-bold text-primary">{title}</h3>
+
+      <h3 className="text-lg font-bold text-primary sm:text-xl">
+        {title}
+      </h3>
+
       {description && (
-        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+        <p className="mt-1.5 max-w-md text-sm leading-6 text-muted-foreground">
           {description}
         </p>
       )}
+
       {action && (
         <Link
           href={action.href}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-secondary/90 hover:shadow-md active:scale-95"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-secondary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-secondary/90 hover:shadow-md active:scale-95"
         >
           {action.label}
-          <FaChevronRight className="h-4 w-4" />
+          <FaChevronRight className="h-3.5 w-3.5" />
         </Link>
       )}
     </motion.div>

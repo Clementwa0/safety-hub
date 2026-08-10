@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { FaBars, FaWhatsapp } from "react-icons/fa6";
+import { FaBars, FaWhatsapp} from "react-icons/fa6";
 
 import Logo from "@/public/logo.png";
 import { TopStripe } from "..";
-import CartIcon from "../../cart/CartIcon";
-import AccountMenu from "../../account/AccountMenu";
+import CartIcon from "../../../cart/CartIcon";
+import AccountMenu from "../../../account/AccountMenu";
 import { COMPANY } from "@/lib/constants";
 import { categoryService } from "@/services/shared/category.service";
 import SearchOverlay from "../SearchOverlay";
@@ -89,10 +89,7 @@ export default function Navbar() {
             }))
         );
       } catch (error) {
-        console.error(
-          "Failed to load navigation categories:",
-          error
-        );
+        console.error("Failed to load navigation categories:", error);
 
         if (!cancelled) {
           setCategoryItems([]);
@@ -112,14 +109,6 @@ export default function Navbar() {
     setMobileDropdown(null);
     setMenuOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [menuOpen]);
 
   const SHOP_ALIAS_PATHS = [
     "/shop",
@@ -151,24 +140,26 @@ export default function Navbar() {
   };
 
   return (
-    <>
-      <motion.header
-        initial={{ y: -80 }}
-        animate={{ y: 0 }}
-        transition={{
-          duration: 0.4,
-          type: "spring",
-          stiffness: 300,
-          damping: 30,
-        }}
-        className={`fixed inset-x-0 top-0 z-50 border-b border-border/50 bg-white/95 backdrop-blur-md transition-shadow duration-300 ${
-          scrolled
-            ? "shadow-lg shadow-black/5"
-            : "shadow-sm"
-        }`}
-      >
-        <TopStripe />
+    <motion.header
+      initial={{ y: -80 }}
+      animate={{ y: 0 }}
+      transition={{
+        duration: 0.4,
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      }}
+      className={`fixed inset-x-0 top-0 z-50 border-b border-border/50 bg-white/95 backdrop-blur-md transition-shadow duration-300 ${
+        scrolled
+          ? "shadow-lg shadow-black/5"
+          : "shadow-sm"
+      }`}
+    >
+      {/* TOP STRIPE */}
+      <TopStripe />
 
+      {/* MAIN NAVBAR */}
+      <div className="border-t border-border/30">
         <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-5 px-4 sm:px-6 lg:px-1">
           <Link
             href="/"
@@ -258,16 +249,16 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+      </div>
 
-        <MobileNavDrawer
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-          categoryItems={categoryItems}
-          mobileDropdown={mobileDropdown}
-          setMobileDropdown={setMobileDropdown}
-          isActive={isActive}
-        />
-      </motion.header>
-    </>
+      <MobileNavDrawer
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        categoryItems={categoryItems}
+        mobileDropdown={mobileDropdown}
+        setMobileDropdown={setMobileDropdown}
+        isActive={isActive}
+      />
+    </motion.header>
   );
 }

@@ -180,6 +180,7 @@ export default function SearchOverlay({ open, onOpenChange }: SearchOverlayProps
                             src={product.image}
                             alt=""
                             fill
+                            preset="thumbnail"
                             className="object-contain p-2"
                             sizes="56px"
                           />

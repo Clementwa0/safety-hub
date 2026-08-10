@@ -20,7 +20,7 @@ export interface Quotation {
   validUntil: number;
   notes?: string;
   terms?: string;
-  invoiceId?: string;
+  orderId?: string;
   createdAt: number;
   updatedAt: number;
 }

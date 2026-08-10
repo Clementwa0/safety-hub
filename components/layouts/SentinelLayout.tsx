@@ -1,8 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Header from "@/components/sentinel/header/Header";
-import Sidebar from "@/components/sentinel/sidebar/Sidebar";
+import Header from "@/components/common/sentinel/header/Header";
+import Sidebar from "@/components/common/sentinel/sidebar/Sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function SentinelLayout({ children }: { children: ReactNode }) {

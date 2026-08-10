@@ -88,7 +88,7 @@ export default function ProductCard ({
       whileHover={shouldReduceMotion ? undefined : { y: -2 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        'group flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-md',
+        'group flex flex-col overflow-hidden rounded-sm border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-md',
         className
       )}
     >
@@ -98,6 +98,7 @@ export default function ProductCard ({
             src={product.image}
             alt={product.name}
             fill
+            preset='card'
             className='object-cover transition-transform duration-300 group-hover:scale-105'
             sizes='(max-width:480px) 45vw,
                    (max-width:640px) 40vw,
