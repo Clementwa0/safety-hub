@@ -1,5 +1,6 @@
-import { formatKES, Product } from "@/data/products";
 import { COMPANY } from "@/lib/constants";
+import { Product } from "@/types/product";
+import { formatKES } from "../format";
 
 function normalizeWhatsAppNumber(value: string) {
   const digits = value.replace(/\D/g, "");

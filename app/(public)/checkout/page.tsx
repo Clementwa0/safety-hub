@@ -1,5 +1,5 @@
-import CheckoutPage from "@/components/checkout/CheckoutPage";
+import CheckoutPage from "@/features/storefront/checkout/CheckoutPage";
 
-export default function CheckoutRoute() {
+export default function Page() {
   return <CheckoutPage />;
 }

@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FaTriangleExclamation, FaArrowLeft } from "react-icons/fa6";

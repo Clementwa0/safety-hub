@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 import { connectToDatabase } from "@/lib/db";
 import { CartModel } from "@/lib/models/Cart";
 import { ProductModel } from "@/lib/models/Product";
-import { StorefrontCustomerModel } from "@/lib/models/StorefrontCustomer";
+import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { formatKES } from "@/lib/format";
 
 const DEFAULT_THRESHOLD_HOURS = 24;

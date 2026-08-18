@@ -7,7 +7,7 @@ export { CART_SESSION_COOKIE };
 const CART_SESSION_MAX_AGE = 60 * 60 * 24 * 90; // 90 days
 
 export interface CartIdentity {
-  /** Set when there is any signed-in user — staff, admin, or storefront customer alike. */
+  /** Set when there is any signed-in user — admin or storefront customer alike. */
   userId?: string;
   /** Set for guest carts, identified by an opaque cookie value. */
   sessionId?: string;
@@ -20,16 +20,16 @@ export interface CartIdentity {
  *
  * Post-unification there is exactly one sign-in mechanism and one session
  * per browser, so this just reads it — a signed-in user (whether their
- * role is customer, staff, or admin) owns the cart/order under their own
- * id, with no precedence question between a "staff session" and a
- * "customer session" left to resolve, because there's only ever one.
+ * role is customer or admin) owns the cart/order under their own id, with
+ * no precedence question between an "admin session" and a "customer
+ * session" left to resolve, because there's only ever one.
  *
  * Falls back to a guest, identified by a long-lived, httpOnly session
  * cookie, when nobody is signed in.
  *
  * (This used to check a separate storefront-customer session first and a
- * separate Sentinel staff session second, specifically so a browser
- * holding both never had orders silently attributed to the staff account
+ * separate Sentinel admin session second, specifically so a browser
+ * holding both never had orders silently attributed to the admin account
  * instead of the customer's own — see git history on this file. Full
  * session unification removes the second session entirely, so that
  * precedence logic no longer applies.)

@@ -1,4 +1,4 @@
-import { CategoryPage } from "@/features/catalog/categories";
+import CategoryPage from "@/features/storefront/catalog/categories/[id]/CategoryPage";
 
 type PageProps = {
   params: Promise<{
