@@ -2,12 +2,12 @@ import { z } from "zod";
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { StorefrontCustomerModel } from "@/lib/models/StorefrontCustomer";
+import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { hashPassword, requireAdmin, serializeUser } from "@/lib/auth";
 
 const updateUserSchema = z.object({
   name: z.string().trim().min(2).optional(),
-  role: z.enum(["admin", "staff"]).optional(),
+  role: z.enum(["admin"]).optional(),
   // Empty/omitted password means "leave it unchanged" — only hash and
   // save a new one when a non-empty value is actually sent.
   password: z.string().min(6).optional().or(z.literal("")),
@@ -29,22 +29,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     await connectToDatabase();
-    // Scoped to role: staff|admin so this endpoint can't be used to edit
-    // an ordinary storefront customer's account — they share the same
-    // collection post-unification, but this is Sentinel team management.
-    const user = await StorefrontCustomerModel.findOne({ _id: id, role: { $in: ["admin", "staff"] } });
+    // Scoped to role: admin so this endpoint can't be used to edit an
+    // ordinary storefront customer's account — they share the same
+    // collection post-unification, but this is Sentinel admin management.
+    const user = await StorefrontCustomerModel.findOne({ _id: id, role: "admin" });
 
     if (!user) {
       return apiError("User not found", [], 404);
-    }
-
-    // Guard against locking everyone out: a "staff" demotion can't be
-    // applied to the last remaining admin account.
-    if (parsed.data.role === "staff" && user.role === "admin") {
-      const adminCount = await StorefrontCustomerModel.countDocuments({ role: "admin" });
-      if (adminCount <= 1) {
-        return apiError("Cannot remove admin access from the last admin account.", [], 400);
-      }
     }
 
     if (parsed.data.name) {
@@ -86,7 +77,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     }
 
     await connectToDatabase();
-    const user = await StorefrontCustomerModel.findOne({ _id: id, role: { $in: ["admin", "staff"] } });
+    const user = await StorefrontCustomerModel.findOne({ _id: id, role: "admin" });
 
     if (!user) {
       return apiError("User not found", [], 404);

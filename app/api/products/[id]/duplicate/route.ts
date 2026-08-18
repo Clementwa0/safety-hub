@@ -2,12 +2,12 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeProduct } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { ProductModel } from "@/lib/models/Product";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/validation";
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

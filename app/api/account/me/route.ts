@@ -2,7 +2,7 @@ import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
 import { updateProfileSchema } from "@/lib/storefront/validation";
-import { StorefrontCustomerModel } from "@/lib/models/StorefrontCustomer";
+import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { AddressModel } from "@/lib/models/Address";
 
 export async function GET() {

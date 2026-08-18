@@ -4,7 +4,7 @@ import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/a
 import { connectToDatabase } from "@/lib/db";
 import { CategoryModel } from "@/lib/models/Category";
 import { ProductModel } from "@/lib/models/Product";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 
 const categorySchema = z.object({
   name: z.string().trim().min(3),
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

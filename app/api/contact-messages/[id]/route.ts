@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { CONTACT_MESSAGE_STATUSES, ContactMessageModel } from "@/lib/models/ContactMessage";
 
 interface RouteContext {
@@ -17,7 +17,7 @@ const updateSchema = z.object({
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -46,7 +46,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -90,7 +90,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

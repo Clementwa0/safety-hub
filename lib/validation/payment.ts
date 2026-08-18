@@ -2,7 +2,18 @@ import { z } from "zod";
 
 import { PAYMENT_METHODS } from "@/types/sentinel/payment";
 
-
+/**
+ * Flat payment form schema for React Hook Form (`zodResolver`), used by
+ * RecordPaymentDialog. The server (`app/api/invoices/[id]/payments/route.ts`)
+ * remains the real source of truth - it re-validates amount against the
+ * invoice's actual outstanding balance, which this schema can't see.
+ *
+ * `amount` is a string here (not a number) because it's bound to a text
+ * `<Input type="number">` - RHF forms take the raw input value, and
+ * `.min(0.01)` on a string field would compare lengths, not magnitude,
+ * so the positivity/balance checks happen in RecordPaymentDialog's
+ * submit handler instead, against the live `balance` prop.
+ */
 export const paymentFormSchema = z.object({
   amount: z.string().trim().min(1, "Enter an amount"),
   method: z.enum(PAYMENT_METHODS),

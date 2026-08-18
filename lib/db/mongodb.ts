@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-
 function getMongoDBUri(): string {
   const uri = process.env.MONGODB_URI;
 
@@ -30,18 +29,13 @@ const cached: MongooseCache =
     promise: null,
   });
 
-export async function connectToDatabase(): Promise<
-  typeof mongoose
-> {
-  // Already connected
+export async function connectToDatabase(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
   }
 
-  // Get a guaranteed string
   const uri = getMongoDBUri();
 
-  // Create connection promise
   if (!cached.promise) {
     cached.promise = mongoose.connect(uri);
   }
@@ -55,7 +49,6 @@ export async function connectToDatabase(): Promise<
 
     return cached.conn;
   } catch (error) {
-    // Allow retry after failure
     cached.promise = null;
 
     console.error("MongoDB connection failed:", error);

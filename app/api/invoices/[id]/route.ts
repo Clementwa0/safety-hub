@@ -4,7 +4,7 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { InvoiceModel } from "@/lib/models/Invoice";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/lib/server/customers";
 
@@ -23,7 +23,7 @@ const invoiceSchema = z.object({
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -44,7 +44,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -102,7 +102,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

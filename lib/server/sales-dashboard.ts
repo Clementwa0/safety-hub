@@ -3,6 +3,7 @@ import { QuotationModel, type IQuotation } from "@/lib/models/Quotation";
 import { OrderModel, type IOrder } from "@/lib/models/Order";
 import { InvoiceModel, type IInvoice } from "@/lib/models/Invoice";
 import { StoreOrderModel, type IStoreOrder } from "@/lib/models/StoreOrder";
+import { PaymentModel, type IPayment } from "@/lib/models/Payment";
 import type {
   AgingBucket,
   DashboardQuery,
@@ -55,13 +56,9 @@ import type {
  *
  * Known data gaps, surfaced honestly in the UI rather than papered
  * over:
- *  - There is no persistent WhatsApp request record yet, so the
- *    "WhatsApp" source bucket is always zero (see improvement #1 in the
- *    product brief).
- *  - B2B invoices don't yet capture a payment method per payment (there
- *    is no separate Payment record — see improvement #6), so the
- *    "payment methods" breakdown only reflects storefront (M-Pesa/COD)
- *    payments. The dashboard says so next to the chart.
+ *  - There is no persistent WhatsApp request record, so the "WhatsApp"
+ *    source bucket is always zero (flagged to the reader via
+ *    pendingImplementation rather than silently shown as "no orders").
  *  - Order/StoreOrder status changes aren't timestamped individually,
  *    so "delivered" figures use the document's createdAt, not an actual
  *    delivery date.
@@ -158,11 +155,12 @@ export async function buildSalesDashboard(
   // place instead of duplicating it across Mongo aggregation pipelines. If
   // this ever needs to scale further, the accounting policy above should
   // move into $facet/$group stages, but the definitions must not change.
-  const [quotations, orders, invoices, storeOrders] = await Promise.all([
+  const [quotations, orders, invoices, storeOrders, payments] = await Promise.all([
     QuotationModel.find({}).lean<IQuotation[]>(),
     OrderModel.find({}).lean<IOrder[]>(),
     InvoiceModel.find({}).lean<IInvoice[]>(),
     StoreOrderModel.find({}).lean<IStoreOrder[]>(),
+    PaymentModel.find({}).lean<IPayment[]>(),
   ]);
 
   const invoiceById = new Map(invoices.map((inv) => [String(inv._id), inv]));
@@ -176,6 +174,7 @@ export async function buildSalesDashboard(
   const ordersInRange = orders.filter((o) => inRange(o.createdAt));
   const invoicesInRange = invoices.filter((inv) => inRange(inv.issueDate));
   const storeOrdersInRange = storeOrders.filter((so) => inRange(so.createdAt));
+  const paymentsInRange = payments.filter((p) => inRange(p.date));
 
   // ---------- KPI cards ----------
 
@@ -194,16 +193,21 @@ export async function buildSalesDashboard(
   );
   const invoicedValue = issuedInvoices.reduce((sum, inv) => sum + total(inv.items), 0);
 
-  const cashFromInvoices = invoices
-    .filter((inv) => inRange(inv.issueDate) && inv.status !== "cancelled")
-    .reduce((sum, inv) => sum + inv.amountPaid, 0);
+  const cashFromInvoices = paymentsInRange
+    .filter((p) => {
+      const inv = invoiceById.get(String(p.invoiceId));
+      return !inv || inv.status !== "cancelled";
+    })
+    .reduce((sum, p) => sum + p.amount, 0);
   const cashFromStoreOrders = storeOrdersInRange
     .filter((so) => so.paymentStatus === "paid")
     .reduce((sum, so) => sum + so.total, 0);
   const cashCollectedValue = cashFromInvoices + cashFromStoreOrders;
   const cashCollectedCount =
-    invoices.filter((inv) => inRange(inv.issueDate) && inv.status !== "cancelled" && inv.amountPaid > 0)
-      .length + storeOrdersInRange.filter((so) => so.paymentStatus === "paid").length;
+    paymentsInRange.filter((p) => {
+      const inv = invoiceById.get(String(p.invoiceId));
+      return !inv || inv.status !== "cancelled";
+    }).length + storeOrdersInRange.filter((so) => so.paymentStatus === "paid").length;
 
   const outstandingFromInvoices = issuedInvoices
     .filter((inv) => inv.status !== "paid")
@@ -420,7 +424,7 @@ export async function buildSalesDashboard(
     bucket.count += 1;
   }
 
-  // ---------- Payment methods (storefront only — see caveat) ----------
+  // ---------- Payment methods (storefront + B2B combined) ----------
 
   const methodTotals = new Map<string, { value: number; count: number }>();
   for (const so of storeOrdersInRange) {
@@ -430,7 +434,19 @@ export async function buildSalesDashboard(
     entry.count += 1;
     methodTotals.set(so.paymentMethod, entry);
   }
-  const METHOD_LABELS: Record<string, string> = { mpesa: "M-Pesa", cod: "Cash on Delivery" };
+  for (const p of paymentsInRange) {
+    const inv = invoiceById.get(String(p.invoiceId));
+    if (inv && inv.status === "cancelled") continue;
+    const entry = methodTotals.get(p.method) ?? { value: 0, count: 0 };
+    entry.value += p.amount;
+    entry.count += 1;
+    methodTotals.set(p.method, entry);
+  }
+  const METHOD_LABELS: Record<string, string> = {
+    mpesa: "M-Pesa",
+    cod: "Cash on Delivery",
+    cash: "Cash",
+  };
   const paymentMethods: PaymentMethodBreakdown[] = Array.from(methodTotals.entries()).map(
     ([method, { value, count }]) => ({
       method,
@@ -483,8 +499,6 @@ export async function buildSalesDashboard(
     ordersByStatus,
     outstandingAging: agingBuckets,
     paymentMethods,
-    paymentMethodsCaveat:
-      "B2B invoice payments don't yet record a payment method (no separate Payment ledger) — this chart currently reflects storefront M-Pesa/COD payments only.",
     topProducts,
     generatedAt: now,
   };

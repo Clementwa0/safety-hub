@@ -109,7 +109,6 @@ export interface SalesDashboardResponse {
   ordersByStatus: OrderStatusBreakdown[];
   outstandingAging: AgingBucket[];
   paymentMethods: PaymentMethodBreakdown[];
-  paymentMethodsCaveat: string;
   topProducts: TopProduct[];
   generatedAt: number;
 }

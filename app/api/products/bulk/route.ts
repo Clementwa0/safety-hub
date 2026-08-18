@@ -2,12 +2,12 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { ProductModel } from "@/lib/models/Product";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { bulkProductActionSchema } from "@/lib/validation/product";
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { OrderModel } from "@/lib/models/Order";
 import { InvoiceModel } from "@/lib/models/Invoice";
 import { ProductModel } from "@/lib/models/Product";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createWithDocumentNumber } from "@/lib/server/documentNumber";
 
 // POST /api/orders/[id]/convert-to-invoice
@@ -27,7 +27,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

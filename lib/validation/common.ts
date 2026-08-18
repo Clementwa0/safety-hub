@@ -113,7 +113,7 @@ export function validateUser(
     errors.password = "Password must be at least 6 characters.";
   }
 
-  if (!input.role || (input.role !== "admin" && input.role !== "staff")) {
+  if (!input.role || input.role !== "admin") {
     errors.role = "Select a role.";
   }
 

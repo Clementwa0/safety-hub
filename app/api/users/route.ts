@@ -2,25 +2,31 @@ import { z } from "zod";
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { StorefrontCustomerModel } from "@/lib/models/StorefrontCustomer";
+import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { hashPassword, requireAdmin, serializeUser } from "@/lib/auth";
 
 const createUserSchema = z.object({
   name: z.string().trim().min(2),
   email: z.string().trim().email(),
   password: z.string().min(6),
-  role: z.enum(["admin", "staff"]),
+  role: z.enum(["admin"]),
 });
 
 /**
- * Sentinel team management — admin-only. Reads/writes the same unified
- * `StorefrontCustomer` collection as everything else post-consolidation,
- * scoped to `role: staff|admin` — that collection also holds ordinary
- * storefront customers, who must never show up in (or be created through)
- * this list. Same as `/api/auth/register`, every account created here is
- * created by an already-authenticated admin — there is no anonymous
- * bootstrap path on either route; the first admin is provisioned out of
- * band via `scripts/admin/create-admin.ts`.
+ * Sentinel admin management. Reads/writes the same unified `UserModel`
+ * (`storefront_customers` collection) as everything else — that
+ * collection also holds ordinary storefront customers, who must never
+ * show up in (or be created through) this list, so every query here is
+ * scoped to `role: "admin"`.
+ *
+ * There is EXACTLY ONE admin account system-wide (enforced at the model
+ * layer in lib/models/User.ts) — there is no "staff" role. This endpoint
+ * cannot be used to create a second admin; the model's pre-save/
+ * pre-findOneAndUpdate hooks reject that and this route surfaces their
+ * error as a 409. Every account created here is created by an
+ * already-authenticated admin — there is no anonymous bootstrap path;
+ * the first admin is provisioned out of band via
+ * `scripts/admin/create-admin.ts`.
  */
 export async function GET() {
   try {
@@ -30,7 +36,7 @@ export async function GET() {
     }
 
     await connectToDatabase();
-    const users = await StorefrontCustomerModel.find({ role: { $in: ["admin", "staff"] } })
+    const users = await StorefrontCustomerModel.find({ role: "admin" })
       .sort("-createdAt")
       .lean();
 

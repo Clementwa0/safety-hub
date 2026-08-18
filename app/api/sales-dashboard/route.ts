@@ -1,12 +1,12 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { buildSalesDashboard } from "@/lib/server/sales-dashboard";
 import { DASHBOARD_RANGES, type DashboardRange } from "@/types/sentinel/sales-dashboard";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireStaff();
+    const user = await requireAdmin();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
