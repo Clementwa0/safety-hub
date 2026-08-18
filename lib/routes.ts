@@ -20,7 +20,7 @@ export const SENTINEL = {
 
 export const AUTH = {
   LOGIN: "/login",
-  SENTINEL_ROOT: "/sentinel",
+  SENTINEL_ROOT: "/sentinel/dashboard",
 } as const;
 
 export function sentinelPath(...segments: string[]) {

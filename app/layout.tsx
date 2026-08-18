@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import CartDrawer from "@/components/cart/CartDrawer";
-import { CustomerSessionProvider } from "@/components/providers/CustomerSessionProvider";
 import { cn } from "@/lib/utils";
 import { COMPANY } from "@/lib/constants";
+import CartDrawer from "@/features/storefront/cart/components/CartDrawer";
+import { CustomerSessionProvider } from "@/components/CustomerSessionProvider";
 
 export const metadata: Metadata = {
   title: {
