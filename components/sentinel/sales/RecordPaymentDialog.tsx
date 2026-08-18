@@ -78,7 +78,7 @@ export function RecordPaymentDialog({ open, onOpenChange, balance, saving, onSub
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Record a payment</DialogTitle>
           <DialogDescription>
@@ -86,10 +86,22 @@ export function RecordPaymentDialog({ open, onOpenChange, balance, saving, onSub
           </DialogDescription>
         </DialogHeader>
 
-        <form id="record-payment-form" onSubmit={handleSubmit(submit)} className="grid gap-4">
+        <form
+          id="record-payment-form"
+          onSubmit={handleSubmit(submit)}
+          className="grid gap-4 overflow-y-auto py-4 sm:grid-cols-2"
+        >
           <div className="space-y-1.5">
             <Label htmlFor="pay-amount">Amount (KES)</Label>
-            <Input id="pay-amount" type="number" min="0.01" step="0.01" placeholder="0.00" {...register("amount")} />
+            <Input
+              id="pay-amount"
+              type="number"
+              inputMode="decimal"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              {...register("amount")}
+            />
             {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
           </div>
 
@@ -99,7 +111,7 @@ export function RecordPaymentDialog({ open, onOpenChange, balance, saving, onSub
               value={method}
               onValueChange={(v) => typeof v === "string" && setValue("method", v as PaymentMethod)}
             >
-              <SelectTrigger id="pay-method"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="pay-method" className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="mpesa">M-Pesa</SelectItem>
                 <SelectItem value="cash">Cash</SelectItem>
@@ -107,22 +119,27 @@ export function RecordPaymentDialog({ open, onOpenChange, balance, saving, onSub
             </Select>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="pay-reference">Reference (optional)</Label>
             <Input id="pay-reference" placeholder="M-Pesa code, receipt no...." {...register("reference")} />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="pay-notes">Notes (optional)</Label>
             <Input id="pay-notes" placeholder="Any additional detail" {...register("notes")} />
           </div>
         </form>
 
-        <DialogFooter>
-          <Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row">
+          <Button
+            variant="outline"
+            disabled={saving}
+            onClick={() => onOpenChange(false)}
+            className="w-full sm:w-auto"
+          >
             Cancel
           </Button>
-          <Button type="submit" form="record-payment-form" disabled={saving}>
+          <Button type="submit" form="record-payment-form" disabled={saving} className="w-full sm:w-auto">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Record payment
           </Button>

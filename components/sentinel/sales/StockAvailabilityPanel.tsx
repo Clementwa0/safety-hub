@@ -47,16 +47,18 @@ export function StockAvailabilityPanel({ items }: StockAvailabilityPanelProps) {
           return (
             <div
               key={item.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm"
+              className="flex flex-col gap-2 rounded-md border border-border p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
             >
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">{item.name}</p>
                 <p className="text-xs text-muted-foreground">
                   Requested {item.quantity} · Available at quote time {available}
                   {procurement > 0 ? ` · Reserved ${reserved} · Procurement ${procurement}` : ""}
                 </p>
               </div>
-              <FulfillmentBadge plan={item.fulfillmentPlan} />
+              <div>
+                <FulfillmentBadge plan={item.fulfillmentPlan} />
+              </div>
             </div>
           );
         })}

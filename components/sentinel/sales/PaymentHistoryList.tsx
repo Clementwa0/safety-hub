@@ -26,19 +26,21 @@ export function PaymentHistoryList({ payments, loading }: PaymentHistoryListProp
   return (
     <ul className="divide-y divide-border">
       {payments.map((payment) => (
-        <li key={payment.id} className="flex items-center justify-between gap-4 py-3 text-sm">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{formatKES(payment.amount)}</span>
-              <Badge variant="outline" className="capitalize">{METHOD_LABEL[payment.method]}</Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatDate(payment.date)}
-              {payment.reference ? ` · Ref: ${payment.reference}` : ""}
-              {payment.recordedBy ? ` · Recorded by ${payment.recordedBy}` : ""}
-            </p>
-            {payment.notes && <p className="text-xs text-muted-foreground">{payment.notes}</p>}
+        <li key={payment.id} className="py-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-foreground tabular-nums">
+              {formatKES(payment.amount)}
+            </span>
+            <Badge variant="outline" className="capitalize">{METHOD_LABEL[payment.method]}</Badge>
           </div>
+          <p className="mt-0.5 break-words text-xs text-muted-foreground">
+            {formatDate(payment.date)}
+            {payment.reference ? ` · Ref: ${payment.reference}` : ""}
+            {payment.recordedBy ? ` · Recorded by ${payment.recordedBy}` : ""}
+          </p>
+          {payment.notes && (
+            <p className="mt-0.5 break-words text-xs text-muted-foreground">{payment.notes}</p>
+          )}
         </li>
       ))}
     </ul>

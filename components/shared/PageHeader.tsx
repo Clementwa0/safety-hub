@@ -22,19 +22,19 @@ export function PageHeader({
   className = "",
 }: PageHeaderProps) {
   return (
-    <div className={`rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 ${className}`}>
+    <div className={`rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6 ${className}`}>
       {breadcrumbs?.length ? (
-        <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+        <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           {breadcrumbs.map((item, index) => {
             const isLast = index === breadcrumbs.length - 1;
             return (
               <div key={`${item.label}-${index}`} className="flex items-center gap-2">
                 {item.href && !isLast ? (
-                  <Link href={item.href} className="transition hover:text-green-600">
+                  <Link href={item.href} className="transition hover:text-secondary">
                     {item.label}
                   </Link>
                 ) : (
-                  <span className={isLast ? "font-semibold text-gray-900" : "text-gray-500"}>
+                  <span className={isLast ? "font-semibold text-foreground" : "text-muted-foreground"}>
                     {item.label}
                   </span>
                 )}
@@ -47,9 +47,9 @@ export function PageHeader({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">{title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
           {description ? (
-            <p className="mt-2 max-w-2xl text-sm text-gray-600">{description}</p>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
           ) : null}
         </div>
         {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
