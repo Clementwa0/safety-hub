@@ -1,4 +1,4 @@
-import StoreOrdersPage from "@/components/sentinel/store-orders/StoreOrdersPage";
+import StoreOrdersPage from "@/features/sentinel/store-orders/StoreOrdersPage";
 
 export default function Page() {
   return <StoreOrdersPage />;

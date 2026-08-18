@@ -1,0 +1,332 @@
+"use client";
+
+import {
+  Pencil,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  X,
+} from "lucide-react";
+import { useState, useMemo } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import type { CategoryWithCount } from "@/types/category";
+
+interface CategoryTableProps {
+  categories: CategoryWithCount[];
+  onEdit: (category: CategoryWithCount) => void;
+  onDelete: (category: CategoryWithCount) => void;
+  loading?: boolean;
+}
+
+export default function CategoryTable({
+  categories,
+  onEdit,
+  onDelete,
+  loading = false,
+}: CategoryTableProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
+  const toggleRow = (id: string) => {
+    setExpandedRow(expandedRow === id ? null : id);
+  };
+
+  // Filter categories based on search query
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return categories;
+
+    const query = searchQuery.toLowerCase().trim();
+    return categories.filter(
+      (category) =>
+        category.name.toLowerCase().includes(query) ||
+        category.slug.toLowerCase().includes(query) ||
+        (category.description &&
+          category.description.toLowerCase().includes(query)),
+    );
+  }, [categories, searchQuery]);
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-12 w-full animate-pulse rounded bg-muted" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full space-y-4">
+      {/* Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search categories..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9 h-9 text-sm"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0 hover:bg-transparent"
+              onClick={clearSearch}
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+          <span>
+            {filteredCategories.length}
+            {filteredCategories.length !== categories.length &&
+              ` of ${categories.length}`}
+          </span>
+          <span>categories</span>
+          {searchQuery && (
+            <Badge variant="secondary" className="text-xs">
+              Filtered
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {filteredCategories.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[200px] gap-2 text-muted-foreground">
+          <Search className="h-8 w-8 opacity-20" />
+          <p className="text-sm">No categories found</p>
+          {searchQuery && (
+            <Button
+              variant="link"
+              size="sm"
+              className="text-xs"
+              onClick={clearSearch}
+            >
+              Clear search
+            </Button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
+            <div className="rounded-md border border-border/70">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="min-w-[180px] font-semibold">
+                      Category
+                    </TableHead>
+                    <TableHead className="font-semibold">Description</TableHead>
+                    <TableHead className="text-center font-semibold">
+                      Products
+                    </TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {filteredCategories.map((category, index) => {
+                    const rowKey = [
+                      category.id,
+                      category.slug,
+                      category.name,
+                      String(index),
+                    ]
+                      .filter(Boolean)
+                      .join("-");
+
+                    return (
+                      <TableRow
+                        key={rowKey}
+                        className="hover:bg-muted/20 transition-colors"
+                      >
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {category.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              /{category.slug}
+                            </p>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {category.description || "No description"}
+                          </p>
+                        </TableCell>
+
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="font-medium">
+                            {category.productCount}
+                          </Badge>
+                        </TableCell>
+
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
+                              aria-label={`Edit ${category.name}`}
+                              onClick={() => onEdit(category)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              aria-label={`Delete ${category.name}`}
+                              onClick={() => onDelete(category)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View - 2 Columns */}
+          <div className="md:hidden grid grid-cols-2 gap-2.5">
+            {filteredCategories.map((category, index) => {
+              const rowKey = [
+                category.id,
+                category.slug,
+                category.name,
+                String(index),
+              ]
+                .filter(Boolean)
+                .join("-");
+              const isExpanded = expandedRow === category.id;
+
+              return (
+                <Card
+                  key={rowKey}
+                  className={cn(
+                    "border-border/70 shadow-sm transition-all duration-200",
+                    isExpanded && "border-primary/30 shadow-md",
+                  )}
+                >
+                  <CardContent className="p-2.5">
+                    <div
+                      className="flex flex-col gap-1.5 cursor-pointer"
+                      onClick={() => toggleRow(category.id)}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-foreground truncate">
+                            {category.name}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground truncate">
+                            /{category.slug}
+                          </p>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="text-[9px] px-1.5 py-0 h-4 shrink-0"
+                        >
+                          {category.productCount}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 hover:bg-primary/10 hover:text-primary"
+                            aria-label={`Edit ${category.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(category);
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            aria-label={`Delete ${category.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(category);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleRow(category.id);
+                          }}
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="h-3 w-3" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Expandable Description */}
+                    {isExpanded && (
+                      <div className="mt-2 pt-2 border-t border-border/50 animate-in slide-in-from-top-1 duration-200">
+                        <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-3">
+                          {category.description || "No description"}
+                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-[8px] text-muted-foreground">
+                            /{category.slug}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

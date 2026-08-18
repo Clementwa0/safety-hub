@@ -1,5 +1,5 @@
-import { DashboardPage } from "@/features/sentinel/dashboard";
+import Dashboard from "@/features/sentinel/dashboard/Dashboard";
 
-export default function Page() {
-  return <DashboardPage />;
+export default function DashboardPage() {
+  return <Dashboard />;
 }

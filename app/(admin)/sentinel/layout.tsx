@@ -1,6 +1,33 @@
 import type { ReactNode } from "react";
-import { SentinelLayout } from "@/components/layouts";
+import { redirect } from "next/navigation";
 
-export default function Layout({ children }: { children: ReactNode }) {
-  return <SentinelLayout>{children}</SentinelLayout>;
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Header } from "@/components/sentinel/header";
+import Sidebar from "@/components/sentinel/sidebar/Sidebar";
+import { requireAdmin } from "@/lib/auth";
+
+export default async function SentinelLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const admin = await requireAdmin();
+
+  if (!admin) {
+    redirect("/sentinel/login");
+  }
+
+  return (
+    <SidebarProvider className="h-screen overflow-hidden">
+      <Sidebar />
+
+      <SidebarInset className="flex h-screen min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+        <Header />
+
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
+          {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }
