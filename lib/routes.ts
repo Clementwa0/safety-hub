@@ -19,7 +19,7 @@ export const SENTINEL = {
 } as const;
 
 export const AUTH = {
-  LOGIN: "/login",
+  LOGIN: "/account/sign-in",
   SENTINEL_ROOT: "/sentinel/dashboard",
 } as const;
 

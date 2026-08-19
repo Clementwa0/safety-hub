@@ -20,9 +20,7 @@ export async function linkGuestOrdersToCustomer(
     const cookieStore = await cookies();
     sessionId = cookieStore.get(CART_SESSION_COOKIE)?.value;
   } catch {
-    // `cookies()` throws if called outside a request context. Fall back to
-    // email-only matching in that case rather than failing entirely.
-    sessionId = undefined;
+   sessionId = undefined;
   }
 
   const orConditions: Record<string, unknown>[] = [{ "customer.email": normalizedEmail }];

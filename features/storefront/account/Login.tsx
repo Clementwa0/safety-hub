@@ -28,8 +28,6 @@ export default function SignInPage() {
   const callbackUrl = getSafeCallbackUrl(searchParams.get("next"), DEFAULT_CALLBACK_URL);
   const errorCode = searchParams.get("error");
 
-  // Already signed in (e.g. followed a stale bookmark to this page) — send
-  // them straight on rather than showing the sign-in form again.
   useEffect(() => {
     if (status === "authenticated") {
       router.replace(callbackUrl);
@@ -49,17 +47,28 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-12rem)] items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <Link href="/" className="text-lg font-bold text-primary">
+    <div className="relative flex min-h-[calc(100vh-12rem)] items-center justify-center px-4 py-12 overflow-hidden">
+      {/* Decorative background – only visual, no interactive elements */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-[-30%] right-[-10%] h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute bottom-[-30%] left-[-10%] h-[500px] w-[500px] rounded-full bg-secondary/5 blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-md shadow-lg border-border/50 transition-shadow hover:shadow-xl">
+        <CardHeader className="items-center text-center space-y-2 pb-6">
+          <Link
+            href="/"
+            className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors"
+          >
             {COMPANY.name}
           </Link>
-          <CardTitle className="mt-2 text-xl">Sign in to your customer account</CardTitle>
-          <CardDescription>Track orders, save addresses, and check out faster.</CardDescription>
+          <CardTitle className="mt-1 text-2xl font-display">Sign in to your customer account</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            Track orders, save addresses, and check out faster.
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-6">
           {errorCode && (
             <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
               <FaTriangleExclamation className="mt-0.5 h-4 w-4 shrink-0" />
@@ -67,12 +76,22 @@ export default function SignInPage() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Button type="button" variant="outline" className="w-full gap-2" onClick={handleGoogle}>
+          <div className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2 h-11 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              onClick={handleGoogle}
+            >
               <FaGoogle className="h-4 w-4" />
               Continue with Google
             </Button>
-            <Button type="button" variant="outline" className="w-full gap-2" onClick={handleFacebook}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2 h-11 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              onClick={handleFacebook}
+            >
               <FaFacebook className="h-4 w-4" />
               Continue with Facebook
             </Button>
