@@ -16,6 +16,48 @@ export const COMPANY = {
     linkedin: "https://linkedin.com/company/your-company",
   },
 };
+
+export const PAGE_SIZE = 10;
+
+export const STATS_CONFIG = [
+  {
+    key: "totalOrders",
+    label: "Total",
+    classes:
+      "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40",
+  },
+  {
+    key: "pending",
+    label: "Pending",
+    classes:
+      "border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30",
+  },
+  {
+    key: "shipped",
+    label: "Shipped",
+    classes:
+      "border-indigo-200 bg-indigo-50 dark:border-indigo-900/60 dark:bg-indigo-950/30",
+  },
+  {
+    key: "delivered",
+    label: "Delivered",
+    classes:
+      "border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30",
+  },
+  {
+    key: "cancelled",
+    label: "Cancelled",
+    classes:
+      "border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30",
+  },
+  {
+    key: "revenue",
+    label: "Revenue",
+    classes:
+      "border-violet-200 bg-violet-50 dark:border-violet-900/60 dark:bg-violet-950/30",
+  },
+] as const;
+
 export const features = [
   {
     icon: FaShieldHalved,

@@ -36,7 +36,7 @@ export const contactMessageService = {
       method: "DELETE",
     });
   },
-  async stats(): Promise<ContactMessageStats> {
+  async stats(p0?: { signal?: AbortSignal }): Promise<ContactMessageStats> {
     return apiRequest<ContactMessageStats>("/api/contact-messages/stats");
   },
 };

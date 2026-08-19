@@ -19,11 +19,6 @@ const settingsSchema = z.object({
 
 const settingsPatchSchema = settingsSchema.partial();
 
-/**
- * The company defaults doubled as the settings service's hardcoded
- * fallbacks before this endpoint was wired up. Reused here so a fresh
- * install seeds the same values instead of empty strings.
- */
 const DEFAULT_SETTINGS = {
   companyName: COMPANY.name,
   contactEmail: COMPANY.email,

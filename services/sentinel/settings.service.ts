@@ -27,4 +27,21 @@ export const settingsService = {
       shippingPolicy: payload.settings?.shippingPolicy ?? "Delivery within 2-5 business days.",
     };
   },
+
+  async update(input: Partial<PortalSettings>): Promise<PortalSettings> {
+    const payload = await apiRequest<{ settings?: Partial<PortalSettings> }>("/api/settings", {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
+    return {
+      companyName: payload.settings?.companyName ?? "",
+      contactEmail: payload.settings?.contactEmail ?? "",
+      contactPhone: payload.settings?.contactPhone ?? "",
+      address: payload.settings?.address ?? "",
+      whatsapp: payload.settings?.whatsapp ?? "",
+      currency: payload.settings?.currency ?? "KES",
+      taxRate: payload.settings?.taxRate ?? 0,
+      shippingPolicy: payload.settings?.shippingPolicy ?? "",
+    };
+  },
 };

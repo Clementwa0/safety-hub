@@ -1,10 +1,5 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
 
-/**
- * Portal settings is a singleton — exactly one document, always looked up
- * by this fixed id, never created via user input. `findOneAndUpdate` with
- * `upsert: true` in the API route is what creates it on first write.
- */
 export const SETTINGS_SINGLETON_ID = "portal-settings";
 
 export interface ISettings extends Omit<Document, "_id"> {

@@ -39,7 +39,7 @@ export const adminStoreOrderService = {
       body: JSON.stringify({ paymentStatus }),
     });
   },
-  async stats(): Promise<StoreOrderStats> {
+  async stats(p0: { signal: AbortSignal; }): Promise<StoreOrderStats> {
     return apiRequest<StoreOrderStats>("/api/admin/store-orders/stats");
   },
 };
