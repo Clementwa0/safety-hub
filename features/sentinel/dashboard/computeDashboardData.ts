@@ -12,6 +12,7 @@ import {
 
 import type { Product } from "@/types/product";
 import type { StoreOrder, StoreOrderStatus } from "@/types/storefront/store-order";
+import { getStockBucket } from "../inventory/stockStatus";
 
 export type TrendRange = "week" | "month";
 
@@ -287,6 +288,47 @@ export function computeStatusBreakdown(orders: StoreOrder[]): StatusSlice[] {
       };
     })
     .filter((slice) => slice.count > 0);
+}
+
+/**
+ * Lightweight, executive-level snapshot of the catalogue for the Dashboard's
+ * Catalog/Inventory KPI cards. Deliberately reuses the same stock-bucket
+ * thresholds as the Inventory page (`getStockBucket`) so "low stock" means
+ * the same thing everywhere in Sentinel. This intentionally does NOT
+ * replicate the Inventory page's `reserved`/`available` split (which
+ * requires a per-product availability fetch) — the Dashboard already has
+ * the product list in memory, so this stays a single, cheap pass over data
+ * that's already loaded rather than firing extra requests.
+ */
+export interface CatalogSnapshot {
+  totalProducts: number;
+  totalUnits: number;
+  draftCount: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+}
+
+export function computeCatalogSnapshot(products: Product[]): CatalogSnapshot {
+  const active = products.filter((p) => (p.status ?? "active") !== "archived");
+
+  let totalUnits = 0;
+  let lowStockCount = 0;
+  let outOfStockCount = 0;
+
+  for (const product of active) {
+    totalUnits += product.stock;
+    const bucket = getStockBucket(product.stock);
+    if (bucket === "out") outOfStockCount += 1;
+    else if (bucket === "low" || bucket === "running-low") lowStockCount += 1;
+  }
+
+  return {
+    totalProducts: products.length,
+    totalUnits,
+    draftCount: products.filter((p) => p.status === "draft").length,
+    lowStockCount,
+    outOfStockCount,
+  };
 }
 
 export function computeCategorySales(

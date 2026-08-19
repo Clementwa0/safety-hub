@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { PageHeader } from "@/components/shared/PageHeader";
 import { TableSkeleton } from "@/components/shared/Loading";
 import { Pagination } from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SafeImage } from "@/components/shared/SafeImage";
+import { useState } from "react";
 import {
   Copy,
   Eye,
@@ -13,8 +13,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { useState } from "react";
 
+import { SafeImage } from "@/components/shared/SafeImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,20 +52,50 @@ const STATUS_VARIANT: Record<ProductStatus, BadgeVariant> = {
   archived: "outline",
 };
 
-const STATUS_LABELS: Record<ProductStatus, string> = {
-  active: "Active",
-  draft: "Draft",
-  out_of_stock: "Out of Stock",
-  archived: "Archived",
+const stockLabel = (stock: number) => {
+  if (stock === 0) return { text: "Out", variant: "destructive" as const };
+  if (stock < 10) return { text: `${stock}`, variant: "secondary" as const };
+  return { text: `${stock}`, variant: "outline" as const };
 };
 
-function stockLabel(stock: number) {
-  if (stock === 0) return { text: "Out", variant: "destructive" as const };
-  if (stock < 10)
-    return { text: `${stock} left`, variant: "secondary" as const };
-  return { text: `${stock}`, variant: "outline" as const };
-}
+// ----- shared sub‑components -----
+const ProductBadges = ({
+  featured,
+  isNewArrival,
+}: {
+  featured?: boolean;
+  isNewArrival?: boolean;
+}) => (
+  <div className="flex items-center gap-0.5">
+    {featured && <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" />}
+    {isNewArrival && (
+      <Badge variant="default" className="h-3.5 px-1 text-[8px] leading-none">
+        <Sparkles className="h-2 w-2" /> NEW
+      </Badge>
+    )}
+  </div>
+);
 
+const ProductPrice = ({ price, compareAtPrice }: { price: number; compareAtPrice?: number }) => {
+  const discount = getDiscountPercent(price, compareAtPrice);
+  return (
+    <div className="flex flex-col leading-none">
+      <span className="text-sm font-medium">{formatKES(price)}</span>
+      {compareAtPrice && (
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <span className="line-through">{formatKES(compareAtPrice)}</span>
+          {discount && (
+            <Badge variant="destructive" className="h-3.5 px-1 text-[8px] leading-none">
+              -{discount}%
+            </Badge>
+          )}
+        </span>
+      )}
+    </div>
+  );
+};
+
+// ----- main component -----
 interface ProductTableProps {
   products: Product[];
   onDelete?: (product: Product) => void;
@@ -89,454 +119,269 @@ export default function ProductTable({
   onToggleSelectAll,
   loading = false,
 }: ProductTableProps) {
-  const selectedSet = new Set(selectedIds);
-  const allSelected =
-    products.length > 0 &&
-    products.every((product) => selectedSet.has(product.id));
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
-
-  const toggleRow = (id: string) => {
-    setExpandedRow(expandedRow === id ? null : id);
-  };
+  const toggleRow = (id: string) => setExpandedRow(prev => prev === id ? null : id);
+  const selectedSet = new Set(selectedIds);
+  const allSelected = products.length > 0 && products.every(p => selectedSet.has(p.id));
 
   if (loading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-12 w-full animate-pulse rounded bg-muted" />
+          <div key={i} className="h-10 w-full animate-pulse rounded bg-muted" />
         ))}
       </div>
     );
   }
 
-  if (products.length === 0) {
+  if (!products.length) {
     return (
-      <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
         No products found
       </div>
     );
   }
 
+  const renderProduct = (product: Product, index: number, isMobile: boolean) => {
+    const stock = stockLabel(product.stock);
+    const status = (product.status ?? "active") as ProductStatus;
+    const isSelected = selectedSet.has(product.id);
+    const isExpanded = expandedRow === product.id && isMobile;
+    const rowKey = product.id || `product-${index}`;
+
+    const productInfo = (
+      <div className="flex items-center gap-2.5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm font-medium leading-tight">{product.name}</p>
+            <ProductBadges featured={product.featured} isNewArrival={product.isNewArrival} />
+          </div>
+        </div>
+      </div>
+    );
+
+    const priceCell = <ProductPrice price={product.price} compareAtPrice={product.compareAtPrice} />;
+
+    const statusBadge = (
+      <Badge variant={STATUS_VARIANT[status]} className="text-[10px] px-1.5 py-0 h-4">
+        {PRODUCT_STATUS_LABELS[status]}
+      </Badge>
+    );
+
+    const actionsMenu = !compact && (
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button size="sm" className="h-7 w-7 p-0" />}>
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-36">
+          <DropdownMenuItem className="text-xs">
+            <Link href={`/products/${product.id}`} className="flex items-center gap-2">
+              <Eye className="h-3.5 w-3.5" /> View
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-xs">
+            <Link href={`/sentinel/products/${product.id}/edit`} className="flex items-center gap-2">
+              <Pencil className="h-3.5 w-3.5" /> Edit
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onDuplicate?.(product)} className="text-xs">
+            <Copy className="h-3.5 w-3.5" /> Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => onDelete?.(product)}
+            className="text-xs text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+
+    // ---- desktop row ----
+    if (!isMobile) {
+      return (
+        <TableRow key={rowKey} data-state={isSelected ? "selected" : undefined} className="h-12">
+          {selectable && (
+            <TableCell className="py-1">
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={c => onToggleSelect?.(product.id, Boolean(c))}
+                className="h-3.5 w-3.5"
+              />
+            </TableCell>
+          )}
+          <TableCell className="py-1">{productInfo}</TableCell>
+          <TableCell className="hidden lg:table-cell py-1 text-xs text-muted-foreground">
+            {product.category}
+          </TableCell>
+          <TableCell className="hidden xl:table-cell py-1 text-xs text-muted-foreground">
+            {product.brand || "—"}
+          </TableCell>
+          <TableCell className="py-1">{priceCell}</TableCell>
+          <TableCell className="hidden sm:table-cell py-1">
+            <Badge variant={stock.variant} className="text-[10px] px-1.5 py-0 h-4">
+              {stock.text}
+            </Badge>
+          </TableCell>
+          <TableCell className="hidden lg:table-cell py-1">{statusBadge}</TableCell>
+          {!compact && <TableCell className="py-1 text-right">{actionsMenu}</TableCell>}
+        </TableRow>
+      );
+    }
+
+    // ---- mobile card ----
+    return (
+      <Card
+        key={rowKey}
+        className={cn(
+          "border-border/60 p-1.5 shadow-sm transition-all duration-200",
+          isExpanded && "border-primary/30 shadow-md"
+        )}
+      >
+        <CardContent className="p-2">
+          <div className="flex items-start gap-2">
+            {selectable && (
+              <div className="pt-0.5">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={c => onToggleSelect?.(product.id, Boolean(c))}
+                  className="h-3.5 w-3.5"
+                />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-1.5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <p className="truncate text-xs font-medium leading-tight">{product.name}</p>
+                    <ProductBadges featured={product.featured} isNewArrival={product.isNewArrival} />
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">{priceCell}</div>
+              </div>
+              <div className="flex items-center justify-between mt-1 pt-1 border-t border-border/40">
+                <div className="flex items-center gap-1.5">
+                  <Badge variant={stock.variant} className="text-[9px] px-1.5 py-0 h-3.5">
+                    {stock.text}
+                  </Badge>
+                  {statusBadge}
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-primary/10 hover:text-primary"
+                  >
+                    <Link href={`/sentinel/products/${product.id}/edit`}>
+                      <Pencil className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => onDelete?.(product)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => toggleRow(product.id)}
+                  >
+                    {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  </Button>
+                </div>
+              </div>
+              {isExpanded && (
+                <div className="mt-1.5 pt-1.5 border-t border-border/40 animate-in slide-in-from-top-1 duration-150">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
+                    <span className="text-muted-foreground">Category</span>
+                    <span className="font-medium text-right truncate">{product.category}</span>
+                    {product.brand && (
+                      <>
+                        <span className="text-muted-foreground">Brand</span>
+                        <span className="font-medium text-right truncate">{product.brand}</span>
+                      </>
+                    )}
+                    {product.sku && (
+                      <>
+                        <span className="text-muted-foreground">SKU</span>
+                        <span className="font-medium text-right truncate">{product.sku}</span>
+                      </>
+                    )}
+                    {product.compareAtPrice && (
+                      <>
+                        <span className="text-muted-foreground">Compare at</span>
+                        <span className="font-medium text-right line-through">{formatKES(product.compareAtPrice)}</span>
+                      </>
+                    )}
+                    {product.createdAt && (
+                      <>
+                        <span className="text-muted-foreground">Created</span>
+                        <span className="font-medium text-right">{formatDate(product.createdAt)}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex gap-1.5 mt-1.5">
+                    <Button variant="outline" size="sm" className="flex-1 h-6 text-[10px]" >
+                      <Link href={`/products/${product.id}`}>
+                        <Eye className="h-2.5 w-2.5 mr-1" /> View
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-6 text-[10px]"
+                      onClick={() => onDuplicate?.(product)}
+                    >
+                      <Copy className="h-2.5 w-2.5 mr-1" /> Duplicate
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // ----- render -----
   return (
     <div className="w-full">
-      {/* Desktop Table View */}
+      {/* Desktop */}
       <div className="hidden md:block w-full overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="h-9">
               {selectable && (
-                <TableHead className="w-10">
+                <TableHead className="w-8">
                   <Checkbox
                     checked={allSelected}
-                    onCheckedChange={(checked) =>
-                      onToggleSelectAll?.(Boolean(checked))
-                    }
+                    onCheckedChange={c => onToggleSelectAll?.(Boolean(c))}
+                    className="h-3.5 w-3.5"
                   />
                 </TableHead>
               )}
-              <TableHead className="min-w-[180px] text-sm font-medium">
-                Product
-              </TableHead>
-              <TableHead className="hidden lg:table-cell text-sm font-medium">
-                Category
-              </TableHead>
-              <TableHead className="hidden xl:table-cell text-sm font-medium">
-                Brand
-              </TableHead>
-              <TableHead className="text-sm font-medium">Price</TableHead>
-              <TableHead className="hidden sm:table-cell text-sm font-medium">
-                Stock
-              </TableHead>
-              <TableHead className="hidden lg:table-cell text-sm font-medium">
-                Status
-              </TableHead>
-              {!compact && (
-                <TableHead className="text-right text-sm font-medium">
-                  Actions
-                </TableHead>
-              )}
+              <TableHead className="min-w-[160px] text-xs font-medium">Product</TableHead>
+              <TableHead className="hidden lg:table-cell text-xs font-medium">Category</TableHead>
+              <TableHead className="hidden xl:table-cell text-xs font-medium">Brand</TableHead>
+              <TableHead className="text-xs font-medium">Price</TableHead>
+              <TableHead className="hidden sm:table-cell text-xs font-medium">Stock</TableHead>
+              <TableHead className="hidden lg:table-cell text-xs font-medium">Status</TableHead>
+              {!compact && <TableHead className="text-right text-xs font-medium">Actions</TableHead>}
             </TableRow>
           </TableHeader>
-
-          <TableBody>
-            {products.map((product, index) => {
-              const stock = stockLabel(product.stock);
-              const status = (product.status ?? "active") as ProductStatus;
-              const normalizedImage =
-                typeof product.image === "string"
-                  ? product.image.trim()
-                  : product.image?.src;
-              const hasValidImage = Boolean(normalizedImage);
-              const rowKey = product.id || `product-${index}`;
-              const discount = getDiscountPercent(
-                product.price,
-                product.compareAtPrice,
-              );
-              const isSelected = selectedSet.has(product.id);
-
-              return (
-                <TableRow
-                  key={rowKey}
-                  data-state={isSelected ? "selected" : undefined}
-                >
-                  {selectable && (
-                    <TableCell>
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) =>
-                          onToggleSelect?.(product.id, Boolean(checked))
-                        }
-                      />
-                    </TableCell>
-                  )}
-
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
-                        <SafeImage
-                          src={hasValidImage ? normalizedImage : null}
-                          alt={product.name}
-                          fill
-                          preset="thumbnail"
-                          sizes="40px"
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="truncate text-sm font-medium">
-                            {product.name}
-                          </p>
-                          {product.featured && (
-                            <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />
-                          )}
-                          {product.isNewArrival && (
-                            <Badge
-                              variant="default"
-                              className="h-4 gap-0.5 px-1 text-[10px]"
-                            >
-                              <Sparkles className="h-2.5 w-2.5" />
-                              NEW
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                    {product.category}
-                  </TableCell>
-
-                  <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
-                    {product.brand || "—"}
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">
-                        {formatKES(product.price)}
-                      </span>
-                      {product.compareAtPrice && (
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span className="line-through">
-                            {formatKES(product.compareAtPrice)}
-                          </span>
-                          {discount && (
-                            <Badge
-                              variant="destructive"
-                              className="h-4 px-1 text-[10px]"
-                            >
-                              -{discount}%
-                            </Badge>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge variant={stock.variant} className="text-xs">
-                      {stock.text}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell className="hidden lg:table-cell">
-                    <Badge variant={STATUS_VARIANT[status]} className="text-xs">
-                      {STATUS_LABELS[status]}
-                    </Badge>
-                  </TableCell>
-
-                  {!compact && (
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button size="sm" className="h-8 w-8 p-0" />
-                            }
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem>
-                              <Link
-                                href={`/products/${product.id}`}
-                                className="flex items-center gap-2"
-                              >
-                                <Eye className="h-4 w-4" />
-                                View
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Link
-                                href={`/sentinel/products/${product.id}/edit`}
-                                className="flex items-center gap-2"
-                              >
-                                <Pencil className="h-4 w-4" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => onDuplicate?.(product)}
-                            >
-                              <Copy className="h-4 w-4" />
-                              Duplicate
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => onDelete?.(product)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              );
-            })}
-          </TableBody>
+          <TableBody>{products.map((p, i) => renderProduct(p, i, false))}</TableBody>
         </Table>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="md:hidden p-2 space-y-2">
-        {products.map((product, index) => {
-          const stock = stockLabel(product.stock);
-          const status = (product.status ?? "active") as ProductStatus;
-          const normalizedImage =
-            typeof product.image === "string"
-              ? product.image.trim()
-              : product.image?.src;
-          const hasValidImage = Boolean(normalizedImage);
-          const rowKey = product.id || `product-${index}`;
-          const discount = getDiscountPercent(
-            product.price,
-            product.compareAtPrice,
-          );
-          const isSelected = selectedSet.has(product.id);
-          const isExpanded = expandedRow === product.id;
-
-          return (
-            <Card
-              key={rowKey}
-              className={cn(
-                "border-border/70 p-2 shadow-sm transition-all duration-200",
-                isExpanded && "border-primary/30 shadow-md",
-              )}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-start gap-3">
-                  {/* Selectable checkbox */}
-                  {selectable && (
-                    <div className="pt-0.5">
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) =>
-                          onToggleSelect?.(product.id, Boolean(checked))
-                        }
-                        className="h-4 w-4"
-                      />
-                    </div>
-                  )}
-
-                  {/* Product image */}
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border bg-muted">
-                    <SafeImage
-                      src={hasValidImage ? normalizedImage : null}
-                      alt={product.name}
-                      fill
-                      preset="thumbnail"
-                      sizes="48px"
-                      className="object-cover"
-                    />
-                  </div>
-
-                  {/* Product info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-sm font-medium truncate">
-                            {product.name}
-                          </p>
-                          {product.featured && (
-                            <Star className="h-3 w-3 shrink-0 fill-amber-400 text-amber-400" />
-                          )}
-                          {product.isNewArrival && (
-                            <Badge
-                              variant="default"
-                              className="h-3.5 px-1 text-[8px]"
-                            >
-                              <Sparkles className="h-2 w-2" />
-                              NEW
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          {product.category}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm font-medium">
-                          {formatKES(product.price)}
-                        </p>
-                        {product.compareAtPrice && discount && (
-                          <Badge
-                            variant="destructive"
-                            className="h-3.5 px-1 text-[8px]"
-                          >
-                            -{discount}%
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bottom row: stock, status, actions */}
-                    <div className="flex items-center justify-between mt-1.5 pt-1.5 border-t border-border/50">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={stock.variant}
-                          className="text-[10px] px-1.5 py-0 h-4"
-                        >
-                          {stock.text}
-                        </Badge>
-                        <Badge
-                          variant={STATUS_VARIANT[status]}
-                          className="text-[10px] px-1.5 py-0 h-4"
-                        >
-                          {STATUS_LABELS[status]}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-0.5">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary"
-                        >
-                          <Link href={`/sentinel/products/${product.id}/edit`}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => onDelete?.(product)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                          onClick={() => toggleRow(product.id)}
-                        >
-                          {isExpanded ? (
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          ) : (
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Expandable details */}
-                    {isExpanded && (
-                      <div className="mt-2 pt-2 border-t border-border/50 animate-in slide-in-from-top-1 duration-200">
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">Brand</span>
-                            <span className="font-medium">
-                              {product.brand || "—"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">SKU</span>
-                            <span className="font-medium">
-                              {product.sku || "—"}
-                            </span>
-                          </div>
-                          {product.compareAtPrice && (
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">
-                                Compare at
-                              </span>
-                              <span className="font-medium line-through">
-                                {formatKES(product.compareAtPrice)}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              Created
-                            </span>
-                            <span className="font-medium">
-                              {product.createdAt
-                                ? formatDate(product.createdAt)
-                                : "—"}
-                            </span>
-                          </div>
-                          <div className="flex gap-2 pt-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex h-7 w-auto text-xs"
-                            >
-                              <Link
-                                className="w-auto flex"
-                                href={`/products/${product.id}`}
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1 h-7 text-xs"
-                              onClick={() => onDuplicate?.(product)}
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              Duplicate
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Mobile */}
+      <div className="md:hidden space-y-1.5">{products.map((p, i) => renderProduct(p, i, true))}</div>
     </div>
   );
 }

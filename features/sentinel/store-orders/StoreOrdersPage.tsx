@@ -27,64 +27,51 @@ import {
   type StoreOrderStatus,
   type StorePaymentStatus,
 } from "@/types/storefront/store-order";
+
 import StatsCard from "@/components/sentinel/shared/StatsCard";
 import StoreOrderTable from "./components/StoreOrderTable";
+import { PAGE_SIZE, STATS_CONFIG } from "@/lib/constants";
 
-const PAGE_SIZE = 10;
-
-// Stats configuration — no icons, just a distinct accent color per card so
-// the row still reads as a quick-scan dashboard instead of six identical tiles.
-const STATS_CONFIG = [
-  {
-    key: "totalOrders",
-    label: "Total",
-    classes: "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40",
-  },
-  {
-    key: "pending",
-    label: "Pending",
-    classes: "border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30",
-  },
-  {
-    key: "shipped",
-    label: "Shipped",
-    classes: "border-indigo-200 bg-indigo-50 dark:border-indigo-900/60 dark:bg-indigo-950/30",
-  },
-  {
-    key: "delivered",
-    label: "Delivered",
-    classes: "border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30",
-  },
-  {
-    key: "cancelled",
-    label: "Cancelled",
-    classes: "border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30",
-  },
-  {
-    key: "revenue",
-    label: "Revenue",
-    classes: "border-violet-200 bg-violet-50 dark:border-violet-900/60 dark:bg-violet-950/30",
-  },
-] as const;
 
 export default function AdminStoreOrdersPage() {
   const [orders, setOrders] = useState<StoreOrder[]>([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, pages: 1 });
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    pages: 1,
+  });
+
   const [stats, setStats] = useState<StoreOrderStats | null>(null);
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 350);
-  const [status, setStatus] = useState<StoreOrderStatus | "all">("all");
-  const [paymentStatus, setPaymentStatus] = useState<StorePaymentStatus | "all">("all");
+
+  const [status, setStatus] = useState<
+    StoreOrderStatus | "all"
+  >("all");
+
+  const [paymentStatus, setPaymentStatus] = useState<
+    StorePaymentStatus | "all"
+  >("all");
+
   const [sort, setSort] = useState("-createdAt");
   const [page, setPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+   * ==========================================================
+   * LOAD ORDERS
+   * ==========================================================
+   */
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
       const result = await adminStoreOrderService.list({
         page,
@@ -94,38 +81,121 @@ export default function AdminStoreOrdersPage() {
         status,
         paymentStatus,
       });
+
       setOrders(result.items);
       setPagination(result.pagination);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not load orders");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not load orders"
+      );
     } finally {
       setLoading(false);
     }
-  }, [page, sort, debouncedSearch, status, paymentStatus]);
+  }, [
+    page,
+    sort,
+    debouncedSearch,
+    status,
+    paymentStatus,
+  ]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  /*
+   * ==========================================================
+   * RESET PAGE WHEN FILTERS CHANGE
+   * ==========================================================
+   */
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, status, paymentStatus]);
 
+  /*
+   * ==========================================================
+   * LOAD STATS
+   *
+   * The service requires an AbortSignal.
+   * ==========================================================
+   */
+
   useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController();
+
     adminStoreOrderService
-      .stats()
-      .then(setStats)
-      .catch(() => {
-        // Stats are supplementary; a failure here shouldn't block the order list.
+      .stats({
+        signal: controller.signal,
+      })
+      .then((result) => {
+        if (!mounted) return;
+
+        setStats(result);
+      })
+      .catch((caught) => {
+        if (!mounted || caught?.name === "AbortError") {
+          return;
+        }
+
+        // Stats are supplementary.
+        // A stats failure should not block the order list.
+        setStats(null);
       });
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, []);
 
-  const hasFilters = Boolean(search) || status !== "all" || paymentStatus !== "all";
+  /*
+   * ==========================================================
+   * FILTER STATE
+   * ==========================================================
+   */
 
-  const getStatValue = (key: string): string => {
-    if (!stats) return "—";
-    if (key === "revenue") return formatKES(stats.totalRevenue);
-    return String(stats[key as keyof StoreOrderStats] ?? "—");
+  const hasFilters =
+    Boolean(search.trim()) ||
+    status !== "all" ||
+    paymentStatus !== "all";
+
+  /*
+   * ==========================================================
+   * STATS VALUE
+   * ==========================================================
+   */
+
+  const getStatValue = (
+    key: (typeof STATS_CONFIG)[number]["key"]
+  ): string => {
+    if (!stats) {
+      return "—";
+    }
+
+    if (key === "revenue") {
+      return formatKES(stats.totalRevenue);
+    }
+
+    return String(
+      stats[key as keyof StoreOrderStats] ?? "—"
+    );
+  };
+
+  /*
+   * ==========================================================
+   * CLEAR FILTERS
+   * ==========================================================
+   */
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatus("all");
+    setPaymentStatus("all");
+    setPage(1);
   };
 
   return (
@@ -134,107 +204,215 @@ export default function AdminStoreOrdersPage() {
         title="Store orders"
         description="Orders placed through the storefront."
       />
-
-      {/* Stats — 2 columns on phones, scaling up to all 6 in a row on
-          desktop. Each card carries its own accent color and icon so the
-          row is scannable at a glance rather than a wall of gray tiles. */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid  grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {STATS_CONFIG.map(({ key, label, classes }) => (
           <StatsCard
             key={key}
             title={label}
             value={getStatValue(key)}
             loading={!stats}
-            className={`rounded-xl border p-3 shadow-none transition-colors ${classes}`}
+            className={`
+              rounded-xl
+              border
+              p-3
+              text-sm
+              shadow-none
+              transition-colors
+              ${classes}
+            `}
           />
         ))}
       </div>
-
-      {/* Filter bar */}
-      <div className="flex flex-col gap-2 rounded-lg border p-3 md:flex-row md:items-center md:gap-3">
+      <div
+        className="
+          flex
+          flex-col
+          gap-2
+          rounded-lg
+          border
+          p-3
+          md:flex-row
+          md:items-center
+          md:gap-3
+        "
+      >
         <Input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           placeholder="Search orders…"
           aria-label="Search store orders"
+          className="md:flex-1"
         />
 
-        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center md:gap-3">
+        {/* Select filters */}
+
+        <div
+          className="
+            grid
+            grid-cols-2
+            gap-2
+            md:flex
+            md:flex-wrap
+            md:items-center
+            md:gap-3
+          "
+        >
+          {/* Order status */}
+
           <Select
             value={status}
             onValueChange={(value) => {
-              if (typeof value === "string") setStatus(value as StoreOrderStatus | "all");
+              if (typeof value === "string") {
+                setStatus(
+                  value as StoreOrderStatus | "all"
+                );
+              }
             }}
           >
             <SelectTrigger className="w-full md:w-40">
               <SelectValue>
-                <span className="capitalize">{status === "all" ? "Status" : status}</span>
+                <span className="capitalize">
+                  {status === "all" ? "Status" : status}
+                </span>
               </SelectValue>
             </SelectTrigger>
+
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">
+                All statuses
+              </SelectItem>
+
               {STORE_ORDER_STATUSES.map((option) => (
-                <SelectItem key={option} value={option}>
-                  <span className="capitalize">{option}</span>
+                <SelectItem
+                  key={option}
+                  value={option}
+                >
+                  <span className="capitalize">
+                    {option}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          {/* Payment status */}
 
           <Select
             value={paymentStatus}
             onValueChange={(value) => {
-              if (typeof value === "string") setPaymentStatus(value as StorePaymentStatus | "all");
+              if (typeof value === "string") {
+                setPaymentStatus(
+                  value as StorePaymentStatus | "all"
+                );
+              }
             }}
           >
             <SelectTrigger className="w-full md:w-40">
               <SelectValue>
-                <span className="capitalize">{paymentStatus === "all" ? "Payment" : paymentStatus}</span>
+                <span className="capitalize">
+                  {paymentStatus === "all"
+                    ? "Payment"
+                    : paymentStatus}
+                </span>
               </SelectValue>
             </SelectTrigger>
+
             <SelectContent>
-              <SelectItem value="all">All payments</SelectItem>
+              <SelectItem value="all">
+                All payments
+              </SelectItem>
+
               {STORE_PAYMENT_STATUSES.map((option) => (
-                <SelectItem key={option} value={option}>
-                  <span className="capitalize">{option}</span>
+                <SelectItem
+                  key={option}
+                  value={option}
+                >
+                  <span className="capitalize">
+                    {option}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={sort} onValueChange={(value) => typeof value === "string" && setSort(value)}>
-            <SelectTrigger className="col-span-2 w-full md:col-span-1 md:w-32">
-              <SelectValue>{sort === "-createdAt" ? "Newest" : "Oldest"}</SelectValue>
+          {/* Sort */}
+
+          <Select
+            value={sort}
+            onValueChange={(value) => {
+              if (typeof value === "string") {
+                setSort(value);
+              }
+            }}
+          >
+            <SelectTrigger
+              className="
+                col-span-2
+                w-full
+                md:col-span-1
+                md:w-32
+              "
+            >
+              <SelectValue>
+                {sort === "-createdAt"
+                  ? "Newest"
+                  : "Oldest"}
+              </SelectValue>
             </SelectTrigger>
+
             <SelectContent>
-              <SelectItem value="-createdAt">Newest</SelectItem>
-              <SelectItem value="createdAt">Oldest</SelectItem>
+              <SelectItem value="-createdAt">
+                Newest
+              </SelectItem>
+
+              <SelectItem value="createdAt">
+                Oldest
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Order table */}
+      {/* ======================================================
+          ORDERS TABLE
+      ======================================================= */}
+
       <Card>
         <CardContent className="p-0">
+          {/* Loading */}
+
           {loading ? (
-            <TableSkeleton rows={6} columns={6} />
+            <TableSkeleton
+              rows={6}
+              columns={6}
+            />
           ) : error ? (
+            /* Error */
+
             <div className="p-4">
               <EmptyState
                 title="Something went wrong"
                 description={error}
                 action={
-                  <Button variant="outline" onClick={() => void load()}>
+                  <Button
+                    variant="outline"
+                    onClick={() => void load()}
+                  >
                     Try again
                   </Button>
                 }
               />
             </div>
           ) : orders.length === 0 ? (
+            /* Empty */
+
             <div className="p-4">
               <EmptyState
-                title={hasFilters ? "No matching orders" : "No orders yet"}
+                title={
+                  hasFilters
+                    ? "No matching orders"
+                    : "No orders yet"
+                }
                 description={
                   hasFilters
                     ? "Try a different search term or clear the filters."
@@ -244,11 +422,7 @@ export default function AdminStoreOrdersPage() {
                   hasFilters ? (
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        setSearch("");
-                        setStatus("all");
-                        setPaymentStatus("all");
-                      }}
+                      onClick={clearFilters}
                     >
                       Clear filters
                     </Button>
@@ -257,17 +431,44 @@ export default function AdminStoreOrdersPage() {
               />
             </div>
           ) : (
+            /* Data */
+
             <>
               <StoreOrderTable orders={orders} />
-              <div className="flex justify-center px-4 py-3 md:justify-end">
+
+              {/* Pagination */}
+
+              <div
+                className="
+                  flex
+                  justify-center
+                  px-4
+                  py-3
+                  md:justify-end
+                "
+              >
                 <Pagination
                   page={pagination.page}
                   totalPages={pagination.pages}
                   total={pagination.total}
-                  onPrev={() => setPage((current) => Math.max(1, current - 1))}
-                  onNext={() => setPage((current) => Math.min(pagination.pages, current + 1))}
+                  onPrev={() =>
+                    setPage((current) =>
+                      Math.max(1, current - 1)
+                    )
+                  }
+                  onNext={() =>
+                    setPage((current) =>
+                      Math.min(
+                        pagination.pages,
+                        current + 1
+                      )
+                    )
+                  }
                   hasPrev={pagination.page > 1}
-                  hasNext={pagination.page < pagination.pages}
+                  hasNext={
+                    pagination.page <
+                    pagination.pages
+                  }
                 />
               </div>
             </>

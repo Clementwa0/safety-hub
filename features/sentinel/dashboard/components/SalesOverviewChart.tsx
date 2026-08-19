@@ -26,6 +26,9 @@ interface SalesOverviewChartProps {
   range: TrendRange;
   onRangeChange: (range: TrendRange) => void;
   loading?: boolean;
+  /** Defaults to "Sales" — the Dashboard's restrained overview passes
+   *  "Business Activity" so the card doesn't read as a revenue chart. */
+  title?: string;
 }
 
 export default function SalesOverviewChart({
@@ -33,11 +36,12 @@ export default function SalesOverviewChart({
   range,
   onRangeChange,
   loading = false,
+  title = "Sales",
 }: SalesOverviewChartProps) {
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-1.5">
-        <CardTitle className="text-sm font-semibold">Sales</CardTitle>
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
         <Select 
           value={range} 
           onValueChange={(v) => typeof v === "string" && onRangeChange(v as TrendRange)}

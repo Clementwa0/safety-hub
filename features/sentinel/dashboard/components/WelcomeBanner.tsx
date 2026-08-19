@@ -24,7 +24,7 @@ export default function WelcomeBanner({ name }: WelcomeBannerProps) {
           Welcome back, {name}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Here's what's happening with your store today.
+          Here&apos;s what&apos;s happening with your store today.
         </p>
       </div>
 

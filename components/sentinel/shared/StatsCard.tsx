@@ -33,7 +33,7 @@ export default function StatsCard({
           {loading ? (
             <div className="h-6 w-20 animate-pulse rounded-md bg-muted sm:h-7 sm:w-24" />
           ) : (
-            <p className="break-words text-lg font-semibold tabular-nums text-foreground sm:text-2xl">
+            <p className="break-words text-md font-semibold tabular-nums text-foreground sm:text-xl">
               {value}
             </p>
           )}
