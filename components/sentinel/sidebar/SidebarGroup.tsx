@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 import {
   SidebarGroup,
@@ -18,74 +19,122 @@ import {
 } from "./navigation";
 
 import { contactMessageService } from "@/services/sentinel/contact-message.service";
+import { adminStoreOrderService } from "@/services/sentinel/admin-store-order.service";
 
 interface AppSidebarGroupProps {
   collapsed: boolean;
   onItemClick?: () => void;
 }
 
-export default function AppSidebarGroup({
+const AppSidebarGroup = ({
   collapsed,
   onItemClick,
-}: AppSidebarGroupProps) {
+}: AppSidebarGroupProps) => {
   const pathname = usePathname();
 
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>(
-    {},
+    {}
   );
 
-  /* ==========================================================
-     LOAD BADGE COUNTS
-  ========================================================== */
-
+  /**
+   * ============================================================
+   * Load sidebar badge counts
+   * ============================================================
+   */
   useEffect(() => {
     let mounted = true;
 
-    contactMessageService
-      .stats()
-      .then((stats) => {
+    const controller = new AbortController();
+
+    const loadStats = async () => {
+      try {
+        const [contactStats, storeStats] = await Promise.all([
+          contactMessageService.stats({
+            signal: controller.signal,
+          }),
+
+          adminStoreOrderService.stats({
+            signal: controller.signal,
+          }),
+        ]);
+
         if (!mounted) return;
 
-        setBadgeCounts((prev) => ({
-          ...prev,
-          contactMessages: stats.new,
-        }));
-      })
-      .catch(() => {
-        // Silently ignore badge statistics failures.
-      });
+        setBadgeCounts({
+          contactMessages: Math.max(0, contactStats.new ?? 0),
+          storeOrders: Math.max(0, storeStats.pending ?? 0),
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        // Sidebar badges should never break navigation.
+        console.error("Failed to load sidebar statistics:", error);
+      }
+    };
+
+    loadStats();
 
     return () => {
       mounted = false;
+      controller.abort();
     };
-  }, [pathname]);
+  }, []);
 
-  /* ==========================================================
-     ACTIVE ROUTE
-  ========================================================== */
+  /**
+   * ============================================================
+   * Active route
+   * ============================================================
+   *
+   * Exact match:
+   * /sentinel/orders
+   *
+   * Nested match:
+   * /sentinel/orders/123
+   *
+   * This keeps the Orders navigation item active on
+   * order detail pages as well.
+   */
+  const isActive = useCallback(
+    (path: string) => {
+      if (!pathname || !path) return false;
 
-  const isActive = (path: string) => {
-    return (
-      pathname === path ||
-      pathname.startsWith(`${path}/`)
-    );
-  };
+      if (path === "/sentinel/dashboard") {
+        return pathname === path || pathname === `${path}/`;
+      }
 
-  /* ==========================================================
-     BADGE
-  ========================================================== */
+      return (
+        pathname === path ||
+        pathname.startsWith(`${path}/`)
+      );
+    },
+    [pathname]
+  );
 
-  const getBadge = (key?: string) => {
-    if (!key) return undefined;
+  /**
+   * ============================================================
+   * Badge lookup
+   * ============================================================
+   */
+  const getBadge = useCallback(
+    (key?: string) => {
+      if (!key) return undefined;
 
-    const count = badgeCounts[key];
+      const count = badgeCounts[key];
 
-    return count > 0 ? count : undefined;
-  };
+      if (!count || count <= 0) {
+        return undefined;
+      }
+
+      return count;
+    },
+    [badgeCounts]
+  );
 
   return (
     <>
-    
+      {/* ========================================================
+          DASHBOARD
+      ========================================================= */}
       <SidebarGroup className="pb-0">
         <SidebarGroupContent>
           <SidebarMenu className="space-y-1">
@@ -99,33 +148,30 @@ export default function AppSidebarGroup({
         </SidebarGroupContent>
       </SidebarGroup>
 
-      {/* ======================================================
+      {/* ========================================================
           NAVIGATION GROUPS
-      ======================================================= */}
-
+      ========================================================= */}
       {sentinelNavigationGroups.map((group) => (
         <SidebarGroup
           key={group.name}
-          className="pt-3"
+          className="pt-3 pb-1"
         >
-          {/* Group heading */}
+          {/* ====================================================
+              GROUP LABEL
+          ==================================================== */}
           {!collapsed && (
             <SidebarGroupLabel
-              className="
-                px-2
-                text-[10px]
-                font-semibold
-                uppercase
-                tracking-wider
-                text-sidebar-foreground/70
-              "
+              className={cn(
+                "mb-1 h-7 px-2",
+                "text-[10px] font-bold uppercase tracking-[0.12em]",
+                "text-sidebar-foreground/60",
+                "border-b border-l-2 border-sidebar-primary/40 pl-3"
+              )}
             >
               {group.name}
             </SidebarGroupLabel>
           )}
-
-          {/* Group items */}
-          <SidebarGroupContent>
+           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {group.items.map((item) => (
                 <SidebarItem
@@ -143,4 +189,6 @@ export default function AppSidebarGroup({
       ))}
     </>
   );
-}
+};
+
+export default AppSidebarGroup;

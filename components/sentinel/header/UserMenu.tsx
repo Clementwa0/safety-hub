@@ -102,7 +102,7 @@ export default function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          onClick={() => router.push("/sentinel/profile")}
+          onClick={() => router.push("/sentinel/settings")}
         >
           <User className="mr-2 h-4 w-4" />
           Profile

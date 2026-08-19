@@ -21,8 +21,6 @@ const OPTIONS = [
 export default function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
 
-  // Avoid rendering a theme-dependent icon until mounted, to prevent
-  // a server/client markup mismatch (next-themes resolves on the client).
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 

@@ -20,7 +20,12 @@ import {
 import AppSidebarGroup from "./SidebarGroup";
 
 const AppSidebar = () => {
-  const { state, isMobile, setOpenMobile, toggleSidebar } = useSidebar();
+  const {
+    state,
+    isMobile,
+    setOpenMobile,
+    toggleSidebar,
+  } = useSidebar();
 
   const collapsed = state === "collapsed";
 
@@ -35,57 +40,64 @@ const AppSidebar = () => {
       collapsible="icon"
       className="
         group/sidebar
-        relative
-        flex-shrink-0
-        border-r
         border-sidebar-border
+        bg-sidebar
         text-sidebar-foreground
       "
     >
       {/* =====================================================
           COLLAPSE TOGGLE
       ====================================================== */}
-      <button
-        type="button"
-        onClick={toggleSidebar}
-        aria-label={
-          collapsed ? "Expand sidebar" : "Collapse sidebar"
-        }
-        aria-expanded={!collapsed}
-        className="
-          absolute
-          -right-3
-          top-6
-          z-50
-          flex
-          h-7
-          w-7
-          items-center
-          justify-center
-          rounded-full
-          border
-          border-sidebar-border
-          bg-sidebar
-          text-sidebar-foreground
-          shadow-sm
-          opacity-0
-          transition-all
-          duration-200
-          hover:scale-105
-          hover:bg-sidebar-accent
-          hover:text-sidebar-accent-foreground
-          focus-visible:outline-none
-          focus-visible:ring-2
-          focus-visible:ring-sidebar-ring
-          group-hover/sidebar:opacity-100
-        "
-      >
-        {collapsed ? (
-          <ChevronRight className="h-3.5 w-3.5" />
-        ) : (
-          <ChevronLeft className="h-3.5 w-3.5" />
-        )}
-      </button>
+      {!isMobile && (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label={
+            collapsed ? "Expand sidebar" : "Collapse sidebar"
+          }
+          aria-expanded={!collapsed}
+          className="
+            absolute
+            -right-3
+            top-6
+            z-50
+            flex
+            h-7
+            w-7
+            items-center
+            justify-center
+            rounded-full
+            border
+            border-sidebar-border
+            bg-sidebar
+            text-sidebar-foreground
+            shadow-sm
+            opacity-0
+            transition-all
+            duration-200
+            hover:scale-105
+            hover:bg-sidebar-accent
+            hover:text-sidebar-accent-foreground
+            focus-visible:opacity-100
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-sidebar-ring
+            group-hover/sidebar:opacity-100
+          "
+        >
+          {collapsed ? (
+            <ChevronRight
+              className="h-4 w-4"
+              aria-hidden="true"
+            />
+          ) : (
+            <ChevronLeft
+              className="h-4 w-4"
+              aria-hidden="true"
+            />
+          )}
+        </button>
+      )}
 
       {/* =====================================================
           HEADER / BRAND
@@ -94,13 +106,14 @@ const AppSidebar = () => {
         className="
           border-b
           border-sidebar-border
-          px-4
+          px-3
           py-4
         "
       >
         <Link
           href="/sentinel/dashboard"
           onClick={handleItemClick}
+          aria-label="HSE Hub dashboard"
           className={`
             flex
             h-9
@@ -122,12 +135,12 @@ const AppSidebar = () => {
               rounded-xl
               bg-sidebar-primary
               shadow-sm
-              shadow-blue-900/20
             "
           >
             <ShieldCheck
               className="h-5 w-5 text-sidebar-primary-foreground"
               strokeWidth={2.25}
+              aria-hidden="true"
             />
           </div>
 
@@ -151,7 +164,7 @@ const AppSidebar = () => {
                   font-extrabold
                   leading-tight
                   tracking-tight
-                  text-sidebar-accent-foreground
+                  text-sidebar-foreground
                 "
               >
                 HSE HUB
@@ -162,8 +175,9 @@ const AppSidebar = () => {
                   truncate
                   text-[10px]
                   font-semibold
+                  leading-tight
                   tracking-wider
-                  text-sidebar-foreground
+                  text-sidebar-foreground/60
                 "
               >
                 PPE &amp; SAFETY SOLUTIONS
@@ -174,7 +188,7 @@ const AppSidebar = () => {
       </SidebarHeader>
 
       {/* =====================================================
-          NAVIGATION CONTENT
+          NAVIGATION
       ====================================================== */}
       <SidebarContent
         className="
@@ -230,7 +244,10 @@ const AppSidebar = () => {
                 text-sidebar-primary
               "
             >
-              <Headset className="h-[18px] w-[18px]" />
+              <Headset
+                className="h-[18px] w-[18px]"
+                aria-hidden="true"
+              />
             </span>
 
             {/* Support Content */}
@@ -239,6 +256,7 @@ const AppSidebar = () => {
                 className="
                   text-[13px]
                   font-semibold
+                  leading-tight
                   text-sidebar-accent-foreground
                 "
               >
@@ -249,7 +267,7 @@ const AppSidebar = () => {
                 className="
                   text-[11px]
                   leading-snug
-                  text-sidebar-foreground
+                  text-sidebar-foreground/70
                 "
               >
                 We&apos;re here to support you
@@ -263,7 +281,11 @@ const AppSidebar = () => {
                   text-emerald-600
                   transition-colors
                   hover:text-emerald-700
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-sidebar-ring
                   dark:text-emerald-400
+                  dark:hover:text-emerald-300
                   dark:hover:text-emerald-300
                 "
               >
