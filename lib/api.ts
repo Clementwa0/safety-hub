@@ -51,26 +51,10 @@ export function serializeDoc<T>(doc: unknown): T {
   } as T;
 }
 
-/**
- * Serializes a `StoreOrder` for the CUSTOMER-facing endpoints
- * (`GET /api/store-orders`, `GET /api/store-orders/[id]`) — never for the
- * admin routes, which may return the full document via `serializeDoc`.
- *
- * Currently just delegates to `serializeDoc`; kept as its own function
- * (rather than inlining `serializeDoc` at each call site) so there's a
- * single place to redact any customer-facing field that shouldn't be
- * echoed back, if one is ever added.
- *
- * Route handlers must call this (not the generic `serializeDoc`) for any
- * response that reaches a signed-in customer or guest cart identity.
- */
 export function serializeStoreOrderForCustomer<T>(doc: unknown): T {
   return serializeDoc<T>(doc);
 }
 
-/**
- * Serializes a Product document whose category may be populated or not.
- */
 export function serializeProduct<T>(doc: unknown): T {
   if (doc === null || typeof doc !== "object") {
     return doc as T;

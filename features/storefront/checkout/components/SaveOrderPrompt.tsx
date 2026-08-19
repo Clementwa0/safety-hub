@@ -12,14 +12,6 @@ interface SaveOrderPromptProps {
   order: StoreOrder;
 }
 
-/**
- * Shown on /checkout/success for a guest who just placed an order. Never
- * blocking (it's a dismissible card below the order confirmation, not a
- * modal) and never required to view the order. One click into Google
- * (pre-filled via `login_hint`) or email (pre-filled, sent immediately) —
- * nothing to re-type, since we already have their contact info from
- * checkout.
- */
 export default function SaveOrderPrompt({ order }: SaveOrderPromptProps) {
   const { data: session, status } = useCustomerSession();
   const [dismissed, setDismissed] = useState(false);
@@ -30,17 +22,11 @@ export default function SaveOrderPrompt({ order }: SaveOrderPromptProps) {
   const callbackUrl =
     typeof window !== "undefined" ? window.location.href : `/checkout/success?order=${order.orderNumber}`;
 
-  // Once signed in (e.g. after returning from the Google/email flow), link
-  // this and any other guest orders to the account. `lib/auth/config.ts`
-  // already does this server-side on every sign-in — this is a client-side
-  // fallback/confirmation so the UI can reflect it immediately without a
-  // page reload.
+ 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id && !hasLinkedRef.current) {
       hasLinkedRef.current = true;
       void accountService.linkGuestOrders().catch(() => {
-        // Best-effort — the server-side auto-link on sign-in already covers
-        // the common case, so a failure here isn't user-facing.
       });
     }
   }, [status, session?.user?.id]);

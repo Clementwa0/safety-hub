@@ -323,7 +323,7 @@ export default function CheckoutSuccessPage() {
                   paymentType={MPESA_CONFIG.type}
                   businessNumber={MPESA_CONFIG.businessNumber}
                   businessName={MPESA_CONFIG.businessName}
-                  accountReference={order.orderNumber}
+                  accountReference={order.customer.phone}
                 />
               )}
             </div>

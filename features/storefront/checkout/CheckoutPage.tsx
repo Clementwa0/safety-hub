@@ -31,6 +31,7 @@ import {
   type WhatsAppPreferredPayment,
 } from "@/lib/storefront/whatsapp";
 import EmptyCart from "../cart/components/EmptyCart";
+import MpesaPaymentCard from "./components/MpesaPaymentCard";
 
 const EMPTY_VALUES: CheckoutFormValues = {
   name: "",
@@ -54,7 +55,7 @@ const PAYMENT_OPTIONS: {
   {
     value: "mpesa",
     label: "M-Pesa",
-    description: "Place your order, then pay using the Paybill details we'll show you next.",
+    description: "Pay using the details below, then confirm your payment to place the order.",
     icon: FaMobileScreenButton,
     requiresAccount: false,
   },
@@ -83,6 +84,8 @@ export default function CheckoutPage() {
   const [whatsappPreferredPayment, setWhatsappPreferredPayment] = useState<WhatsAppPreferredPayment>("cod");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  
+  const [mpesaConfirmed, setMpesaConfirmed] = useState(false);
 
   const isSignedIn = Boolean(session?.user?.id);
   const signInHref = `/account/sign-in?next=${encodeURIComponent(pathname || "/checkout")}`;
@@ -137,6 +140,10 @@ export default function CheckoutPage() {
     };
   }, [sessionStatus, session?.user?.id]);
 
+  useEffect(() => {
+    if (paymentMethod !== "mpesa") setMpesaConfirmed(false);
+  }, [paymentMethod]);
+
   const hasUnavailableItems = items.some((item) => item.unavailable);
   const hasStockIssue = items.some((item) => !item.unavailable && item.quantity > item.stock);
   const fullShippingAddress = [formValues.address, formValues.city, formValues.country]
@@ -153,6 +160,11 @@ export default function CheckoutPage() {
 
     if (needsSignIn) {
       router.push(signInHref);
+      return;
+    }
+
+    if (paymentMethod === "mpesa" && !mpesaConfirmed) {
+      setFormError("Please complete your M-Pesa payment and confirm it below before placing your order.");
       return;
     }
 
@@ -348,27 +360,37 @@ export default function CheckoutPage() {
               </RadioGroup>
 
               {isMpesaOrder && (
-                <div className="mt-4 space-y-3 rounded-lg border border-success/20 bg-success/[0.03] p-4">
-                  <div className="flex items-start gap-3">
-                    <span
-                      aria-hidden="true"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"
-                    >
-                      <FaMobileScreenButton className="h-4.5 w-4.5" />
-                    </span>
-                    <div className="min-w-0 space-y-1">
-                      <h3 className="text-sm font-semibold text-foreground">Pay with M-Pesa</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Select M-Pesa and place your order first. After your order is created, we&apos;ll show your{" "}
-                        {getMpesaNumberLabel(MPESA_CONFIG.type).toLowerCase()}, order number, and exact amount to
-                        pay.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm">
-                    <span className="text-muted-foreground">{getMpesaNumberLabel(MPESA_CONFIG.type)}</span>
-                    <span className="font-mono font-semibold text-foreground">{MPESA_CONFIG.businessNumber}</span>
-                  </div>
+                <div className="mt-4 space-y-3">
+                  {formValues.phone && formValues.phone.trim().length >= 7 ? (
+                    <>
+                      <MpesaPaymentCard
+                        total={total}
+                        paymentType={MPESA_CONFIG.type}
+                        accountReference={formValues.phone.trim()}
+                        businessNumber={MPESA_CONFIG.businessNumber}
+                        businessName={MPESA_CONFIG.businessName}
+                      />
+                      <label
+                        htmlFor="mpesaConfirmed"
+                        className="flex cursor-pointer items-start gap-2 rounded-lg border border-input p-3 has-[[data-checked]]:border-success has-[[data-checked]]:bg-success/5"
+                      >
+                        <Checkbox
+                          id="mpesaConfirmed"
+                          checked={mpesaConfirmed}
+                          onCheckedChange={(checked) => setMpesaConfirmed(checked === true)}
+                          className="mt-0.5"
+                        />
+                        <span className="text-sm text-foreground">
+                          I&apos;ve completed this M-Pesa payment
+                        </span>
+                      </label>
+                    </>
+                  ) : (
+                    <p className="rounded-lg border border-success/20 bg-success/[0.03] p-3 text-xs text-muted-foreground">
+                      Enter your phone number above to see your {getMpesaNumberLabel(MPESA_CONFIG.type).toLowerCase()},
+                      account number, and the exact amount to pay.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -467,7 +489,7 @@ export default function CheckoutPage() {
             <Button
               type="submit"
               className={`w-full gap-2 ${isWhatsAppOrder ? "bg-green-600 hover:bg-green-700" : ""}`}
-              disabled={submitting || hasUnavailableItems || hasStockIssue}
+              disabled={submitting || hasUnavailableItems || hasStockIssue || (isMpesaOrder && !mpesaConfirmed)}
             >
               {isWhatsAppOrder ? <FaWhatsapp className="h-4 w-4" /> : <FaLock className="h-4 w-4" />}
               {submitting
@@ -478,7 +500,9 @@ export default function CheckoutPage() {
                   ? "Sign In to Continue"
                   : isWhatsAppOrder
                     ? "Continue on WhatsApp"
-                    : "Place Order"}
+                    : isMpesaOrder && !mpesaConfirmed
+                      ? "Confirm Payment to Continue"
+                      : "Place Order"}
             </Button>
           </CardContent>
         </Card>
