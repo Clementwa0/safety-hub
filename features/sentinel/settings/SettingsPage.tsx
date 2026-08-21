@@ -11,14 +11,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CloudinaryImageField } from "@/components/shared/CloudinaryImageField";
 
 import { settingsService, type PortalSettings } from "@/services/sentinel/settings.service";
+import { useSettings } from "@/components/SettingsProvider";
 
 export default function SettingsPage() {
   const [values, setValues] = useState<PortalSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { setSettings: setGlobalSettings } = useSettings();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,6 +43,10 @@ export default function SettingsPage() {
     setValues((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
+  const setSocialField = (key: keyof PortalSettings["social"], value: string) => {
+    setValues((prev) => (prev ? { ...prev, social: { ...prev.social, [key]: value } } : prev));
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!values) return;
@@ -48,6 +55,9 @@ export default function SettingsPage() {
     try {
       const updated = await settingsService.update(values);
       setValues(updated);
+      // Push the freshly-saved values into the app-wide context immediately,
+      // so the header/footer/etc. reflect the change without a reload.
+      setGlobalSettings(updated);
       toast.success("Settings saved");
     } catch (caught) {
       toast.error(caught instanceof Error ? caught.message : "Could not save settings");
@@ -148,6 +158,85 @@ export default function SettingsPage() {
                   onChange={(e) => setField("address", e.target.value)}
                   disabled={saving}
                   required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="settings-website">Website</Label>
+                <Input
+                  id="settings-website"
+                  type="url"
+                  placeholder="https://example.com"
+                  value={values.website}
+                  onChange={(e) => setField("website", e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="settings-business-hours">Business hours</Label>
+                <Input
+                  id="settings-business-hours"
+                  placeholder="Mon - Fri: 8:00 AM - 5:00 PM"
+                  value={values.businessHours}
+                  onChange={(e) => setField("businessHours", e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <CloudinaryImageField
+                  id="settings-logo"
+                  label="Company logo"
+                  value={values.logoUrl}
+                  onChange={(url) => setField("logoUrl", url)}
+                  folder="settings"
+                  disabled={saving}
+                  helperText="Used on quotations, invoices and anywhere else the brand mark appears."
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Social links</CardTitle>
+              <CardDescription>Shown in the storefront footer. Leave blank to hide a link.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="settings-social-facebook">Facebook</Label>
+                <Input
+                  id="settings-social-facebook"
+                  type="url"
+                  placeholder="https://facebook.com/your-page"
+                  value={values.social.facebook}
+                  onChange={(e) => setSocialField("facebook", e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="settings-social-instagram">Instagram</Label>
+                <Input
+                  id="settings-social-instagram"
+                  type="url"
+                  placeholder="https://instagram.com/your-page"
+                  value={values.social.instagram}
+                  onChange={(e) => setSocialField("instagram", e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="settings-social-linkedin">LinkedIn</Label>
+                <Input
+                  id="settings-social-linkedin"
+                  type="url"
+                  placeholder="https://linkedin.com/company/your-company"
+                  value={values.social.linkedin}
+                  onChange={(e) => setSocialField("linkedin", e.target.value)}
+                  disabled={saving}
                 />
               </div>
             </CardContent>
