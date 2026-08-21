@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/http";
-import type { AdminUser, UserInput } from "@/types/sentinel/user";
+import type { AdminUser, CreateStaffInput, UpdateUserInput } from "@/types/sentinel/user";
 
 export const userService = {
   async list(): Promise<AdminUser[]> {
@@ -7,14 +7,14 @@ export const userService = {
     return payload.items;
   },
 
-  async create(input: UserInput): Promise<AdminUser> {
+  async create(input: CreateStaffInput): Promise<AdminUser> {
     return apiRequest<AdminUser>("/api/users", {
       method: "POST",
       body: JSON.stringify(input),
     });
   },
 
-  async update(id: string, input: Partial<UserInput>): Promise<AdminUser> {
+  async update(id: string, input: UpdateUserInput): Promise<AdminUser> {
     return apiRequest<AdminUser>(`/api/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify(input),

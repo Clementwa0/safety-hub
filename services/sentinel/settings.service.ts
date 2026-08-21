@@ -23,11 +23,7 @@ export interface PortalSettings {
   social: PortalSettingsSocial;
 }
 
-/**
- * Fallback values used only if `/api/settings` is unreachable (e.g. during
- * local dev before the DB is seeded). The API route seeds the same values
- * into the DB on first read, so in normal operation these are never shown.
- */
+
 export const DEFAULT_PORTAL_SETTINGS: PortalSettings = {
   companyName: "HSE Hub Limited",
   contactEmail: "info@hsehub.co.ke",
