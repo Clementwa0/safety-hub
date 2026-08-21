@@ -1,6 +1,5 @@
 import type { ProductInput, ProductStatus } from "@/types/product";
 import type { CategoryInput } from "@/types/category";
-import type { UserInput } from "@/types/sentinel/user";
 import { PRODUCT_STATUSES } from "@/types/product";
 import { validateImageUrlFormat } from "@/lib/image-url";
 
@@ -91,11 +90,18 @@ export function hasErrors(errors: Record<string, string | undefined>): boolean {
   return Object.values(errors).some(Boolean);
 }
 
+interface StaffFormInput {
+  name: string;
+  email: string;
+  password?: string;
+  role: "staff";
+}
+
 export function validateUser(
-  input: Partial<UserInput>,
+  input: Partial<StaffFormInput>,
   { isNew }: { isNew: boolean },
-): ValidationErrors<UserInput> {
-  const errors: ValidationErrors<UserInput> = {};
+): ValidationErrors<StaffFormInput> {
+  const errors: ValidationErrors<StaffFormInput> = {};
 
   if (!input.name || input.name.trim().length < 2) {
     errors.name = "Name must be at least 2 characters.";
@@ -113,7 +119,7 @@ export function validateUser(
     errors.password = "Password must be at least 6 characters.";
   }
 
-  if (!input.role || input.role !== "admin") {
+  if (!input.role || input.role !== "staff") {
     errors.role = "Select a role.";
   }
 

@@ -19,6 +19,7 @@ export const CLOUDINARY_FOLDERS = {
   categories: "safety-hub/categories",
   banners: "safety-hub/banners",
   testimonials: "safety-hub/testimonials",
+  settings: "safety-hub/settings",
 } as const;
 
 export type CloudinaryFolderKey = keyof typeof CLOUDINARY_FOLDERS;
