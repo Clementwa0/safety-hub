@@ -6,7 +6,7 @@ import { QuotationModel, type IQuotation } from "@/lib/models/Quotation";
 import { CustomerModel } from "@/lib/models/Customer";
 import { OrderModel } from "@/lib/models/Order";
 import { ProductModel } from "@/lib/models/Product";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/lib/server/customers";
 import { createWithDocumentNumber } from "@/lib/server/documentNumber";
@@ -24,7 +24,7 @@ const quotationSchema = z.object({
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -45,7 +45,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -174,9 +174,12 @@ async function duplicateQuotation(quotation: IQuotation) {
  * moment stock gets reserved: `Product.reserved` is incremented per line
  * so the quantity still shows as on-hand but no longer available to
  * quote/sell elsewhere, without touching `Product.stock` itself (stock
- * only decrements later, when the Order is converted to an Invoice - see
- * POST /api/orders/[id]/convert-to-invoice). A quotation that's merely
- * drafted or sent never reserves anything.
+ * only decrements later, when the Order reaches "shipped" - see the
+ * PATCH handler in app/api/orders/[id]/route.ts). The order is stamped
+ * `reservedStock: true` so that handler knows this hold exists and needs
+ * releasing/consuming, unlike an order created directly via POST
+ * /api/orders. A quotation that's merely drafted or sent never reserves
+ * anything.
  *
  * Idempotent the same way the old direct-to-invoice conversion was: if
  * an Order already exists for this quotation, it's returned as-is rather
@@ -199,6 +202,7 @@ async function convertQuotationToOrder(quotation: IQuotation) {
     status: "confirmed",
     notes: quotation.notes,
     quotationId: quotation._id,
+    reservedStock: true,
   }));
 
   const reservations = quotation.items
@@ -219,7 +223,7 @@ async function convertQuotationToOrder(quotation: IQuotation) {
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
