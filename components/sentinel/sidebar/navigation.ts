@@ -20,6 +20,8 @@ export interface NavigationItem {
   path: string;
   icon: LucideIcon;
   badgeKey?: "contactMessages" | "storeOrders";
+  /** Hidden from staff — only the admin account can see/use this. */
+  adminOnly?: boolean;
 }
 
 export interface NavigationGroup {
@@ -36,15 +38,6 @@ export const sentinelDashboardItem: NavigationItem = {
   icon: LayoutDashboard,
 };
 
-/**
- * Main Sentinel navigation groups.
- *
- * Grouped as: Catalog / Operations / Communication / Customers / Insights /
- * System. "Order Requests" is intentionally NOT a nav item or badgeKey here:
- * it has no model, no API route, and no feature anywhere in the codebase —
- * it needs a product definition before it can be built, not just UI work.
- * Every other route below corresponds to a real page.
- */
 export const sentinelNavigationGroups: NavigationGroup[] = [
   {
     name: "Catalog",
@@ -93,19 +86,6 @@ export const sentinelNavigationGroups: NavigationGroup[] = [
       },
     ],
   },
-
-  {
-    name: "Communication",
-    items: [
-      {
-        name: "Contact Messages",
-        path: "/sentinel/contact-messages",
-        icon: MessagesSquare,
-        badgeKey: "contactMessages",
-      },
-    ],
-  },
-
   {
     name: "Customers",
     items: [
@@ -124,6 +104,7 @@ export const sentinelNavigationGroups: NavigationGroup[] = [
         name: "Reports",
         path: "/sentinel/reports",
         icon: BarChart3,
+        adminOnly: true,
       },
     ],
   },
@@ -135,11 +116,13 @@ export const sentinelNavigationGroups: NavigationGroup[] = [
         name: "Users",
         path: "/sentinel/users",
         icon: UserCog,
+        adminOnly: true,
       },
       {
         name: "Settings",
         path: "/sentinel/settings",
         icon: Settings,
+        adminOnly: true,
       },
     ],
   },

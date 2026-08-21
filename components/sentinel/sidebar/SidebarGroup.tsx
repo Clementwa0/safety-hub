@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 import {
@@ -31,6 +32,8 @@ const AppSidebarGroup = ({
   onItemClick,
 }: AppSidebarGroupProps) => {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
 
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>(
     {}
@@ -79,6 +82,27 @@ const AppSidebarGroup = ({
       controller.abort();
     };
   }, []);
+
+  /**
+   * ============================================================
+   * Role-filtered navigation
+   * ============================================================
+   *
+   * Staff see everything except admin-only items (Users, Settings,
+   * Reports) — matching the requireAdmin() gates on those routes/pages.
+   * Groups left with no visible items (Insights, System, for staff)
+   * are dropped entirely rather than rendered empty.
+   */
+  const visibleGroups = useMemo(() => {
+    if (isAdmin) return sentinelNavigationGroups;
+
+    return sentinelNavigationGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !item.adminOnly),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [isAdmin]);
 
   /**
    * ============================================================
@@ -151,7 +175,7 @@ const AppSidebarGroup = ({
       {/* ========================================================
           NAVIGATION GROUPS
       ========================================================= */}
-      {sentinelNavigationGroups.map((group) => (
+      {visibleGroups.map((group) => (
         <SidebarGroup
           key={group.name}
           className="pt-3 pb-1"

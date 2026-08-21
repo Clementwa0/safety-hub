@@ -24,20 +24,25 @@ import {
 } from "./computeDashboardData";
 import DashboardStatCard from "./components/DashboardStatCard";
 import SalesOverviewChart from "./components/SalesOverviewChart";
-import SystemHealth, { type SystemHealthRow } from "./components/SystemHealth";
-import AttentionRequired, { type AttentionItem } from "./components/AttentionRequired";
+import AttentionRequired, {
+  type AttentionItem,
+} from "./components/AttentionRequired";
 import OrderStatusDonut from "./components/OrderStatusDonut";
 
 export default function Dashboard() {
   const { data: session } = useSession();
   const firstName = session?.user?.name?.split(" ")[0] ?? "Admin";
-
   const [orders, setOrders] = useState<StoreOrder[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [customerCount, setCustomerCount] = useState(0);
-  const [contactStats, setContactStats] = useState<ContactMessageStats | null>(null);
+  const [contactStats, setContactStats] = useState<ContactMessageStats | null>(
+    null,
+  );
   const [pendingQuotations, setPendingQuotations] = useState(0);
-  const statusBreakdown = useMemo(() => computeStatusBreakdown(orders), [orders]);
+  const statusBreakdown = useMemo(
+    () => computeStatusBreakdown(orders),
+    [orders],
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +54,13 @@ export default function Dashboard() {
     const controller = new AbortController();
 
     try {
-      const [orderPage, productList, customerTotal, contactMessageStats, sentQuotations] = await Promise.all([
+      const [
+        orderPage,
+        productList,
+        customerTotal,
+        contactMessageStats,
+        sentQuotations,
+      ] = await Promise.all([
         adminStoreOrderService.list({ limit: 500, sort: "-createdAt" }),
         productService.list(),
         customerService.count(),
@@ -63,7 +74,11 @@ export default function Dashboard() {
       setContactStats(contactMessageStats);
       setPendingQuotations(sentQuotations.length);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not load dashboard data");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not load dashboard data",
+      );
     } finally {
       setLoading(false);
     }
@@ -77,21 +92,10 @@ export default function Dashboard() {
 
   const kpis = useMemo(() => computeKpis(orders, now), [orders, now]);
   const catalog = useMemo(() => computeCatalogSnapshot(products), [products]);
-  const salesTrend = useMemo(() => computeSalesTrend(orders, now, trendRange), [orders, now, trendRange]);
-
-  const systemHealthRows: SystemHealthRow[] = useMemo(() => {
-    const adminApiStatus = error ? "degraded" : loading ? "unknown" : "operational";
-    return [
-      {
-        id: "admin-api",
-        label: "Admin API & Database",
-        status: adminApiStatus,
-        statusLabel: error ? "Unavailable" : loading ? "Checking…" : "Operational",
-      },
-      { id: "storefront", label: "Storefront", status: "unknown", statusLabel: "Not monitored" },
-      { id: "payments", label: "Payments", status: "unknown", statusLabel: "Not monitored" },
-    ];
-  }, [error, loading]);
+  const salesTrend = useMemo(
+    () => computeSalesTrend(orders, now, trendRange),
+    [orders, now, trendRange],
+  );
 
   const attentionItems: AttentionItem[] = useMemo(() => {
     const items: AttentionItem[] = [];
@@ -161,7 +165,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
-      <PageHeader title="Dashboard" description={`Overview of Safety Hub, ${firstName}.`} />
+      <PageHeader
+        title="Dashboard"
+        description={`Overview of Safety Hub, ${firstName}.`}
+      />
 
       {/* KPI Cards - Catalog / Inventory / Customers / Orders */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4 xl:gap-4">
@@ -170,8 +177,18 @@ export default function Dashboard() {
           value={String(catalog.totalProducts)}
           loading={loading}
           lines={[
-            { label: "Products", tone: "muted" },
-            ...(catalog.draftCount > 0 ? [{ label: `${catalog.draftCount} Draft`, tone: "muted" as const }] : []),
+            {
+              label: `${catalog.totalProducts} Products`,
+              tone: "muted" as const,
+            },
+            ...(catalog.draftCount > 0
+              ? [
+                  {
+                    label: `${catalog.draftCount} Draft`,
+                    tone: "muted" as const,
+                  },
+                ]
+              : []),
           ]}
         />
         <DashboardStatCard
@@ -181,7 +198,12 @@ export default function Dashboard() {
           lines={[
             { label: "Units", tone: "muted" },
             ...(catalog.lowStockCount > 0
-              ? [{ label: `${catalog.lowStockCount} Low stock`, tone: "warning" as const }]
+              ? [
+                  {
+                    label: `${catalog.lowStockCount} Low stock`,
+                    tone: "warning" as const,
+                  },
+                ]
               : []),
           ]}
         />
@@ -200,8 +222,8 @@ export default function Dashboard() {
       </div>
 
       {/* Business Activity + System panels */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4 ">
-        <div className="lg:col-span-2 ">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
+        <div className="lg:col-span-2">
           <SalesOverviewChart
             data={salesTrend}
             range={trendRange}
@@ -211,7 +233,13 @@ export default function Dashboard() {
           />
         </div>
         <div className="space-y-3 lg:col-span-1 lg:space-y-4">
-          <OrderStatusDonut data={statusBreakdown} total={orders.length} loading={loading} />
+          <div className="md:col-span-1">
+            <OrderStatusDonut
+              data={statusBreakdown}
+              total={orders.length}
+              loading={loading}
+            />
+          </div>
           <AttentionRequired items={attentionItems} loading={loading} />
         </div>
       </div>

@@ -18,17 +18,17 @@ export default function OrderStatusDonut({
 }) {
   return (
     <Card className="border-border/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-0">
         <CardTitle className="text-sm font-medium text-foreground">Order Status</CardTitle>
         <Button
           variant="link"
           size="sm"
-          className="p-0 text-xs"
+          className="h-auto p-0 text-xs"
         >
           <Link href="/sentinel/store-orders">View all</Link>
         </Button>
       </CardHeader>
-      <CardContent className=" pt-1">
+      <CardContent className="p-3 pt-1">
         {loading ? (
           <div className="h-[200px] w-full animate-pulse rounded bg-muted" />
         ) : data.length === 0 ? (
@@ -36,7 +36,7 @@ export default function OrderStatusDonut({
             No orders yet
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:items-center">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
             <div className="relative h-[120px] w-[150px] shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -44,7 +44,7 @@ export default function OrderStatusDonut({
                     data={data}
                     dataKey="count"
                     nameKey="label"
-                    innerRadius={40}
+                    innerRadius={35}
                     outerRadius={60}
                     paddingAngle={2}
                     strokeWidth={0}

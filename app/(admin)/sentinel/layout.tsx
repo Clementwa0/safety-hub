@@ -4,16 +4,16 @@ import { redirect } from "next/navigation";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Header } from "@/components/sentinel/header";
 import Sidebar from "@/components/sentinel/sidebar/Sidebar";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export default async function SentinelLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const admin = await requireAdmin();
+  const user = await requireStaff();
 
-  if (!admin) {
+  if (!user) {
     redirect("/sentinel/login");
   }
 
