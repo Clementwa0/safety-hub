@@ -3,14 +3,15 @@ import { apiError, apiSuccess, serializeProduct } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { ProductModel } from "@/lib/models/Product";
 import { CategoryModel } from "@/lib/models/Category";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { productPartialSchema } from "@/lib/validation/product";
 import { slugify } from "@/lib/validation";
+import { recordMovement } from "@/lib/server/movements";
 import { NextRequest } from "next/server";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     const isAdmin = Boolean(user);
 
     const { id } = await params;
@@ -33,7 +34,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -71,6 +72,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiError("Validation failed", ["Original price must be greater than the selling price."], 400);
     }
 
+    // Captured before Object.assign overwrites it, so a manual stock edit
+    // (Inventory page's quick-edit, or the product form) can be logged as
+    // a Movement with an accurate before/after delta.
+    const previousStock = product.stock;
+
     Object.assign(product, parsed.data);
     // Product.category is an ObjectId ref — never assign the raw category
     // name string that `parsed.data.category` carries.
@@ -82,6 +88,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     await product.save();
 
+    if (parsed.data.stock !== undefined && parsed.data.stock !== previousStock) {
+      await recordMovement({
+        productId: product._id as mongoose.Types.ObjectId,
+        type: "manual_adjustment",
+        delta: parsed.data.stock - previousStock,
+        resultingStock: product.stock,
+      });
+    }
+
     const updated = await product.populate("category", "name slug");
     return apiSuccess(serializeProduct(updated.toObject()), "Product updated");
   } catch (error) {
@@ -91,7 +106,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

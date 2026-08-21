@@ -20,7 +20,7 @@ import BulkActionsBar from "./components/BulkActionsBar";
 import ProductTable from "./components/ProductTable";
 import Pagination from "@/components/shared/Pagination";
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100,1000];
 const DEFAULT_PAGE_SIZE = 25;
 
 export default function AdminProductsPage() {
