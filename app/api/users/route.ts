@@ -9,24 +9,24 @@ const createUserSchema = z.object({
   name: z.string().trim().min(2),
   email: z.string().trim().email(),
   password: z.string().min(6),
-  role: z.enum(["admin"]),
+  role: z.enum(["staff"]),
 });
 
 /**
- * Sentinel admin management. Reads/writes the same unified `UserModel`
+ * Sentinel user management. Reads/writes the same unified `UserModel`
  * (`storefront_customers` collection) as everything else — that
  * collection also holds ordinary storefront customers, who must never
  * show up in (or be created through) this list, so every query here is
- * scoped to `role: "admin"`.
+ * scoped to `role: { $in: ["admin", "staff"] }`.
  *
  * There is EXACTLY ONE admin account system-wide (enforced at the model
- * layer in lib/models/User.ts) — there is no "staff" role. This endpoint
- * cannot be used to create a second admin; the model's pre-save/
- * pre-findOneAndUpdate hooks reject that and this route surfaces their
- * error as a 409. Every account created here is created by an
- * already-authenticated admin — there is no anonymous bootstrap path;
- * the first admin is provisioned out of band via
- * `scripts/admin/create-admin.ts`.
+ * layer in lib/models/User.ts), but any number of staff accounts. Staff
+ * have the same Sentinel access as admin except Users, Settings, and
+ * Reports (gated by requireAdmin() on those specific routes/pages).
+ * This endpoint only ever creates `role: "staff"` — the admin account is
+ * provisioned out of band via `scripts/admin/create-admin.ts` and can't
+ * be created here. Only an already-authenticated admin can reach this
+ * route (requireAdmin() below) — there's no anonymous bootstrap path.
  */
 export async function GET() {
   try {
@@ -36,7 +36,9 @@ export async function GET() {
     }
 
     await connectToDatabase();
-    const users = await StorefrontCustomerModel.find({ role: "admin" })
+    const users = await StorefrontCustomerModel.find({
+      role: { $in: ["admin", "staff"] },
+    })
       .sort("-createdAt")
       .lean();
 
@@ -71,23 +73,15 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await hashPassword(parsed.data.password);
 
-    let user;
-    try {
-      user = await StorefrontCustomerModel.create({
-        name: parsed.data.name,
-        email: normalizedEmail,
-        passwordHash,
-        role: parsed.data.role,
-        status: "active",
-      });
-    } catch (createError) {
-      if (createError instanceof Error && createError.message.includes("Only one admin account is allowed")) {
-        return apiError("Only one admin account is allowed.", [], 409);
-      }
-      throw createError;
-    }
+    const user = await StorefrontCustomerModel.create({
+      name: parsed.data.name,
+      email: normalizedEmail,
+      passwordHash,
+      role: parsed.data.role,
+      status: "active",
+    });
 
-    return apiSuccess(serializeUser(user.toObject()), "User created");
+    return apiSuccess(serializeUser(user.toObject()), "Staff account created");
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to create user", [], 500);
   }

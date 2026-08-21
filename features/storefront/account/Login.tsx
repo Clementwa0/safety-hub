@@ -8,7 +8,7 @@ import { FaGoogle, FaFacebook, FaTriangleExclamation } from "react-icons/fa6";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 import { getSafeCallbackUrl } from "@/lib/storefront/safe-redirect";
 import { useCustomerSession } from "@/hooks/use-customer-session";
 
@@ -24,6 +24,7 @@ export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useCustomerSession();
+  const { settings } = useSettings();
 
   const callbackUrl = getSafeCallbackUrl(searchParams.get("next"), DEFAULT_CALLBACK_URL);
   const errorCode = searchParams.get("error");
@@ -60,7 +61,7 @@ export default function SignInPage() {
             href="/"
             className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors"
           >
-            {COMPANY.name}
+            {settings.companyName}
           </Link>
           <CardTitle className="mt-1 text-2xl font-display">Sign in to your customer account</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">

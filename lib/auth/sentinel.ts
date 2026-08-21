@@ -14,7 +14,7 @@ export async function comparePassword(
 
 type SerializableUser = Pick<
   IUser,
-  "name" | "email" | "role" | "createdAt"
+  "name" | "email" | "role" | "status" | "createdAt"
 > & {
   _id?: unknown;
   id?: unknown;
@@ -31,6 +31,7 @@ export function serializeUser(user: SerializableUser) {
     name: String(user.name ?? ""),
     email: String(user.email ?? ""),
     role: user.role,
+    status: user.status,
     createdAt,
   };
 }

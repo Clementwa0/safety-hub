@@ -20,8 +20,9 @@ export default function UserMenu() {
 
   const user = session?.user;
 
-  const displayName = user?.name?.trim() || "Sentinel Admin";
-  const email = user?.email || "admin@example.com";
+  const displayName = user?.name?.trim() || "Sentinel User";
+  const email = user?.email || "";
+  const roleLabel = user?.role === "staff" ? "Sentinel Staff" : "Sentinel Admin";
 
   const initials =
     displayName
@@ -64,7 +65,7 @@ export default function UserMenu() {
           </span>
 
           <span className="text-xs text-muted-foreground">
-            Sentinel Admin
+            {roleLabel}
           </span>
         </span>
 
@@ -94,7 +95,7 @@ export default function UserMenu() {
             </span>
 
             <span className="mt-0.5 text-xs text-muted-foreground">
-              Sentinel Admin
+              {roleLabel}
             </span>
           </div>
         </div>
@@ -102,7 +103,7 @@ export default function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          onClick={() => router.push("/sentinel/settings")}
+          onClick={() => router.push("/sentinel/profile")}
         >
           <User className="mr-2 h-4 w-4" />
           Profile

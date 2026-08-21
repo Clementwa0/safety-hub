@@ -98,7 +98,11 @@ export async function PATCH(request: Request) {
             customer: customer.id,
           },
         },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
+        {
+  upsert: true,
+  returnDocument: "after",
+  setDefaultsOnInsert: true,
+},
       ).lean();
 
       savedAddress = { address: upserted.address, city: upserted.city, country: upserted.country };

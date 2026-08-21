@@ -7,7 +7,7 @@ export async function createSentinelSession(userId: string) {
   const user = await UserModel.findOneAndUpdate(
     {
       _id: userId,
-      role: "admin",
+      role: { $in: ["admin", "staff"] },
       status: "active",
     },
     {
@@ -16,7 +16,7 @@ export async function createSentinelSession(userId: string) {
       },
     },
     {
-      new: true,
+      returnDocument: "after",
     },
   );
 
@@ -31,7 +31,7 @@ export async function invalidateSentinelSession(userId: string) {
   await UserModel.findOneAndUpdate(
     {
       _id: userId,
-      role: "admin",
+      role: { $in: ["admin", "staff"] },
     },
     {
       $set: {

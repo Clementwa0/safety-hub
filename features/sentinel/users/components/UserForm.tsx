@@ -15,155 +15,131 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { userService } from "@/services/sentinel/user.service";
-import { hasErrors, validateUser, type ValidationErrors } from "@/lib/validation";
-import type { AdminUser, UserInput } from "@/types/sentinel/user";
+import type { AdminUser } from "@/types/sentinel/user";
+import { cn } from "@/lib/utils";
 
 interface UserFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user?: AdminUser | null;
+  user: AdminUser | null;
   onSaved?: () => void;
 }
 
-const EMPTY: UserInput = { name: "", email: "", password: "", role: "staff" };
-
 export default function UserForm({ open, onOpenChange, user, onSaved }: UserFormProps) {
-  const [values, setValues] = useState<UserInput>(EMPTY);
-  const [errors, setErrors] = useState<ValidationErrors<UserInput>>({});
+  const [name, setName] = useState(user?.name ?? "");
+  const [password, setPassword] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Reset the form whenever the dialog opens for a different user.
-  const formKey = `${open ? "open" : "closed"}:${user?.id ?? "new"}`;
+  const formKey = `${open ? "open" : "closed"}:${user?.id ?? "none"}`;
   const [lastFormKey, setLastFormKey] = useState(formKey);
 
   if (formKey !== lastFormKey) {
     setLastFormKey(formKey);
-    setValues(
-      open && user
-        ? { name: user.name, email: user.email, password: "", role: user.role }
-        : EMPTY,
-    );
-    setErrors({});
+    setName(open && user ? user.name : "");
+    setPassword("");
+    setNameError(null);
+    setPasswordError(null);
   }
-
-  const setField = <K extends keyof UserInput>(key: K, value: UserInput[K]) => {
-    setValues((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!user) return;
 
-    const nextErrors = validateUser(values, { isNew: !user });
-    setErrors(nextErrors);
-
-    if (hasErrors(nextErrors)) return;
+    let hasError = false;
+    if (!name.trim()) {
+      setNameError("Name is required");
+      hasError = true;
+    }
+    if (password && password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      hasError = true;
+    }
+    if (hasError) return;
 
     setSaving(true);
-
     try {
-      if (user) {
-        await userService.update(user.id, {
-          name: values.name,
-          role: values.role,
-          // Leave the password unchanged unless the admin typed a new one.
-          ...(values.password ? { password: values.password } : {}),
-        });
-        toast.success("User updated");
-      } else {
-        await userService.create(values);
-        toast.success("User created");
-      }
-
+      await userService.update(user.id, {
+        name: name.trim(),
+        ...(password ? { password } : {}),
+      });
+      toast.success("Account updated");
       onSaved?.();
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save the user");
+      toast.error(error instanceof Error ? error.message : "Could not update the account");
     } finally {
       setSaving(false);
     }
   };
 
+  const handleClose = () => {
+    if (!saving) onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{user ? "Edit user" : "Add user"}</DialogTitle>
-          <DialogDescription>
-            {user
-              ? "Update this team member's name, role, or password."
-              : "Create a new Sentinel portal account for a team member."}
+        <DialogHeader className="space-y-1.5">
+          <DialogTitle className="text-xl font-semibold">Edit admin account</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Update the account name, or set a new password. Leave the password blank to keep it
+            unchanged.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="user-name">Name</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="user-name" className="text-sm font-medium">
+              Name <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="user-name"
-              value={values.name}
-              onChange={(event) => setField("name", event.target.value)}
-              placeholder="Jane Doe"
-              aria-invalid={Boolean(errors.name)}
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setNameError(null);
+              }}
+              className={cn("h-10", nameError && "border-destructive focus-visible:ring-destructive")}
+              disabled={saving}
+              autoFocus
             />
-            {errors.name ? <p className="text-xs text-destructive">{errors.name}</p> : null}
+            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="user-email">Email</Label>
-            <Input
-              id="user-email"
-              type="email"
-              value={values.email}
-              onChange={(event) => setField("email", event.target.value)}
-              placeholder="jane@hsehub.co.ke"
-              aria-invalid={Boolean(errors.email)}
-              disabled={Boolean(user)}
-            />
-            {errors.email ? (
-              <p className="text-xs text-destructive">{errors.email}</p>
-            ) : user ? (
-              <p className="text-xs text-muted-foreground">Email can&apos;t be changed after the account is created.</p>
-            ) : null}
+          <div className="space-y-1.5">
+            <Label htmlFor="user-email" className="text-sm font-medium">
+              Email
+            </Label>
+            <Input id="user-email" value={user?.email ?? ""} disabled className="h-10" />
+            <p className="text-[11px] text-muted-foreground">
+              Email can't be changed here — contact support if it needs to change.
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="user-password">{user ? "New password (optional)" : "Password"}</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="user-password" className="text-sm font-medium">
+              New password
+            </Label>
             <Input
               id="user-password"
               type="password"
-              value={values.password}
-              onChange={(event) => setField("password", event.target.value)}
-              placeholder="••••••••"
-              aria-invalid={Boolean(errors.password)}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError(null);
+              }}
+              placeholder="Leave blank to keep current password"
+              className={cn(
+                "h-10",
+                passwordError && "border-destructive focus-visible:ring-destructive",
+              )}
+              disabled={saving}
             />
-            {errors.password ? (
-              <p className="text-xs text-destructive">{errors.password}</p>
-            ) : user ? (
-              <p className="text-xs text-muted-foreground">Leave blank to keep the current password.</p>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="user-role">Role</Label>
-            <Select value={values.role} onValueChange={(value) => setField("role", value as UserInput["role"])}>
-              <SelectTrigger id="user-role" className="w-full">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="staff">Staff</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.role ? <p className="text-xs text-destructive">{errors.role}</p> : null}
+            {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
           </div>
 
           <DialogFooter>
@@ -172,7 +148,7 @@ export default function UserForm({ open, onOpenChange, user, onSaved }: UserForm
             </Button>
             <Button type="submit" disabled={saving}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {user ? "Save changes" : "Create user"}
+              Save changes
             </Button>
           </DialogFooter>
         </form>

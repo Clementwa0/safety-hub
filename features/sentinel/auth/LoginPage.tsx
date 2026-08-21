@@ -110,7 +110,7 @@ export default function LoginPage() {
             </CardTitle>
 
             <CardDescription>
-              Sign in to your administrator account.
+              Sign in to your Sentinel account.
             </CardDescription>
           </CardHeader>
 

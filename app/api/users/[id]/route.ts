@@ -7,7 +7,7 @@ import { hashPassword, requireAdmin, serializeUser } from "@/lib/auth";
 
 const updateUserSchema = z.object({
   name: z.string().trim().min(2).optional(),
-  role: z.enum(["admin"]).optional(),
+  status: z.enum(["active", "suspended"]).optional(),
   // Empty/omitted password means "leave it unchanged" — only hash and
   // save a new one when a non-empty value is actually sent.
   password: z.string().min(6).optional().or(z.literal("")),
@@ -29,33 +29,37 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     await connectToDatabase();
-    // Scoped to role: admin so this endpoint can't be used to edit an
-    // ordinary storefront customer's account — they share the same
-    // collection post-unification, but this is Sentinel admin management.
-    const user = await StorefrontCustomerModel.findOne({ _id: id, role: "admin" });
+    // Scoped to role: admin/staff so this endpoint can't be used to edit
+    // an ordinary storefront customer's account — they share the same
+    // collection post-unification, but this is Sentinel user management.
+    const user = await StorefrontCustomerModel.findOne({
+      _id: id,
+      role: { $in: ["admin", "staff"] },
+    });
 
     if (!user) {
       return apiError("User not found", [], 404);
     }
 
+    if (
+      parsed.data.status &&
+      user.role === "admin" &&
+      parsed.data.status === "suspended"
+    ) {
+      return apiError("The admin account can't be suspended.", [], 400);
+    }
+
     if (parsed.data.name) {
       user.name = parsed.data.name;
     }
-    if (parsed.data.role) {
-      user.role = parsed.data.role;
+    if (parsed.data.status) {
+      user.status = parsed.data.status;
     }
     if (parsed.data.password) {
       user.passwordHash = await hashPassword(parsed.data.password);
     }
 
-    try {
-      await user.save();
-    } catch (saveError) {
-      if (saveError instanceof Error && saveError.message.includes("Only one admin account is allowed")) {
-        return apiError("Only one admin account is allowed.", [], 409);
-      }
-      throw saveError;
-    }
+    await user.save();
 
     return apiSuccess(serializeUser(user.toObject()), "User updated");
   } catch (error) {
@@ -77,17 +81,17 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     }
 
     await connectToDatabase();
-    const user = await StorefrontCustomerModel.findOne({ _id: id, role: "admin" });
+    const user = await StorefrontCustomerModel.findOne({
+      _id: id,
+      role: { $in: ["admin", "staff"] },
+    });
 
     if (!user) {
       return apiError("User not found", [], 404);
     }
 
     if (user.role === "admin") {
-      const adminCount = await StorefrontCustomerModel.countDocuments({ role: "admin" });
-      if (adminCount <= 1) {
-        return apiError("Cannot delete the last admin account.", [], 400);
-      }
+      return apiError("The admin account can't be deleted.", [], 400);
     }
 
     await user.deleteOne();

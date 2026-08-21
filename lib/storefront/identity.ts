@@ -53,16 +53,20 @@ export async function resolveStorefrontCustomer(): Promise<StorefrontCustomerIde
 
 /**
  * Resolves the signed-in user as a Sentinel identity, ONLY if their role
- * is admin. Returns `null` for a signed-out visitor or a signed-in
- * plain customer — callers that need Sentinel authorization should
- * generally prefer requireAdmin() from lib/auth/permissions
- * over this, which exists mainly for read-only "is there an admin session"
- * checks (e.g. lib/storefront/session.ts's cart identity resolution).
+ * is admin or staff. Returns `null` for a signed-out visitor or a
+ * signed-in plain customer — callers that need Sentinel authorization
+ * should generally prefer requireAdmin()/requireStaff() from
+ * lib/auth/permissions over this, which exists mainly for read-only "is
+ * there a Sentinel session" checks (e.g. lib/storefront/session.ts's
+ * cart identity resolution).
  */
 export async function resolveSentinelUser(): Promise<SentinelUserIdentity | null> {
   const session = await auth();
 
-  if (!session?.user?.id || session.user.role !== "admin") {
+  if (
+    !session?.user?.id ||
+    (session.user.role !== "admin" && session.user.role !== "staff")
+  ) {
     return null;
   }
 

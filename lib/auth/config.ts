@@ -64,7 +64,7 @@ const providers = [
 
       const user = await UserModel.findOne({
         email,
-        role: "admin",
+        role: { $in: ["admin", "staff"] },
         status: "active",
       }).select("+passwordHash +activeSessionId");
 
@@ -90,7 +90,7 @@ const providers = [
         name: user.name ?? "",
         email: user.email,
         image: user.image ?? null,
-        role: "admin",
+        role: user.role,
         sid: sessionId,
       };
     },
@@ -116,7 +116,7 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.AUTH_SECRET,
 
   pages: {
-    signIn: "/account/sign-in",
+    signIn: "/login",
   },
 
   callbacks: {
@@ -140,7 +140,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account.provider === "sentinel-credentials") {
-        return identity?.role === "admin";
+        return identity?.role === "admin" || identity?.role === "staff";
       }
 
       if (
@@ -173,12 +173,12 @@ export const authOptions: NextAuthOptions = {
         token.role = "customer";
       }
 
-      if (token.role === "admin" && token.id) {
+      if ((token.role === "admin" || token.role === "staff") && token.id) {
         await connectToDatabase();
 
         const dbUser = await UserModel.findOne({
           _id: token.id,
-          role: "admin",
+          role: { $in: ["admin", "staff"] },
         })
           .select("+activeSessionId status")
           .lean();
@@ -288,7 +288,7 @@ export const authOptions: NextAuthOptions = {
 
     async signOut({ token }) {
       if (
-        token?.role === "admin" &&
+        (token?.role === "admin" || token?.role === "staff") &&
         typeof token.id === "string"
       ) {
         await connectToDatabase();
