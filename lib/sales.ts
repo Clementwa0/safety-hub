@@ -1,4 +1,5 @@
 import type { DocumentTotals, LineItem } from "@/types/sentinel/sales";
+import type { Invoice, InvoiceStatus } from "@/types/sentinel/invoice";
 
 export function createLineItem(overrides: Partial<LineItem> = {}): LineItem {
   return {
@@ -65,4 +66,22 @@ export function isOverdue(dueDate: number, status: string): boolean {
 
 export function computeDocumentTotals(items: LineItem[]): DocumentTotals {
   return computeTotals(items);
+}
+
+/**
+ * The status an invoice should be treated as *right now* — same as
+ * `invoice.status` except a still-open invoice past its due date reads as
+ * "overdue" without needing a background job to flip the stored value.
+ * Pulled out of the "use client" invoiceService so server code (e.g. the
+ * PDF route) can compute it without crossing the client boundary.
+ */
+export function effectiveInvoiceStatus(invoice: Invoice): InvoiceStatus {
+  if (invoice.status === "paid" || invoice.status === "cancelled") return invoice.status;
+  if (isOverdue(invoice.dueDate, invoice.status)) return "overdue";
+  return invoice.status;
+}
+
+export function invoiceOutstandingBalance(invoice: Invoice): number {
+  const totals = computeTotals(invoice.items);
+  return Math.max(0, totals.total - invoice.amountPaid);
 }

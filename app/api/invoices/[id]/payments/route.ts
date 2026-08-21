@@ -4,7 +4,7 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { InvoiceModel } from "@/lib/models/Invoice";
 import { PaymentModel } from "@/lib/models/Payment";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 // Mirrors lib/sales.ts#computeTotals exactly. Reimplemented locally
 // rather than imported because computeTotals is typed against the
@@ -39,7 +39,7 @@ const paymentSchema = z.object({
 // payment" panel on the invoice detail page.
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -77,7 +77,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 // overshoot).
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

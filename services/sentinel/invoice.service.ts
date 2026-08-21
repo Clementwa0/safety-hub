@@ -2,17 +2,11 @@
 
 import { apiRequest } from "@/lib/http";
 import type { Invoice, InvoiceInput, InvoiceStatus } from "@/types/sentinel/invoice";
-import { computeTotals, isOverdue } from "@/lib/sales";
+import { effectiveInvoiceStatus, invoiceOutstandingBalance } from "@/lib/sales";
 
 export interface InvoiceQuery {
   search?: string;
   status?: InvoiceStatus | "all";
-}
-
-function resolveStatus(invoice: Invoice): InvoiceStatus {
-  if (invoice.status === "paid" || invoice.status === "cancelled") return invoice.status;
-  if (isOverdue(invoice.dueDate, invoice.status)) return "overdue";
-  return invoice.status;
 }
 
 export const invoiceService = {
@@ -36,9 +30,6 @@ export const invoiceService = {
   async remove(id: string): Promise<void> {
     await apiRequest<void>(`/api/invoices/${id}`, { method: "DELETE" });
   },
-  effectiveStatus: resolveStatus,
-  outstandingBalance(invoice: Invoice): number {
-    const totals = computeTotals(invoice.items);
-    return Math.max(0, totals.total - invoice.amountPaid);
-  },
+  effectiveStatus: effectiveInvoiceStatus,
+  outstandingBalance: invoiceOutstandingBalance,
 };

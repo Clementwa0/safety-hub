@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { CreditCard, Download, Pencil, Printer } from "lucide-react";
+import { CreditCard, Download, Loader2, Pencil, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 import DocumentPreview from "@/components/sentinel/sales/DocumentPreview";
@@ -39,6 +39,7 @@ export default function InvoiceViewPage() {
   const [paymentsLoading, setPaymentsLoading] = useState(true);
   const [payDialogOpen, setPayDialogOpen] = useState(false);
   const [recordingPayment, setRecordingPayment] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState<"print" | "download" | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -91,6 +92,65 @@ export default function InvoiceViewPage() {
     finally { setUpdating(false); }
   };
 
+  // Not using invoiceService/apiRequest here: apiRequest always parses the
+  // response as JSON, but this endpoint returns a raw application/pdf
+  // stream, so we fetch it directly and hand the blob to the browser.
+  const fetchInvoicePdf = async (): Promise<Blob> => {
+    const response = await fetch(`/api/invoices/${id}/pdf`, { credentials: "include" });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      throw new Error(payload?.message || "Could not generate PDF");
+    }
+    return response.blob();
+  };
+
+  const handlePrint = () => {
+    if (!invoice) return;
+    // Open a blank tab synchronously, inside this click handler's user
+    // gesture — some browsers only allow window.open to bypass the popup
+    // blocker when called synchronously from the gesture, so opening it
+    // after the `await fetchInvoicePdf()` below (as before) could get
+    // silently blocked. We point this tab at the PDF once it's ready.
+    // (No "noopener" here: that flag makes window.open return null,
+    // which we need in order to set its location afterward — safe in
+    // this case since the tab only ever shows our own blob: URL.)
+    const printTab = window.open("", "_blank", "noreferrer");
+    void (async () => {
+      setPdfBusy("print");
+      try {
+        if (!printTab) {
+          throw new Error("Your browser blocked the new tab — allow pop-ups for this site and try again.");
+        }
+        const blob = await fetchInvoicePdf();
+        const url = URL.createObjectURL(blob);
+        printTab.location.href = url;
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      } catch (c) {
+        printTab?.close();
+        toast.error(c instanceof Error ? c.message : "Could not open invoice for printing");
+      } finally {
+        setPdfBusy(null);
+      }
+    })();
+  };
+
+  const handleExportPdf = async () => {
+    if (!invoice) return;
+    setPdfBusy("download");
+    try {
+      const blob = await fetchInvoicePdf();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${invoice.number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (c) { toast.error(c instanceof Error ? c.message : "Could not export PDF"); }
+    finally { setPdfBusy(null); }
+  };
+
   if (loading) return <Loading label="Loading invoice..." />;
   if (error || !invoice) {
     return <EmptyState title="Invoice not found" description={error ?? "This invoice may have been deleted."} />;
@@ -111,11 +171,21 @@ export default function InvoiceViewPage() {
         ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="h-4 w-4" /> Print
+            <Button variant="outline" disabled={pdfBusy !== null} onClick={handlePrint}>
+              {pdfBusy === "print" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Printer className="h-4 w-4" />
+              )}
+              Print
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>
-              <Download className="h-4 w-4" /> Export PDF
+            <Button variant="outline" disabled={pdfBusy !== null} onClick={() => void handleExportPdf()}>
+              {pdfBusy === "download" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Export PDF
             </Button>
             <Button nativeButton={false} render={<Link href={`/sentinel/invoices/${invoice.id}/edit`} />}>
               <Pencil className="h-4 w-4" /> Edit
