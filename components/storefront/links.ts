@@ -19,7 +19,7 @@ import {
   FaPhone,
 } from "react-icons/fa";
 
-import { COMPANY } from "@/lib/constants";
+import type { PortalSettings } from "@/services/sentinel/settings.service";
 
 export type DropdownItem = {
   label: string;
@@ -206,22 +206,29 @@ export const businessLinks: FooterLink[] = [
   },
 ];
 
-export const contactInfo: ContactInfo[] = [
-  {
-    icon: FaPhone,
-    value: COMPANY.phone,
-    href: `tel:${COMPANY.phone}`,
-  },
-  {
-    icon: FaEnvelope,
-    value: COMPANY.email,
-    href: `mailto:${COMPANY.email}`,
-  },
-  {
-    icon: FaMapMarkerAlt,
-    value: COMPANY.address,
-  },
-];
+/**
+ * Built from live settings rather than a static constant, so editing
+ * Sentinel → Settings updates the footer immediately. Call with the
+ * current `useSettings().settings`.
+ */
+export function getContactInfo(settings: Pick<PortalSettings, "contactPhone" | "contactEmail" | "address">): ContactInfo[] {
+  return [
+    {
+      icon: FaPhone,
+      value: settings.contactPhone,
+      href: `tel:${settings.contactPhone}`,
+    },
+    {
+      icon: FaEnvelope,
+      value: settings.contactEmail,
+      href: `mailto:${settings.contactEmail}`,
+    },
+    {
+      icon: FaMapMarkerAlt,
+      value: settings.address,
+    },
+  ];
+}
 
 export const legalLinks: FooterLink[] = [
   {
@@ -238,23 +245,26 @@ export const legalLinks: FooterLink[] = [
   },
 ];
 
-export const socialLinks: SocialLink[] = [
-  {
-    label: "Facebook",
-    href: COMPANY.social.facebook,
-    icon: FaFacebook,
-  },
-  {
-    label: "Instagram",
-    href: COMPANY.social.instagram,
-    icon: FaInstagram,
-  },
-  {
-    label: "LinkedIn",
-    href: COMPANY.social.linkedin,
-    icon: FaLinkedinIn,
-  },
-];
+/** Same rationale as `getContactInfo` — sourced from live settings, not a constant. */
+export function getSocialLinks(social: PortalSettings["social"]): SocialLink[] {
+  return [
+    {
+      label: "Facebook",
+      href: social.facebook,
+      icon: FaFacebook,
+    },
+    {
+      label: "Instagram",
+      href: social.instagram,
+      icon: FaInstagram,
+    },
+    {
+      label: "LinkedIn",
+      href: social.linkedin,
+      icon: FaLinkedinIn,
+    },
+  ].filter((link) => link.href.trim().length > 0);
+}
 
 export const containerVariants = {
   hidden: {

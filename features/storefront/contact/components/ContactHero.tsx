@@ -6,9 +6,11 @@ import { FaPhone, FaCommentDots } from "react-icons/fa6";
 
 import heroImg from "@/public/images/contact-hero.png";
 import { Button } from "@/components/ui/button";
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 
 export default function ContactHero() {
+  const { settings } = useSettings();
+
   return (
     <section className="bg-white py-4 lg:py-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,7 +19,7 @@ export default function ContactHero() {
           <div className="relative h-[260px] sm:h-[300px] lg:h-[340px]">
             <Image
               src={heroImg}
-              alt={`Contact ${COMPANY.name}`}
+              alt={`Contact ${settings.companyName}`}
               fill
               priority
               className="object-cover"
@@ -34,7 +36,7 @@ export default function ContactHero() {
                   animate={{ opacity: 1, y: 0 }}
                   className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-wider text-emerald-400"
                 >
-                  Contact {COMPANY.name}
+                  Contact {settings.companyName}
                 </motion.span>
 
                 <motion.h1
@@ -65,7 +67,7 @@ export default function ContactHero() {
                   transition={{ delay: 0.3 }}
                   className="mt-5 flex flex-wrap gap-2"
                 >
-                  <a href={`tel:${COMPANY.phone}`}>
+                  <a href={`tel:${settings.contactPhone}`}>
                     <Button
                       size="sm"
                       className="h-10 rounded-lg bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm transition-all hover:bg-slate-100 active:scale-[0.98]"
@@ -76,7 +78,7 @@ export default function ContactHero() {
                   </a>
 
                   <a
-                    href={`https://wa.me/${COMPANY.whatsapp}`}
+                    href={`https://wa.me/${settings.whatsapp}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

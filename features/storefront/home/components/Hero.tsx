@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa6";
 
 import heroImg from "@/public/images/hero.png";
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 
 const features = [
   {
@@ -29,6 +29,8 @@ const features = [
 ];
 
 export default function Hero() {
+  const { settings } = useSettings();
+
   return (
     <section
       id="home"
@@ -127,7 +129,7 @@ export default function Hero() {
             </Link>
 
             <Link
-              href={`https://wa.me/${COMPANY.whatsapp}`}
+              href={`https://wa.me/${settings.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-primary shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"

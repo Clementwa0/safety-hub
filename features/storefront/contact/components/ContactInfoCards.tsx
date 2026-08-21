@@ -2,9 +2,13 @@
 
 import { motion } from "framer-motion";
 
-import { contactCards, fadeUp } from "./contact-data";
+import { getContactCards, fadeUp } from "./contact-data";
+import { useSettings } from "@/components/SettingsProvider";
 
 export default function ContactInfoCards() {
+  const { settings } = useSettings();
+  const contactCards = getContactCards(settings);
+
   return (
     <section className="relative mt-5 z-20 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto max-w-7xl">

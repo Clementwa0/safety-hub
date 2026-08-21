@@ -6,21 +6,25 @@ import { useEffect, useState } from "react";
 import { FaShieldAlt, FaChevronDown } from "react-icons/fa";
 import {
   businessLinks,
-  contactInfo,
   containerVariants,
+  getContactInfo,
+  getSocialLinks,
   itemVariants,
   legalLinks,
   shopLinks,
-  socialLinks,
   toCategoryLinks,
   type CategoryLink,
 } from ".";
 import { categoryService } from "@/services/shared/category.service";
+import { useSettings } from "@/components/SettingsProvider";
 
 export function Footer() {
+  const { settings } = useSettings();
   const currentYear = new Date().getFullYear();
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categories, setCategories] = useState<CategoryLink[]>([]);
+  const contactInfo = getContactInfo(settings);
+  const socialLinks = getSocialLinks(settings.social);
 
   // Categories live in the DB now, so fetch them instead of using a
   // hardcoded list — keeps the footer in sync with admin changes.
@@ -58,7 +62,7 @@ export function Footer() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
                 <FaShieldAlt className="h-5 w-5" />
               </div>
-              <span className="font-display text-lg font-bold">HSE Hub</span>
+              <span className="font-display text-lg font-bold">{settings.companyName}</span>
             </div>
             <p className="mt-4 text-sm text-primary-foreground/70">
               Certified PPE and industrial safety equipment for sites, factories and field teams across East Africa.
@@ -192,7 +196,7 @@ export function Footer() {
           className="mt-10 border-t border-white/10 pt-6 text-xs text-primary-foreground/60"
         >
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p>© {currentYear} HSE Hub Limited. All rights reserved.</p>
+            <p>© {currentYear} {settings.companyName}. All rights reserved.</p>
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
               {legalLinks.map((link) => (
                 <Link

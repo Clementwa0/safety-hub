@@ -13,7 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 import { DropdownItem, navLinks } from "..";
 
 interface MobileNavDrawerProps {
@@ -34,6 +34,7 @@ export default function MobileNavDrawer({
   isActive,
 }: MobileNavDrawerProps) {
   const { data: session, status } = useSession();
+  const { settings } = useSettings();
 
   const close = () => {
     setMobileDropdown(null);
@@ -186,7 +187,7 @@ export default function MobileNavDrawer({
         {/* WhatsApp CTA */}
         <div className="border-t bg-background p-4">
           <Link
-            href={`https://wa.me/${COMPANY.whatsapp}`}
+            href={`https://wa.me/${settings.whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={close}

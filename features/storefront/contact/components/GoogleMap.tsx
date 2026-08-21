@@ -8,11 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 import ContactForm from "./ContactForm";
-import { COMPANY } from "@/lib/constants";
-
-const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(COMPANY.address)}&output=embed`;
+import { useSettings } from "@/components/SettingsProvider";
 
 export default function GoogleMap() {
+  const { settings } = useSettings();
+  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(settings.address)}&output=embed`;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 30 }}
@@ -24,7 +25,7 @@ export default function GoogleMap() {
         <CardContent className="relative p-0">
           {/* Google Map */}
           <iframe
-            title="HSE Hub Location"
+            title={`${settings.companyName} Location`}
             src={mapSrc}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
@@ -52,17 +53,17 @@ export default function GoogleMap() {
                     </h3>
 
                     <p className="text-sm text-muted-foreground">
-                      HSE Hub Limited
+                      {settings.companyName}
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-1 text-sm text-muted-foreground leading-6">
-                  <p>{COMPANY.address}</p>
+                  <p>{settings.address}</p>
                 </div>
 
                 <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY.address)}`}
+                  href={`https://maps.google.com/?q=${encodeURIComponent(settings.address)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -91,17 +92,17 @@ export default function GoogleMap() {
               </h3>
 
               <p className="text-sm text-muted-foreground">
-                HSE Hub Limited
+                {settings.companyName}
               </p>
             </div>
           </div>
 
           <div className="space-y-1 text-sm text-muted-foreground leading-6">
-            <p>{COMPANY.address}</p>
+            <p>{settings.address}</p>
           </div>
 
           <a
-            href={`https://maps.google.com/?q=${encodeURIComponent(COMPANY.address)}`}
+            href={`https://maps.google.com/?q=${encodeURIComponent(settings.address)}`}
             target="_blank"
             rel="noopener noreferrer"
           >

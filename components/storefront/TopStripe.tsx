@@ -1,3 +1,5 @@
+"use client";
+
 import {
   RiCustomerService2Fill,
   RiMailFill,
@@ -6,15 +8,12 @@ import {
   RiTruckFill,
 } from "react-icons/ri";
 
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 import { corporateLink } from "./links";
 
-const SITE = {
-  phone: COMPANY.phone,
-  email: COMPANY.email,
-};
-
 export default function TopStripe() {
+  const { settings } = useSettings();
+
   return (
     <div className="hidden border-b border-border/40 bg-primary text-white md:block">
       <div className="mx-auto flex h-9 w-full max-w-[1440px] items-center justify-between px-4 text-xs sm:px-6 lg:px-8">
@@ -30,25 +29,25 @@ export default function TopStripe() {
 
           <span className="flex items-center gap-1.5">
             <RiTimeFill className="text-sm text-orange-400" />
-            Mon – Fri: 8:00 AM – 5:00 PM
+            {settings.businessHours || "Mon – Fri: 8:00 AM – 5:00 PM"}
           </span>
         </div>
 
         <div className="flex items-center gap-6">
           <a
-            href={`tel:${SITE.phone}`}
+            href={`tel:${settings.contactPhone}`}
             className="flex items-center gap-1.5 transition-colors hover:text-orange-400"
           >
             <RiPhoneFill className="text-sm" />
-            {SITE.phone}
+            {settings.contactPhone}
           </a>
 
           <a
-            href={`mailto:${SITE.email}`}
+            href={`mailto:${settings.contactEmail}`}
             className="flex items-center gap-1.5 transition-colors hover:text-orange-400"
           >
             <RiMailFill className="text-sm" />
-            {SITE.email}
+            {settings.contactEmail}
           </a>
 
           <a

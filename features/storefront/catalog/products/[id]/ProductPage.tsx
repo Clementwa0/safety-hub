@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useProduct } from "@/hooks/useProduct";
 import { useCart } from "@/hooks/useCart";
 import { useCartUIStore } from "@/store/cart-ui-store";
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 import type { Product } from "@/types/product";
 import { ProductGallery, ProductHeader, ProductNotFound, ProductPricing, ProductRelated, ProductSkeleton, ProductTabs } from "..";
 
@@ -38,6 +38,7 @@ function ProductPurchasePanel({
 
 export default function ProductPage() {
   const params = useParams();
+  const { settings } = useSettings();
   const slug = params.slug as string;
   const { product, relatedProducts, loading, error } = useProduct(slug);
   const { addItem } = useCart();
@@ -56,8 +57,8 @@ export default function ProductPage() {
 
   const handleWhatsApp = () => {
     if (!product) return;
-    const url = `https://wa.me/${COMPANY.whatsapp}?text=${encodeURIComponent(
-      `Hello ${COMPANY.name}, I'm interested in ${product.name} (${product.category}) for KES ${product.price.toLocaleString(
+    const url = `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(
+      `Hello ${settings.companyName}, I'm interested in ${product.name} (${product.category}) for KES ${product.price.toLocaleString(
         "en-KE"
       )}.`
     )}`;

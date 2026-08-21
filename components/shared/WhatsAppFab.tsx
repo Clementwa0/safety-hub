@@ -2,16 +2,18 @@
 
 import { FaWhatsapp, FaRobot, FaTimes } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 import { waLink } from "@/lib/whatsapp";
 import { useEffect, useState } from "react";
 
 export default function WhatsAppFab() {
+  const { settings } = useSettings();
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const href = waLink(
-    `Hello ${COMPANY.name}, I'm interested in your safety products. Kindly assist me.`
+    `Hello ${settings.companyName}, I'm interested in your safety products. Kindly assist me.`,
+    settings.whatsapp
   );
 
   // Auto-close after 8 seconds

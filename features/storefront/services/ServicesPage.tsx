@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CTA } from "@/features/storefront/home/components";
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 import { corporateLink, requestQuoteLink } from "@/components/storefront";
 
 const coreServices = [
@@ -99,6 +99,8 @@ const industries = [
 ];
 
 export default function ServicesPage() {
+  const { settings } = useSettings();
+
   return (
     <main className="bg-background">
       {/* Hero */}
@@ -121,7 +123,7 @@ export default function ServicesPage() {
             </h1>
 
             <p className="mx-auto mt-8 max-w-3xl text-lg leading-8 text-muted-foreground">
-              Beyond supplying certified PPE, {COMPANY.name} works alongside
+              Beyond supplying certified PPE, {settings.companyName} works alongside
               construction companies, manufacturers, healthcare facilities and
               institutions to keep every workplace equipped, compliant and
               protected.
@@ -265,7 +267,7 @@ export default function ServicesPage() {
                 </Link>
 
                 <a
-                  href={`https://wa.me/${COMPANY.whatsapp}`}
+                  href={`https://wa.me/${settings.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

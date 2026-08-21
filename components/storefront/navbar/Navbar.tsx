@@ -9,7 +9,7 @@ import { FaBars, FaWhatsapp} from "react-icons/fa6";
 
 import Logo from "@/public/logo.png";
 import { TopStripe } from "..";
-import { COMPANY } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 import { categoryService } from "@/services/shared/category.service";
 import SearchOverlay from "../SearchOverlay";
 import type { DropdownItem } from "..";
@@ -21,6 +21,7 @@ import AccountMenu from "@/features/storefront/account/components/AccountMenu";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { settings } = useSettings();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdown, setDropdown] = useState<string | null>(null);
@@ -163,12 +164,12 @@ export default function Navbar() {
         <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-5 px-6 sm:px-6 lg:px-10">
           <Link
             href="/"
-            aria-label={`${COMPANY.name} home`}
+            aria-label={`${settings.companyName} home`}
             className="group flex shrink-0 items-center"
           >
             <Image
-              src={Logo}
-              alt={`${COMPANY.name} logo`}
+              src={settings.logoUrl || Logo}
+              alt={`${settings.companyName} logo`}
               width={130}
               height={20}
               priority
@@ -215,7 +216,7 @@ export default function Navbar() {
             </div>
 
             <Link
-              href={`https://wa.me/${COMPANY.whatsapp}`}
+              href={`https://wa.me/${settings.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Text to order on WhatsApp"

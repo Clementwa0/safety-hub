@@ -5,47 +5,50 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 
-import { COMPANY } from "@/lib/constants";
+import type { PortalSettings } from "@/services/sentinel/settings.service";
 
 export const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 },
 };
 
-export const contactCards = [
-  {
-    icon: FaPhoneAlt,
-    iconBg: "bg-blue-900",
-    iconColor: "text-blue-600",
-    title: "Call Us",
-    lines: [COMPANY.phone],
-    sub: "Mon - Sat: 8:00 AM - 6:00 PM",
-  },
-  {
-    icon: FaWhatsapp,
-    iconBg: "bg-green-500",
-    iconColor: "text-green-600",
-    title: "WhatsApp",
-    lines: [COMPANY.whatsapp],
-    sub: "Chat with us on WhatsApp anytime!",
-  },
-  {
-    icon:FaEnvelope,
-    iconBg: "bg-yellow-500",
-    iconColor: "text-red-600",
-    title: "Email Us",
-    lines: [COMPANY.email],
-    sub: "We reply within 24 hours",
-  },
-  {
-    icon: FaMapMarkerAlt,
-    iconBg: "bg-green-500",
-    iconColor: "text-orange-600",
-    title: "Visit Us",
-    lines: [COMPANY.address],
-    sub: "Mon - Sat: 8:00 AM - 6:00 PM",
-  },
-];
+/** Sourced from live settings — call with `useSettings().settings`. */
+export function getContactCards(settings: PortalSettings) {
+  return [
+    {
+      icon: FaPhoneAlt,
+      iconBg: "bg-blue-900",
+      iconColor: "text-blue-600",
+      title: "Call Us",
+      lines: [settings.contactPhone],
+      sub: settings.businessHours || "Mon - Sat: 8:00 AM - 6:00 PM",
+    },
+    {
+      icon: FaWhatsapp,
+      iconBg: "bg-green-500",
+      iconColor: "text-green-600",
+      title: "WhatsApp",
+      lines: [settings.whatsapp],
+      sub: "Chat with us on WhatsApp anytime!",
+    },
+    {
+      icon: FaEnvelope,
+      iconBg: "bg-yellow-500",
+      iconColor: "text-red-600",
+      title: "Email Us",
+      lines: [settings.contactEmail],
+      sub: "We reply within 24 hours",
+    },
+    {
+      icon: FaMapMarkerAlt,
+      iconBg: "bg-green-500",
+      iconColor: "text-orange-600",
+      title: "Visit Us",
+      lines: [settings.address],
+      sub: settings.businessHours || "Mon - Sat: 8:00 AM - 6:00 PM",
+    },
+  ];
+}
 
 export const navLinks = [
   { label: "Home", href: "#" },

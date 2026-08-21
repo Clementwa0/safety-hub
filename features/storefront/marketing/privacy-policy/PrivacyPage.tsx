@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { COMPANY, privacysections } from "@/lib/constants";
+import { privacysections } from "@/lib/constants";
+import { useSettings } from "@/components/SettingsProvider";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - HSE Hub Limited",
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
+  const { settings } = useSettings();
   const effectiveDate = "January 15, 2026";
 
   return (
@@ -297,25 +299,25 @@ export default function PrivacyPage() {
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Email</p>
                     <a
-                      href={`mailto:${COMPANY.email}`}
+                      href={`mailto:${settings.contactEmail}`}
                       className="text-sm font-medium text-secondary hover:underline"
                     >
-                      {COMPANY.email}
+                      {settings.contactEmail}
                     </a>
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Phone</p>
                     <a
-                      href={`tel:${COMPANY.phone}`}
+                      href={`tel:${settings.contactPhone}`}
                       className="text-sm font-medium text-secondary hover:underline"
                     >
-                      {COMPANY.phone}
+                      {settings.contactPhone}
                     </a>
                   </div>
                   <div className="rounded-lg border p-3 text-center hover:shadow-sm transition">
                     <p className="text-xs text-muted-foreground">Location</p>
                     <span className="text-sm font-medium">
-                      {COMPANY.address}
+                      {settings.address}
                     </span>
                   </div>
                 </div>
