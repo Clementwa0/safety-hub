@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { getProductAvailability } from "@/lib/server/availability";
 
 // GET /api/products/availability?ids=<id1>,<id2>,...
@@ -12,7 +12,7 @@ import { getProductAvailability } from "@/lib/server/availability";
 // stock/reserved for a handful of ids), not the full product document.
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

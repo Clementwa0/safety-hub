@@ -22,14 +22,33 @@ import InventoryFilters, {
 } from "./components/InventoryFilters";
 import InventoryTable from "./components/InventoryTable";
 import StockHealth from "./components/StockHealth";
-import StockMovements from "./components/StockMovements";
+import StockMovements, { type StockMovementRow } from "./components/StockMovements";
 import { getStockBucket } from "./stockStatus";
 import { computeInventorySummary, computeStockHealthSlices } from "./summary";
 import { useInventoryRows } from "./useInventoryRows";
 import { inventoryValue } from "./types";
+import { movementService, type Movement } from "@/services/sentinel/movement.service";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const DEFAULT_PAGE_SIZE = 25;
+
+const MOVEMENT_REASON: Record<Movement["type"], string> = {
+  manual_adjustment: "Manual adjustment",
+  order_shipped: "Order shipped",
+  store_order_shipped: "Store order shipped",
+};
+
+function toMovementRow(movement: Movement): StockMovementRow {
+  return {
+    id: movement.id,
+    productName: movement.product?.name ?? "Deleted product",
+    quantity: movement.delta,
+    reason: movement.reference
+      ? `${MOVEMENT_REASON[movement.type]} · ${movement.reference}`
+      : MOVEMENT_REASON[movement.type],
+    occurredAt: movement.createdAt,
+  };
+}
 
 export default function InventoryPage() {
   const { rows, setRows, loading: rowsLoading, error: rowsError, reload: load } = useInventoryRows();
@@ -38,11 +57,37 @@ export default function InventoryPage() {
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
+  const [movements, setMovements] = useState<StockMovementRow[] | null>(null);
+  const [movementsLoading, setMovementsLoading] = useState(true);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const loading = rowsLoading;
   const error = rowsError ?? categoriesError;
+
+  // Recent Movements is supplementary to the main inventory table, so a
+  // failure here shouldn't block the rest of the page — it just leaves
+  // the panel in its "no data" empty state.
+  useEffect(() => {
+    let cancelled = false;
+    setMovementsLoading(true);
+    movementService
+      .listRecent(20)
+      .then((items) => {
+        if (!cancelled) setMovements(items.map(toMovementRow));
+      })
+      .catch(() => {
+        if (!cancelled) setMovements(null);
+      })
+      .finally(() => {
+        if (!cancelled) setMovementsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
 
   // Categories are only needed for the filter dropdown, so they're loaded
   // alongside — not inside — the shared inventory-rows hook.
@@ -185,7 +230,7 @@ export default function InventoryPage() {
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         <StockHealth slices={stockHealthSlices} loading={loading} />
-        <StockMovements data={null} loading={loading} />
+        <StockMovements data={movements} loading={movementsLoading} />
       </div>
 
       <InventoryFilters value={filters} onChange={setFilters} categories={categories.map((item) => item.name)} />
