@@ -2,12 +2,12 @@ import type { NextRequest } from "next/server";
 
 import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { ContactMessageModel } from "@/lib/models/ContactMessage";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

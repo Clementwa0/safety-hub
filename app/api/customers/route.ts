@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 const customerSchema = z.object({
   name: z.string().trim().min(2),
@@ -15,7 +15,7 @@ const customerSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
