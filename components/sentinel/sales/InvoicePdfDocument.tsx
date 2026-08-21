@@ -1,4 +1,4 @@
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 
 import { formatKES, formatDate } from "@/lib/format";
 import { computeTotals, lineItemTotal } from "@/lib/sales";
@@ -51,6 +51,12 @@ const styles = StyleSheet.create({
   },
   companyBlock: {
     alignItems: "flex-end",
+  },
+  companyLogo: {
+    width: 44,
+    height: 44,
+    marginBottom: 6,
+    objectFit: "contain",
   },
   companyName: {
     fontSize: 11,
@@ -222,6 +228,7 @@ interface InvoicePdfDocumentProps {
   effectiveStatus: InvoiceStatus;
   balance: number;
   settings: PortalSettings;
+  logoDataUri?: string;
 }
 
 export function InvoicePdfDocument({
@@ -229,6 +236,7 @@ export function InvoicePdfDocument({
   effectiveStatus,
   balance,
   settings,
+  logoDataUri,
 }: InvoicePdfDocumentProps) {
   const totals = computeTotals(invoice.items);
   const { customer, items } = invoice;
@@ -240,15 +248,6 @@ export function InvoicePdfDocument({
       subject={`Invoice for ${customer.name}`}
     >
       <Page size="A4" style={styles.page} wrap>
-        {/*
-          Company/invoice header and the bill-to/dates block render once,
-          in normal flow, at the top of page 1 only — they are not marked
-          `fixed`. @react-pdf/renderer's `fixed` re-stamps a view at the
-          same page position on every page, which works well for a small
-          running footer (below) but risks overlapping page-1 content if
-          used for a block this size, so we keep it simple here and let
-          the line-item table paginate naturally instead.
-        */}
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.eyebrow}>Invoice</Text>
@@ -258,6 +257,10 @@ export function InvoicePdfDocument({
             </Text>
           </View>
           <View style={styles.companyBlock}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- this is
+                @react-pdf/renderer's Image (a PDF layout node), not an
+                HTML <img>; it has no alt prop in its API. */}
+            {logoDataUri ? <Image src={logoDataUri} style={styles.companyLogo} /> : null}
             <Text style={styles.companyName}>{settings.companyName}</Text>
             {settings.address ? <Text style={styles.companyLine}>{settings.address}</Text> : null}
             {settings.contactEmail ? (

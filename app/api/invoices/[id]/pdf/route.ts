@@ -12,13 +12,7 @@ import { serializeDoc } from "@/lib/api";
 import { InvoicePdfDocument } from "@/components/sentinel/sales/InvoicePdfDocument";
 import type { Invoice } from "@/types/sentinel/invoice";
 
-// GET /api/invoices/[id]/pdf
-//
-// Streams a generated PDF of one invoice. Mirrors the auth/lookup shape
-// of GET /api/invoices/[id] (same `requireStaff` gate, same 404 for a
-// missing invoice, populated customer) and reuses the same total/status
-// logic the invoice detail page already renders, so the PDF can never
-// disagree with what staff see on screen.
+
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireStaff();
