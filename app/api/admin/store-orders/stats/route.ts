@@ -1,11 +1,11 @@
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel, STORE_ORDER_STATUSES } from "@/lib/models/StoreOrder";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

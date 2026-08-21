@@ -1,12 +1,16 @@
+import mongoose from "mongoose";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { OrderModel } from "@/lib/models/Order";
+import { ProductModel } from "@/lib/models/Product";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/lib/server/customers";
+import { validateOrderStatusTransition } from "@/lib/server/order-status";
+import { recordMovement } from "@/lib/server/movements";
 
 const orderSchema = z.object({
   customer: customerInputSchema.optional(),
@@ -19,7 +23,7 @@ const orderSchema = z.object({
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -40,7 +44,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -54,29 +58,140 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     await connectToDatabase();
-    const order = await OrderModel.findById(id);
 
-    if (!order) {
-      return apiError("Order not found", [], 404);
-    }
-
+    // Resolve/create the customer up front — it doesn't touch stock, so it
+    // doesn't need to be inside the transaction below.
+    let resolvedCustomerId: mongoose.Types.ObjectId | string | undefined;
     if (parsed.data.customer) {
       if (typeof parsed.data.customer === "string") {
         const customer = await CustomerModel.findById(parsed.data.customer);
         if (!customer) {
           return apiError("Customer not found", [], 404);
         }
-        order.customer = customer._id;
+        resolvedCustomerId = customer._id as mongoose.Types.ObjectId;
       } else {
         const customer = await findOrCreateCustomer(parsed.data.customer);
-        order.customer = customer._id;
+        resolvedCustomerId = customer._id as mongoose.Types.ObjectId;
       }
     }
 
-    Object.assign(order, { ...parsed.data, customer: order.customer });
-    await order.save();
+    const session = await mongoose.startSession();
+    try {
+      let updated: Awaited<ReturnType<typeof OrderModel.findById>> | null = null;
 
-    return apiSuccess(serializeDoc(order.toObject()), "Order updated");
+      await session.withTransaction(async () => {
+        const order = await OrderModel.findById(id).session(session);
+        if (!order) {
+          throw new Error("__ORDER_NOT_FOUND__");
+        }
+
+        if (parsed.data.status && parsed.data.status !== order.status) {
+          const transitionError = validateOrderStatusTransition(order.status, parsed.data.status);
+          if (transitionError) {
+            throw new Error(`__TRANSITION__${transitionError}`);
+          }
+
+          const previousStatus = order.status;
+          order.status = parsed.data.status;
+
+          // Stock actually leaves inventory here, at "shipped" — not when
+          // the order is converted to an invoice (see
+          // app/api/orders/[id]/convert-to-invoice/route.ts, which no
+          // longer touches stock at all). Guarded by `stockDecremented`
+          // so re-sending the same status can't double-decrement.
+          if (parsed.data.status === "shipped" && !order.stockDecremented) {
+            for (const item of order.items) {
+              if (!item.productId) continue;
+
+              // Only orders created from an accepted Quotation placed a
+              // `reserved` hold (see convertQuotationToOrder) — a
+              // directly-created order (POST /api/orders) never
+              // reserved, so releasing `reserved` for it would push the
+              // field negative. Two static $inc shapes rather than a
+              // dynamically-built one, to stay within Mongoose's typed
+              // update signature.
+              const updatedProduct = order.reservedStock
+                ? await ProductModel.findOneAndUpdate(
+                    { _id: item.productId },
+                    { $inc: { stock: -item.quantity, reserved: -item.quantity } },
+                    { session, returnDocument: "after" },
+                  )
+                : await ProductModel.findOneAndUpdate(
+                    { _id: item.productId },
+                    { $inc: { stock: -item.quantity } },
+                    { session, returnDocument: "after" },
+                  );
+
+              if (updatedProduct) {
+                await recordMovement({
+                  productId: updatedProduct._id as mongoose.Types.ObjectId,
+                  type: "order_shipped",
+                  delta: -item.quantity,
+                  resultingStock: updatedProduct.stock,
+                  reference: order.number,
+                  session,
+                });
+              }
+            }
+            order.stockDecremented = true;
+          }
+
+          // Cancellation is only reachable before "shipped" (enforced by
+          // validateOrderStatusTransition above), so `stock` was never
+          // touched for this order — only a `reserved` hold (if any)
+          // needs releasing. No Movement is logged: nothing actually
+          // moved.
+          if (parsed.data.status === "cancelled" && previousStatus !== "shipped" && order.reservedStock) {
+            for (const item of order.items) {
+              if (!item.productId) continue;
+              await ProductModel.updateOne(
+                { _id: item.productId },
+                { $inc: { reserved: -item.quantity } },
+                { session },
+              );
+            }
+          }
+        }
+
+        if (parsed.data.items) {
+          order.items = parsed.data.items;
+        }
+        if (parsed.data.notes !== undefined) {
+          order.notes = parsed.data.notes;
+        }
+        if (parsed.data.quotationId !== undefined) {
+          order.quotationId = parsed.data.quotationId;
+        }
+        if (parsed.data.invoiceId !== undefined) {
+          order.invoiceId = parsed.data.invoiceId;
+        }
+        if (resolvedCustomerId) {
+          order.customer = resolvedCustomerId;
+        }
+
+        await order.save({ session });
+        updated = order;
+      });
+
+      if (!updated) {
+        return apiError("Order not found", [], 404);
+      }
+
+      return apiSuccess(serializeDoc((updated as InstanceType<typeof OrderModel>).toObject()), "Order updated");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update order";
+
+      if (message === "__ORDER_NOT_FOUND__") {
+        return apiError("Order not found", [], 404);
+      }
+      if (message.startsWith("__TRANSITION__")) {
+        return apiError(message.replace("__TRANSITION__", ""), [], 400);
+      }
+
+      return apiError(message, [], 500);
+    } finally {
+      await session.endSession();
+    }
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to update order", [], 500);
   }
@@ -84,7 +199,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

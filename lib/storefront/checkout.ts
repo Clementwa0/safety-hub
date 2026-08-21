@@ -6,6 +6,7 @@ import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal }
 import { getNextOrderNumber } from "@/lib/storefront/order-number";
 import type { CartIdentity } from "@/lib/storefront/session";
 import { CartError } from "@/lib/storefront/cart";
+import { findOrCreateCustomer } from "@/lib/server/customers";
 
 export interface CheckoutInput {
   customer: { name: string; email: string; phone: string };
@@ -58,10 +59,18 @@ export async function performCheckout(
         if (cartItem.quantity <= 0) {
           throw new CartError("Invalid quantity in cart", 400);
         }
-        if (cartItem.quantity > product.stock) {
+        // Available = stock minus whatever's already reserved by other
+        // pending/unshipped orders and accepted quotations — not raw
+        // stock. Checkout no longer decrements `stock` directly (that now
+        // only happens once an order actually ships, see
+        // app/api/admin/store-orders/[id]/route.ts); it holds a
+        // reservation instead, the same mechanism the B2B quotation flow
+        // already uses (see lib/server/availability.ts).
+        const available = Math.max(0, product.stock - product.reserved);
+        if (cartItem.quantity > available) {
           throw new CartError(
-            product.stock > 0
-              ? `Only ${product.stock} unit(s) of "${product.name}" are in stock`
+            available > 0
+              ? `Only ${available} unit(s) of "${product.name}" are in stock`
               : `"${product.name}" is out of stock`,
             400,
           );
@@ -90,12 +99,31 @@ export async function performCheckout(
 
       const orderNumber = await getNextOrderNumber(session);
 
+      // Matches/creates a CRM Customer record from the checkout details,
+      // the same findOrCreateCustomer used by the Quotation/Order/Invoice
+      // forms — so a storefront shopper shows up in the Customers list
+      // too, deduped against an existing B2B contact if they share an
+      // email or phone. Runs inside this transaction so it commits or
+      // rolls back atomically with the rest of the order.
+      const customerRecord = await findOrCreateCustomer(
+        {
+          name: input.customer.name,
+          email: input.customer.email,
+          phone: input.customer.phone,
+          address: [input.shippingAddress.address, input.shippingAddress.city, input.shippingAddress.country]
+            .filter(Boolean)
+            .join(", "),
+        },
+        session,
+      );
+
       const [order] = await StoreOrderModel.create(
         [
           {
             orderNumber,
             user: identity.userId,
             sessionId: identity.sessionId,
+            customerId: customerRecord._id,
             items: orderItems,
             subtotal,
             shippingFee,
@@ -111,12 +139,19 @@ export async function performCheckout(
         { session },
       );
 
-      // Reduce stock atomically per product, guarding against a stock change
-      // between the check above and this write (e.g. a concurrent order).
+      // Hold a reservation atomically per product, guarding against an
+      // availability change between the check above and this write (e.g.
+      // a concurrent order or an accepted quotation landing in between).
+      // `stock` itself is untouched here — it only moves when the order
+      // ships (see the "shipped" transition in
+      // app/api/admin/store-orders/[id]/route.ts).
       for (const item of orderItems) {
         const result = await ProductModel.updateOne(
-          { _id: item.product, stock: { $gte: item.quantity } },
-          { $inc: { stock: -item.quantity } },
+          {
+            _id: item.product,
+            $expr: { $gte: [{ $subtract: ["$stock", "$reserved"] }, item.quantity] },
+          },
+          { $inc: { reserved: item.quantity } },
           { session },
         );
 

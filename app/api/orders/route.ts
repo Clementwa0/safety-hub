@@ -4,7 +4,7 @@ import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/a
 import { connectToDatabase } from "@/lib/db";
 import { OrderModel } from "@/lib/models/Order";
 import { CustomerModel } from "@/lib/models/Customer";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/lib/server/customers";
 import { createWithDocumentNumber } from "@/lib/server/documentNumber";
@@ -20,7 +20,7 @@ const orderSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }

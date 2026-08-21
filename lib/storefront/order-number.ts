@@ -20,7 +20,7 @@ export async function getNextOrderNumber(session?: mongoose.ClientSession): Prom
   const counter = await CounterModel.findOneAndUpdate(
     { key },
     { $inc: { seq: 1 } },
-    { new: true, upsert: true, session },
+    { returnDocument: "after", upsert: true, session },
   );
 
   const sequence = String(counter.seq).padStart(6, "0");

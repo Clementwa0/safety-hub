@@ -18,6 +18,13 @@ export interface IOrder extends Document {
   notes?: string;
   quotationId?: mongoose.Types.ObjectId | string;
   invoiceId?: mongoose.Types.ObjectId | string;
+  /** Guards against decrementing stock twice if "shipped" is somehow set more than once. */
+  stockDecremented: boolean;
+  /** True only when this Order came from convertQuotationToOrder, which placed a
+   *  `Product.reserved` hold for its items. Direct-created orders (POST /api/orders)
+   *  never reserve, so their "shipped" transition must decrement stock without also
+   *  touching `reserved` — this flag is how that transition tells the two cases apart. */
+  reservedStock: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +50,8 @@ const orderSchema = new Schema<IOrder>(
     notes: { type: String },
     quotationId: { type: Schema.Types.ObjectId, ref: "Quotation" },
     invoiceId: { type: Schema.Types.ObjectId, ref: "Invoice" },
+    stockDecremented: { type: Boolean, default: false },
+    reservedStock: { type: Boolean, default: false },
   },
   {
     timestamps: true,

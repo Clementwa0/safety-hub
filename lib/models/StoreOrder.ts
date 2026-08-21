@@ -58,6 +58,12 @@ export interface IStoreOrder extends Document {
   /** Refs `StorefrontCustomer` — the single identity collection post-unification. */
   user?: mongoose.Types.ObjectId;
   sessionId?: string;
+  /** Refs the CRM `Customer` record matched/created at checkout via
+   *  findOrCreateCustomer (see lib/storefront/checkout.ts) — separate from
+   *  `user`, which is the storefront login identity, not the CRM contact.
+   *  Optional only because orders placed before this linkage existed
+   *  won't have it backfilled. */
+  customerId?: mongoose.Types.ObjectId;
 
   items: IStoreOrderItem[];
 
@@ -86,8 +92,8 @@ export interface IStoreOrder extends Document {
     country: string;
   };
 
-  /** Guards against restoring stock twice if an order is cancelled. */
-  stockRestored: boolean;
+  /** Guards against decrementing stock twice if "shipped" is somehow set more than once. */
+  stockDecremented: boolean;
 
   createdAt: Date;
   updatedAt: Date;
@@ -113,6 +119,7 @@ const storeOrderSchema = new Schema<IStoreOrder>(
 
     user: { type: Schema.Types.ObjectId, ref: "StorefrontCustomer" },
     sessionId: { type: String, trim: true },
+    customerId: { type: Schema.Types.ObjectId, ref: "Customer" },
 
     items: {
       type: [storeOrderItemSchema],
@@ -157,7 +164,7 @@ const storeOrderSchema = new Schema<IStoreOrder>(
       country: { type: String, required: true, trim: true },
     },
 
-    stockRestored: { type: Boolean, default: false },
+    stockDecremented: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -172,6 +179,7 @@ storeOrderSchema.index({ orderNumber: 1 }, { unique: true });
 // needed alongside `user`.
 storeOrderSchema.index({ user: 1, createdAt: -1 });
 storeOrderSchema.index({ sessionId: 1, createdAt: -1 });
+storeOrderSchema.index({ customerId: 1, createdAt: -1 });
 storeOrderSchema.index({ status: 1, createdAt: -1 });
 storeOrderSchema.index({ paymentStatus: 1 });
 storeOrderSchema.index({ "customer.email": 1 });

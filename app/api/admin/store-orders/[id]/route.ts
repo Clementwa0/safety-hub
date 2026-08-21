@@ -4,10 +4,11 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
 import { ProductModel } from "@/lib/models/Product";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { updateStoreOrderSchema } from "@/lib/storefront/validation";
 import { validateStatusTransition } from "@/lib/storefront/order-status";
 import { validatePaymentStatusTransition } from "@/lib/storefront/payment-status";
+import { recordMovement } from "@/lib/server/movements";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -15,7 +16,7 @@ interface RouteContext {
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -40,7 +41,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    const user = await requireAdmin();
+    const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);
     }
@@ -74,19 +75,51 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
             throw new Error(`__TRANSITION__${transitionError}`);
           }
 
+          const previousStatus = order.status;
           order.status = parsed.data.status;
 
-          // Restore stock exactly once when an order is cancelled.
-          if (parsed.data.status === "cancelled" && !order.stockRestored) {
+          // Stock actually leaves inventory here, at "shipped" — not at
+          // checkout (see performCheckout in lib/storefront/checkout.ts,
+          // which only places a `reserved` hold) and not at any other
+          // status change. Guarded by `stockDecremented` so re-saving or
+          // re-sending the same status can't double-decrement.
+          if (parsed.data.status === "shipped" && !order.stockDecremented) {
+            for (const item of order.items) {
+              if (!item.product) continue;
+
+              const updatedProduct = await ProductModel.findOneAndUpdate(
+                { _id: item.product },
+                { $inc: { stock: -item.quantity, reserved: -item.quantity } },
+                { session, returnDocument: "after" },
+              );
+
+              if (updatedProduct) {
+                await recordMovement({
+                  productId: item.product,
+                  type: "store_order_shipped",
+                  delta: -item.quantity,
+                  resultingStock: updatedProduct.stock,
+                  reference: order.orderNumber,
+                  session,
+                });
+              }
+            }
+            order.stockDecremented = true;
+          }
+
+          // Cancellation is only reachable before "shipped" (enforced by
+          // validateStatusTransition above), so `stock` was never touched
+          // for this order — only the checkout-time reservation needs
+          // releasing. No Movement is logged: nothing actually moved.
+          if (parsed.data.status === "cancelled" && previousStatus !== "shipped") {
             for (const item of order.items) {
               if (!item.product) continue;
               await ProductModel.updateOne(
                 { _id: item.product },
-                { $inc: { stock: item.quantity } },
+                { $inc: { reserved: -item.quantity } },
                 { session },
               );
             }
-            order.stockRestored = true;
           }
         }
 
