@@ -62,6 +62,17 @@ import type {
  *   deliberately conservative. A future finance configuration could
  *   swap this for accrual-on-invoice or another policy; this function
  *   is the only place that would need to change.
+ *   For B2B, this is scoped to the period by the date the invoice
+ *   actually became fully paid (its latest active `Payment.date` — the
+ *   same "date cash actually moved" signal CASH COLLECTED uses above),
+ *   NOT by the unrelated order's `createdAt`. An order is routinely
+ *   created well before it's delivered and its invoice paid off, so
+ *   gating on order creation date would silently drop revenue that was
+ *   recognized in-range just because the order document itself was
+ *   created in an earlier period — the exact bug class already fixed
+ *   for Cash Collected. For the storefront there is still no separate
+ *   payment-date ledger, so order creation date remains the closest
+ *   available proxy there (same limitation as Cash Collected).
  *
  * Known data gaps, surfaced honestly in the UI rather than papered
  * over:
@@ -189,6 +200,33 @@ export async function buildSalesDashboard(
   // equivalent rule applied to a single invoice's amountPaid.
   const paymentsInRange = payments.filter((p) => inRange(p.date) && isActivePayment(p));
 
+  // All active payments grouped by invoice (not range-filtered — we need
+  // this to find the date an invoice actually crossed into "paid" even
+  // when that date falls outside the current window's `paymentsInRange`,
+  // so that a since-paid invoice from an earlier period is correctly
+  // excluded from *this* period's Revenue Recognized rather than mixed
+  // in). Used below to date B2B revenue recognition by "when the cash
+  // finished coming in", not "when the order document was created".
+  const activePaymentsByInvoice = new Map<string, IPayment[]>();
+  for (const p of payments) {
+    if (!isActivePayment(p)) continue;
+    const key = String(p.invoiceId);
+    const arr = activePaymentsByInvoice.get(key);
+    if (arr) arr.push(p);
+    else activePaymentsByInvoice.set(key, [p]);
+  }
+  /** The date an invoice's balance actually reached zero, approximated as
+   * its most recent active payment (amountPaid only grows via new
+   * payments, so the latest one is the one that completed it). Falls
+   * back to issueDate in the defensive case of a "paid" invoice with no
+   * surviving active payment row (e.g. all payments later voided without
+   * the status being recomputed). */
+  function invoicePaidDate(inv: IInvoice): number {
+    const ps = activePaymentsByInvoice.get(String(inv._id));
+    if (!ps || ps.length === 0) return new Date(inv.issueDate).getTime();
+    return Math.max(...ps.map((p) => new Date(p.date).getTime()));
+  }
+
   // ---------- KPI cards ----------
 
   const confirmedOrderValue = ordersInRange
@@ -236,13 +274,32 @@ export async function buildSalesDashboard(
     storeOrdersInRange.filter((so) => so.paymentStatus === "pending" && so.status !== "cancelled")
       .length;
 
-  const b2bRevenueRecognized = ordersInRange.filter((o) => {
-    if (o.status !== "delivered" || !o.invoiceId) return false;
+  // Paired with the invoice that was actually billed and paid - not
+  // just the order's own `items`. An invoice's items can be edited
+  // independently after it's generated from an order (see the PATCH
+  // /api/invoices/[id] route, which accepts `items`), so `order.items`
+  // can be a stale snapshot of what was originally quoted while
+  // `invoice.items` reflects what the customer was actually billed and
+  // paid. Every other paid/invoiced figure on this dashboard (the
+  // "Invoiced" KPI, the "Paid" pipeline stage) already sources its
+  // value from the invoice for this same reason; Revenue Recognized
+  // must match them rather than silently drift when an invoice is
+  // discounted or corrected after the order was placed.
+  // Sourced from ALL orders, not `ordersInRange` — gating on
+  // `o.createdAt` would silently drop an order created before the
+  // window but delivered-and-paid within it (see the accounting-policy
+  // comment above). Instead each candidate is dated by when its invoice
+  // actually finished being paid and gated on *that*.
+  const b2bRevenueRecognized: { order: IOrder; invoice: IInvoice; recognizedAt: number }[] = [];
+  for (const o of orders) {
+    if (o.status !== "delivered" || !o.invoiceId) continue;
     const inv = invoiceById.get(String(o.invoiceId));
-    return inv?.status === "paid";
-  });
+    if (inv?.status !== "paid") continue;
+    const recognizedAt = invoicePaidDate(inv);
+    if (inRange(recognizedAt)) b2bRevenueRecognized.push({ order: o, invoice: inv, recognizedAt });
+  }
   const b2bRevenueRecognizedValue = b2bRevenueRecognized.reduce(
-    (sum, o) => sum + total(o.items),
+    (sum, { invoice }) => sum + total(invoice.items),
     0,
   );
   const storeRevenueRecognized = storeOrdersInRange.filter(
@@ -310,7 +367,7 @@ export async function buildSalesDashboard(
     {
       key: "revenueRecognized",
       label: "Revenue Recognized",
-      count: b2bRevenueRecognized.length,
+      count: b2bRevenueRecognized.length, // count of orders, unchanged
       value: b2bRevenueRecognizedValue,
       conversionRate: stageCount(b2bRevenueRecognized.length, deliveredOrders.length),
     },
@@ -366,8 +423,8 @@ export async function buildSalesDashboard(
     if (so.paymentStatus !== "paid") continue;
     bump(periodKey(new Date(so.createdAt), granularity), "cashCollected", so.total);
   }
-  for (const o of b2bRevenueRecognized) {
-    bump(periodKey(new Date(o.createdAt), granularity), "revenueRecognized", total(o.items));
+  for (const { invoice, recognizedAt } of b2bRevenueRecognized) {
+    bump(periodKey(new Date(recognizedAt), granularity), "revenueRecognized", total(invoice.items));
   }
   for (const so of storeRevenueRecognized) {
     bump(periodKey(new Date(so.createdAt), granularity), "revenueRecognized", so.total);
@@ -492,7 +549,7 @@ export async function buildSalesDashboard(
       productTotals.set(item.name, entry);
     }
   };
-  for (const o of b2bRevenueRecognized) addItems(o.items);
+  for (const { invoice } of b2bRevenueRecognized) addItems(invoice.items);
   for (const so of storeRevenueRecognized) {
     for (const item of so.items) {
       const entry = productTotals.get(item.name) ?? { quantity: 0, revenue: 0 };
