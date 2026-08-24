@@ -28,6 +28,10 @@ export interface LineItem {
   productId?: string | undefined;
   name: string;
   description?: string | undefined;
+  /** Set only when this line is a specific size/variant of a
+   *  variant-enabled product. Both undefined together for a simple line. */
+  variantSku?: string | undefined;
+  size?: string | undefined;
   quantity: number;
   unitPrice: number;
   discount: number;

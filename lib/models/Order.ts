@@ -4,6 +4,11 @@ export interface IOrderLineItem {
   productId?: string;
   name: string;
   description?: string;
+  /** Present only when this line is a specific size/variant of a
+   *  variant-enabled product — matches `IProductVariant.sku`/`size` on the
+   *  Product document. Absent for simple (non-variant) products. */
+  variantSku?: string;
+  size?: string;
   quantity: number;
   unitPrice: number;
   taxRate: number;
@@ -37,6 +42,8 @@ const orderSchema = new Schema<IOrder>(
       productId: { type: String },
       name: { type: String, required: true },
       description: { type: String },
+      variantSku: { type: String },
+      size: { type: String },
       quantity: { type: Number, required: true, min: 1 },
       unitPrice: { type: Number, required: true, min: 0 },
       taxRate: { type: Number, default: 0 },

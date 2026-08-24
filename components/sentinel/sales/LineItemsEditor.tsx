@@ -57,12 +57,18 @@ export default function LineItemsEditor({
     };
   }, []);
 
+  // Keyed by productId, same assumption the backend snapshot logic makes
+  // (see snapshotLineItemAvailability): a document only ever references one
+  // variant of a given product per line, so productId is a safe map key.
+  // The key string includes the variant SKU so switching sizes on an
+  // existing line re-triggers the live availability fetch, not just
+  // switching products.
   const productIdsKey = stockAware
     ? Array.from(
         new Set(
           items
-            .map((item) => item.productId)
-            .filter(Boolean)
+            .filter((item) => item.productId)
+            .map((item) => `${item.productId}:${item.variantSku ?? ""}`)
         )
       )
         .sort()
@@ -77,8 +83,13 @@ export default function LineItemsEditor({
 
     let mounted = true;
 
+    const pairs = productIdsKey.split(",").map((pair) => {
+      const [productId, variantSku] = pair.split(":");
+      return { productId, variantSku: variantSku || undefined };
+    });
+
     productService
-      .getAvailability(productIdsKey.split(","))
+      .getAvailability(pairs)
       .then((data) => {
         if (mounted) setAvailability(data);
       })
@@ -123,6 +134,8 @@ export default function LineItemsEditor({
     if (productId === "custom") {
       updateItem(id, {
         productId: undefined,
+        variantSku: undefined,
+        size: undefined,
       });
 
       setOpenCombobox(null);
@@ -135,11 +148,18 @@ export default function LineItemsEditor({
 
     if (!product) return;
 
+    // Picking a new product always clears any previously-chosen variant -
+    // a SKU/size from the last product has no meaning here, even if the
+    // new product also happens to have variants. `unitPrice` starts as the
+    // parent's price and is a placeholder for variant products until the
+    // staffer picks a size in VariantSizeSelect, which overwrites it.
     updateItem(id, {
       productId,
       name: product.name,
       description: product.description,
       unitPrice: product.price,
+      variantSku: undefined,
+      size: undefined,
     });
 
     setOpenCombobox(null);

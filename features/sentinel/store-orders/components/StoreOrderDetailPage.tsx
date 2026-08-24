@@ -156,12 +156,14 @@ export default function AdminStoreOrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {order.items.map((item, index) => (
-                <div key={`${item.product ?? item.name}-${index}`} className="flex items-center justify-between gap-3 text-sm">
+                <div key={`${item.variantSku ?? item.product ?? item.name}-${index}`} className="flex items-center justify-between gap-3 text-sm">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">{item.name}</p>
+                    <p className="truncate font-medium text-foreground">
+                      {item.size ? `${item.name} (${item.size})` : item.name}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {formatKES(item.price)} × {item.quantity}
-                      {item.sku ? ` · SKU: ${item.sku}` : ""}
+                      {item.variantSku ? ` · SKU: ${item.variantSku}` : item.sku ? ` · SKU: ${item.sku}` : ""}
                     </p>
                   </div>
                   <p className="shrink-0 font-semibold">{formatKES(item.subtotal)}</p>

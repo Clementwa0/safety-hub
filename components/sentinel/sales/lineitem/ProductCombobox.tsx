@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import type { Product } from "@/types/product";
+import { hasVariants, type Product } from "@/types/product";
 
 interface ProductComboboxProps {
   itemId: string;
@@ -98,7 +98,13 @@ export function ProductCombobox({
                   )}
                 />
 
-                {product.name}
+                <span className="flex-1 truncate">{product.name}</span>
+
+                {hasVariants(product) && (
+                  <span className="ml-2 shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {product.variants!.length} sizes
+                  </span>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>

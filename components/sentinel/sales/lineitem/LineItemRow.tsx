@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { formatKES } from "@/lib/format";
 import { lineItemTotal } from "@/lib/sales";
 
-import type { Product } from "@/types/product";
+import { hasVariants, type Product } from "@/types/product";
 import type { LineItem } from "@/types/sentinel/sales";
 import type { ProductAvailability } from "@/services/shared/product.service";
 
 import { ProductCombobox } from "./ProductCombobox";
 import { StockWarning } from "./StockWarning";
+import { VariantSizeSelect } from "./VariantSizeSelect";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 interface LineItemRowProps {
@@ -53,6 +54,31 @@ export function LineItemRow({
 }: LineItemRowProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
+  const selectedProduct = products.find(
+    (product) => product.id === item.productId
+  );
+  const variantOptions = selectedProduct?.variants ?? [];
+  const needsVariant = hasVariants(
+    selectedProduct ?? { variants: undefined }
+  );
+
+  // Selecting a size stamps the SKU/size onto the line, switches the price
+  // to that variant's price (parent price is only a placeholder until a
+  // size is chosen), and folds the size into the display name so it shows
+  // up anywhere `item.name` is rendered (PDFs, summaries) without needing
+  // every consumer to know about `item.size` separately.
+  const handleVariantSelect = (variantSku: string) => {
+    const variant = variantOptions.find((v) => v.sku === variantSku);
+    if (!variant || !selectedProduct) return;
+
+    onChange({
+      variantSku: variant.sku,
+      size: variant.size,
+      unitPrice: variant.price,
+      name: `${selectedProduct.name} — ${variant.size}`,
+    });
+  };
+
   const plan =
     stockAware && availability
       ? planFor(item.quantity, availability.available)
@@ -73,22 +99,32 @@ export function LineItemRow({
       <div className="group border-b border-border/30 py-3 last:border-b-0">
         <div className="grid grid-cols-12 gap-2">
           {/* Item */}
-          <div className="col-span-4 flex gap-2">
-            <ProductCombobox
-              itemId={item.id}
-              productId={item.productId}
-              products={products}
-              open={comboboxOpen}
-              onOpenChange={onComboboxOpenChange}
-              onSelect={onProductSelect}
-            />
+          <div className="col-span-4 space-y-1.5">
+            <div className="flex gap-2">
+              <ProductCombobox
+                itemId={item.id}
+                productId={item.productId}
+                products={products}
+                open={comboboxOpen}
+                onOpenChange={onComboboxOpenChange}
+                onSelect={onProductSelect}
+              />
 
-            <Input
-              value={item.name}
-              onChange={(e) => onChange({ name: e.target.value })}
-              placeholder="Item name"
-              className="h-9 min-w-0 flex-1 border-0 bg-muted/50 px-3 text-sm shadow-none focus:ring-1"
-            />
+              <Input
+                value={item.name}
+                onChange={(e) => onChange({ name: e.target.value })}
+                placeholder="Item name"
+                className="h-9 min-w-0 flex-1 border-0 bg-muted/50 px-3 text-sm shadow-none focus:ring-1"
+              />
+            </div>
+
+            {needsVariant && (
+              <VariantSizeSelect
+                variants={variantOptions}
+                value={item.variantSku}
+                onSelect={handleVariantSelect}
+              />
+            )}
           </div>
 
           {/* Quantity */}
@@ -218,6 +254,14 @@ return (
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
+
+      {needsVariant && (
+        <VariantSizeSelect
+          variants={variantOptions}
+          value={item.variantSku}
+          onSelect={handleVariantSelect}
+        />
+      )}
 
       {/* Item name */}
       <Input

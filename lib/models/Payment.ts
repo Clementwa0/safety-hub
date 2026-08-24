@@ -6,10 +6,13 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
  * `Invoice.amountPaid` was a bare number staff edited by hand, with no
  * record of how or when any of it was actually collected.
  *
- * Payments are immutable once created (no PATCH/edit route) - if a
- * payment was recorded in error, the fix is to record an equal-and-
- * opposite adjustment or contact an admin directly, not to silently
- * rewrite history on a financial ledger. `invoiceId` is indexed since the
+ * Payments are never destructively deleted — there is no DELETE route.
+ * If a payment was recorded in error, or needs to be refunded, it's
+ * voided instead (`status: "voided"`, plus `voidedAt`/`voidedBy`/
+ * `voidReason`): the row stays in the ledger forever as a historical
+ * record, it just stops counting toward the invoice's active
+ * `amountPaid` (see modules/invoicing/calculations.ts#sumActivePayments
+ * and invoice.service.ts#voidPayment). `invoiceId` is indexed since the
  * primary access pattern is "list payments for this invoice".
  */
 export interface IPayment extends Document {
@@ -20,6 +23,10 @@ export interface IPayment extends Document {
   date: Date;
   recordedBy?: string;
   notes?: string;
+  status: "recorded" | "voided";
+  voidedAt?: Date;
+  voidedBy?: string;
+  voidReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +46,13 @@ const paymentSchema = new Schema<IPayment>(
     // even if that staff account is later renamed or removed.
     recordedBy: { type: String, trim: true },
     notes: { type: String, trim: true },
+    // "recorded" (active, counts toward Invoice.amountPaid) or "voided"
+    // (kept for history, no longer counted). See the class doc comment.
+    status: { type: String, enum: ["recorded", "voided"], default: "recorded", index: true },
+    voidedAt: { type: Date },
+    // Same snapshot-string convention as recordedBy, for the same reason.
+    voidedBy: { type: String, trim: true },
+    voidReason: { type: String, trim: true },
   },
   {
     timestamps: true,

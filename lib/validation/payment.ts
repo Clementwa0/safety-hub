@@ -29,3 +29,28 @@ export const EMPTY_PAYMENT_FORM: PaymentFormValues = {
   reference: "",
   notes: "",
 };
+
+/**
+ * Server-side schema for POST /api/invoices/[id]/payments - the real
+ * validation gate (unlike paymentFormSchema above, which only guards the
+ * form's raw string input client-side). `amount` must be a genuine
+ * positive number here since nothing downstream re-parses it from a
+ * string. Exported (rather than kept inline in the route) so it has its
+ * own tests - see tests/lib/validation/payment.test.ts.
+ */
+export const recordPaymentSchema = z.object({
+  amount: z.number().positive(),
+  method: z.enum(PAYMENT_METHODS),
+  reference: z.string().trim().optional(),
+  date: z.number().optional(),
+  notes: z.string().trim().optional(),
+});
+
+export type RecordPaymentDTO = z.infer<typeof recordPaymentSchema>;
+
+/** Server-side schema for POST /api/invoices/[id]/payments/[paymentId]/void. */
+export const voidPaymentSchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+});
+
+export type VoidPaymentDTO = z.infer<typeof voidPaymentSchema>;

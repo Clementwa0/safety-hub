@@ -1,5 +1,10 @@
 import type { DocumentTotals, LineItem } from "@/types/sentinel/sales";
 import type { Invoice, InvoiceStatus } from "@/types/sentinel/invoice";
+import {
+  calculateInvoiceBalance,
+  calculateInvoiceTotals,
+  calculateLineItemTotal,
+} from "@/modules/invoicing/calculations";
 
 export function createLineItem(overrides: Partial<LineItem> = {}): LineItem {
   return {
@@ -17,32 +22,25 @@ export function createLineItem(overrides: Partial<LineItem> = {}): LineItem {
   };
 }
 
+// lineItemTotal/lineItemTax/computeTotals below all delegate to
+// modules/invoicing/calculations.ts, the single source of truth for this
+// math (see that file's doc comment). They used to each carry their own
+// copy of the gross → discount → tax formula; this file, the payments
+// route, and the sales dashboard all had to be kept in sync by hand.
+// Signatures are unchanged so every existing caller (quotations, orders,
+// invoices, the PDF renderer) keeps working as-is.
 export function lineItemTotal(item: LineItem): number {
-  const gross = item.quantity * item.unitPrice;
-  const discounted = gross - gross * (item.discount / 100);
-  return Math.max(0, discounted);
+  return calculateLineItemTotal(item);
 }
 
 export function lineItemTax(item: LineItem): number {
-  return lineItemTotal(item) * (item.taxRate / 100);
+  const gross = item.quantity * item.unitPrice;
+  const net = Math.max(0, gross - gross * (item.discount / 100));
+  return net * (item.taxRate / 100);
 }
 
 export function computeTotals(items: LineItem[]): DocumentTotals {
-  let subtotal = 0;
-  let discount = 0;
-  let tax = 0;
-
-  for (const item of items) {
-    const gross = item.quantity * item.unitPrice;
-    const disc = gross * (item.discount / 100);
-    const net = gross - disc;
-    subtotal += gross;
-    discount += disc;
-    tax += net * (item.taxRate / 100);
-  }
-
-  const total = subtotal - discount + tax;
-  return { subtotal, discount, tax, total };
+  return calculateInvoiceTotals(items);
 }
 
 function pad(value: number, size = 4): string {
@@ -83,5 +81,5 @@ export function effectiveInvoiceStatus(invoice: Invoice): InvoiceStatus {
 
 export function invoiceOutstandingBalance(invoice: Invoice): number {
   const totals = computeTotals(invoice.items);
-  return Math.max(0, totals.total - invoice.amountPaid);
+  return calculateInvoiceBalance(totals.total, invoice.amountPaid);
 }

@@ -21,6 +21,11 @@ export const lineItemSchema = z.object({
   productId: z.string().trim().optional(),
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
+  // Set only when this line is a specific size/variant of a
+  // variant-enabled product (see IProductVariant in lib/models/Product.ts).
+  // Both are optional/undefined together for a simple product's line.
+  variantSku: z.string().trim().optional(),
+  size: z.string().trim().optional(),
   quantity: z.number().int().positive(),
   unitPrice: z.number().nonnegative(),
   // Percentages, not arbitrary multipliers - mirrors the 0-100 clamp

@@ -110,16 +110,32 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               // field negative. Two static $inc shapes rather than a
               // dynamically-built one, to stay within Mongoose's typed
               // update signature.
+              // As above, $inc bypasses the pre-validate rollup hook, so a
+              // variant line must increment both its own
+              // variants.$[v].stock/reserved and the parent-level
+              // stock/reserved in the same op to keep the rollup correct.
+              const arrayFilters = item.variantSku ? [{ "v.sku": item.variantSku }] : undefined;
               const updatedProduct = order.reservedStock
                 ? await ProductModel.findOneAndUpdate(
                     { _id: item.productId },
-                    { $inc: { stock: -item.quantity, reserved: -item.quantity } },
-                    { session, returnDocument: "after" },
+                    item.variantSku
+                      ? {
+                          $inc: {
+                            "variants.$[v].stock": -item.quantity,
+                            "variants.$[v].reserved": -item.quantity,
+                            stock: -item.quantity,
+                            reserved: -item.quantity,
+                          },
+                        }
+                      : { $inc: { stock: -item.quantity, reserved: -item.quantity } },
+                    { session, returnDocument: "after", arrayFilters },
                   )
                 : await ProductModel.findOneAndUpdate(
                     { _id: item.productId },
-                    { $inc: { stock: -item.quantity } },
-                    { session, returnDocument: "after" },
+                    item.variantSku
+                      ? { $inc: { "variants.$[v].stock": -item.quantity, stock: -item.quantity } }
+                      : { $inc: { stock: -item.quantity } },
+                    { session, returnDocument: "after", arrayFilters },
                   );
 
               if (updatedProduct) {
@@ -146,8 +162,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
               if (!item.productId) continue;
               await ProductModel.updateOne(
                 { _id: item.productId },
-                { $inc: { reserved: -item.quantity } },
-                { session },
+                item.variantSku
+                  ? { $inc: { "variants.$[v].reserved": -item.quantity, reserved: -item.quantity } }
+                  : { $inc: { reserved: -item.quantity } },
+                {
+                  session,
+                  arrayFilters: item.variantSku ? [{ "v.sku": item.variantSku }] : undefined,
+                },
               );
             }
           }

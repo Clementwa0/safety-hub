@@ -208,10 +208,19 @@ async function convertQuotationToOrder(quotation: IQuotation) {
   const reservations = quotation.items
     .filter((item) => item.productId)
     .map((item) =>
-      ProductModel.updateOne(
-        { _id: item.productId },
-        { $inc: { reserved: item.quantity } },
-      ),
+      item.variantSku
+        ? ProductModel.updateOne(
+            { _id: item.productId },
+            // Keep the parent-level rollup in sync too — $inc bypasses the
+            // pre-validate hook in lib/models/Product.ts that normally sums
+            // variant reserved up to the parent, so it has to be done here.
+            { $inc: { "variants.$[v].reserved": item.quantity, reserved: item.quantity } },
+            { arrayFilters: [{ "v.sku": item.variantSku }] },
+          )
+        : ProductModel.updateOne(
+            { _id: item.productId },
+            { $inc: { reserved: item.quantity } },
+          ),
     );
   await Promise.all(reservations);
 

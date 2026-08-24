@@ -9,14 +9,18 @@ import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/sch
 import { findOrCreateCustomer } from "@/lib/server/customers";
 import { createWithDocumentNumber } from "@/lib/server/documentNumber";
 
+// "paid"/"partially_paid" and `amountPaid` are deliberately not
+// accepted here - see the identical note in app/api/invoices/[id]/route.ts.
+// A brand-new invoice can't have any payments against it yet (it was
+// just created), so amountPaid always starts at 0 - there is nothing
+// for a client to legitimately override.
 const invoiceSchema = z
   .object({
     customer: customerInputSchema,
     items: z.array(lineItemSchema),
-    status: z.enum(["draft", "unpaid", "partially_paid", "paid", "overdue", "cancelled"]).optional(),
+    status: z.enum(["draft", "unpaid", "cancelled"]).optional(),
     issueDate: z.number().optional(),
     dueDate: z.number(),
-    amountPaid: z.number().nonnegative().optional(),
     notes: z.string().trim().optional(),
     terms: z.string().trim().optional(),
     quotationId: z.string().trim().optional(),
@@ -99,7 +103,7 @@ export async function POST(request: NextRequest) {
       status: parsed.data.status ?? "draft",
       issueDate: parsed.data.issueDate ? new Date(parsed.data.issueDate) : new Date(),
       dueDate: new Date(parsed.data.dueDate),
-      amountPaid: parsed.data.amountPaid ?? 0,
+      amountPaid: 0,
       notes: parsed.data.notes,
       terms: parsed.data.terms,
       quotationId: parsed.data.quotationId,

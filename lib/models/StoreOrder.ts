@@ -47,6 +47,11 @@ export interface IStoreOrderItem {
   name: string;
   slug?: string;
   sku?: string;
+  /** Present only when the ordered line is a specific size/variant of a
+   *  variant-enabled product — matches `IProductVariant.sku`/`size` on the
+   *  Product document. Absent for simple (non-variant) products. */
+  variantSku?: string;
+  size?: string;
   image?: string;
   price: number;
   quantity: number;
@@ -105,6 +110,8 @@ const storeOrderItemSchema = new Schema<IStoreOrderItem>(
     name: { type: String, required: true },
     slug: { type: String },
     sku: { type: String },
+    variantSku: { type: String },
+    size: { type: String },
     image: { type: String },
     price: { type: Number, required: true, min: 0 },
     quantity: { type: Number, required: true, min: 1 },

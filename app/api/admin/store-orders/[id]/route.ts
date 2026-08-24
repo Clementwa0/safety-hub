@@ -89,8 +89,21 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
               const updatedProduct = await ProductModel.findOneAndUpdate(
                 { _id: item.product },
-                { $inc: { stock: -item.quantity, reserved: -item.quantity } },
-                { session, returnDocument: "after" },
+                item.variantSku
+                  ? {
+                      $inc: {
+                        "variants.$[v].stock": -item.quantity,
+                        "variants.$[v].reserved": -item.quantity,
+                        stock: -item.quantity,
+                        reserved: -item.quantity,
+                      },
+                    }
+                  : { $inc: { stock: -item.quantity, reserved: -item.quantity } },
+                {
+                  session,
+                  returnDocument: "after",
+                  arrayFilters: item.variantSku ? [{ "v.sku": item.variantSku }] : undefined,
+                },
               );
 
               if (updatedProduct) {
@@ -116,8 +129,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
               if (!item.product) continue;
               await ProductModel.updateOne(
                 { _id: item.product },
-                { $inc: { reserved: -item.quantity } },
-                { session },
+                item.variantSku
+                  ? { $inc: { "variants.$[v].reserved": -item.quantity, reserved: -item.quantity } }
+                  : { $inc: { reserved: -item.quantity } },
+                {
+                  session,
+                  arrayFilters: item.variantSku ? [{ "v.sku": item.variantSku }] : undefined,
+                },
               );
             }
           }

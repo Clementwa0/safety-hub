@@ -15,9 +15,18 @@ import {
 import { invoiceService } from "@/services/sentinel/invoice.service";
 import { INVOICE_STATUSES, type Invoice, type InvoiceStatus } from "@/types/sentinel/invoice";
 import type { Customer, LineItem } from "@/types/sentinel/sales";
-import { toDateInputValue, fromDateInputValue } from "@/lib/format";
+import { toDateInputValue, fromDateInputValue, formatKES } from "@/lib/format";
 
 const EMPTY_CUSTOMER: Customer = { name: "", email: "", phone: "", company: "", address: "" };
+
+// "paid"/"partially_paid" are derived from the payment ledger only (see
+// app/api/invoices/[id]/route.ts) - this form can issue an invoice
+// (draft -> unpaid) or cancel one, nothing more. "overdue" was never a
+// real stored value. Kept as the full INVOICE_STATUSES list (with the
+// non-editable ones disabled) rather than filtered out entirely, so an
+// invoice that's currently "paid"/"partially_paid" still displays its
+// real status correctly instead of rendering blank.
+const EDITABLE_STATUSES: InvoiceStatus[] = ["draft", "unpaid", "cancelled"];
 
 export default function InvoiceForm({ invoice }: { invoice?: Invoice }) {
   const router = useRouter();
@@ -26,7 +35,6 @@ export default function InvoiceForm({ invoice }: { invoice?: Invoice }) {
   const [issueDate, setIssueDate] = useState(toDateInputValue(invoice?.issueDate));
   const [dueDate, setDueDate] = useState(toDateInputValue(invoice?.dueDate));
   const [status, setStatus] = useState<InvoiceStatus>(invoice?.status ?? "draft");
-  const [amountPaid, setAmountPaid] = useState(String(invoice?.amountPaid ?? 0));
   const [notes, setNotes] = useState(invoice?.notes ?? "");
   const [terms, setTerms] = useState(invoice?.terms ?? "");
   const [saving, setSaving] = useState(false);
@@ -39,7 +47,6 @@ export default function InvoiceForm({ invoice }: { invoice?: Invoice }) {
     try {
       const payload = {
         customer, items, status, notes, terms,
-        amountPaid: Number(amountPaid) || 0,
         issueDate: fromDateInputValue(issueDate) ?? new Date().toISOString(),
         dueDate: fromDateInputValue(dueDate),
       };
@@ -79,15 +86,23 @@ export default function InvoiceForm({ invoice }: { invoice?: Invoice }) {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {INVOICE_STATUSES.map((o) => (
-                  <SelectItem key={o} value={o}><span className="capitalize">{o.replace(/_/g, " ")}</span></SelectItem>
+                  <SelectItem key={o} value={o} disabled={!EDITABLE_STATUSES.includes(o)}>
+                    <span className="capitalize">{o.replace(/_/g, " ")}</span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Amount paid</Label>
-            <Input type="number" min="0" step="0.01" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} />
-          </div>
+          {invoice ? (
+            <div className="space-y-2">
+              <Label>Amount paid</Label>
+              {/* Read-only: amountPaid is derived from the payment ledger
+                  (record/void a payment on the invoice detail page) and
+                  can no longer be edited directly from this form - see
+                  app/api/invoices/[id]/route.ts. */}
+              <Input type="text" value={formatKES(invoice.amountPaid)} disabled readOnly />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

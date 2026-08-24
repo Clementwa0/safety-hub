@@ -14,4 +14,14 @@ export const paymentService = {
       body: JSON.stringify(input),
     });
   },
+  async void(
+    invoiceId: string,
+    paymentId: string,
+    reason?: string,
+  ): Promise<{ payment: Payment; invoice: Invoice }> {
+    return apiRequest<{ payment: Payment; invoice: Invoice }>(
+      `/api/invoices/${invoiceId}/payments/${paymentId}/void`,
+      { method: "POST", body: JSON.stringify({ reason }) },
+    );
+  },
 };

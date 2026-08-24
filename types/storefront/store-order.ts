@@ -22,6 +22,10 @@ export interface StoreOrderItem {
   name: string;
   slug?: string;
   sku?: string;
+  /** SKU of the specific size/variant ordered. Undefined for simple products. */
+  variantSku?: string;
+  /** Size label snapshotted at checkout, e.g. "M". Undefined for simple products. */
+  size?: string;
   image?: string;
   price: number;
   quantity: number;
