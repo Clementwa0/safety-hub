@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +9,8 @@ import {
   createLineItem,
 } from "@/lib/sales";
 
+import { settingsService } from "@/services/sentinel/settings.service";
+
 import {
   productService,
   type ProductAvailability,
@@ -16,9 +18,9 @@ import {
 
 import type { Product } from "@/types/product";
 import type { LineItem } from "@/types/sentinel/sales";
+
 import { LineItemRow } from "./lineitem/LineItemRow";
 import { LineItemsSummary } from "./lineitem/LineItemsSummary";
-
 
 interface LineItemsEditorProps {
   items: LineItem[];
@@ -40,16 +42,27 @@ export default function LineItemsEditor({
   const [openCombobox, setOpenCombobox] =
     useState<string | null>(null);
 
+  const [defaultTaxRate, setDefaultTaxRate] =
+    useState<number | null>(null);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Load settings
+   * --------------------------------------------------------------------------
+   */
+
   useEffect(() => {
     let mounted = true;
 
-    productService
-      .list()
-      .then((data) => {
-        if (mounted) setProducts(data);
+    settingsService
+      .get()
+      .then((settings) => {
+        if (mounted) {
+          setDefaultTaxRate(settings.taxRate);
+        }
       })
       .catch(() => {
-        if (mounted) setProducts([]);
+        // Fall back to createLineItem() default.
       });
 
     return () => {
@@ -57,23 +70,55 @@ export default function LineItemsEditor({
     };
   }, []);
 
-  // Keyed by productId, same assumption the backend snapshot logic makes
-  // (see snapshotLineItemAvailability): a document only ever references one
-  // variant of a given product per line, so productId is a safe map key.
-  // The key string includes the variant SKU so switching sizes on an
-  // existing line re-triggers the live availability fetch, not just
-  // switching products.
-  const productIdsKey = stockAware
-    ? Array.from(
-        new Set(
-          items
-            .filter((item) => item.productId)
-            .map((item) => `${item.productId}:${item.variantSku ?? ""}`)
-        )
+  /*
+   * --------------------------------------------------------------------------
+   * Load products
+   * --------------------------------------------------------------------------
+   */
+
+  useEffect(() => {
+    let mounted = true;
+
+    productService
+      .list()
+      .then((data) => {
+        if (mounted) {
+          setProducts(data);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setProducts([]);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Product availability
+   * --------------------------------------------------------------------------
+   */
+
+  const productIdsKey = useMemo(() => {
+    if (!stockAware) return "";
+
+    return Array.from(
+      new Set(
+        items
+          .filter((item) => item.productId)
+          .map(
+            (item) =>
+              `${item.productId}:${item.variantSku ?? ""}`
+          )
       )
-        .sort()
-        .join(",")
-    : "";
+    )
+      .sort()
+      .join(",");
+  }, [items, stockAware]);
 
   useEffect(() => {
     if (!stockAware || !productIdsKey) {
@@ -84,14 +129,30 @@ export default function LineItemsEditor({
     let mounted = true;
 
     const pairs = productIdsKey.split(",").map((pair) => {
-      const [productId, variantSku] = pair.split(":");
-      return { productId, variantSku: variantSku || undefined };
+      const separatorIndex = pair.indexOf(":");
+
+      if (separatorIndex === -1) {
+        return {
+          productId: pair,
+          variantSku: undefined,
+        };
+      }
+
+      const productId = pair.slice(0, separatorIndex);
+      const variantSku = pair.slice(separatorIndex + 1);
+
+      return {
+        productId,
+        variantSku: variantSku || undefined,
+      };
     });
 
     productService
       .getAvailability(pairs)
       .then((data) => {
-        if (mounted) setAvailability(data);
+        if (mounted) {
+          setAvailability(data);
+        }
       })
       .catch(() => {
         if (mounted) {
@@ -104,35 +165,70 @@ export default function LineItemsEditor({
     };
   }, [stockAware, productIdsKey]);
 
+  /*
+   * --------------------------------------------------------------------------
+   * Line item helpers
+   * --------------------------------------------------------------------------
+   *
+   * IMPORTANT:
+   * We deliberately use the ARRAY INDEX for mutations.
+   *
+   * `item.id` comes from persisted invoice data and may be missing or
+   * duplicated in older records. Using the ID to update/remove an item can
+   * therefore modify multiple rows at once.
+   *
+   * The index is guaranteed to identify exactly one row in the current array.
+   */
+
   const updateItem = (
-    id: string,
+    index: number,
     patch: Partial<LineItem>
   ) => {
     onChange(
-      items.map((item) =>
-        item.id === id
-          ? { ...item, ...patch }
+      items.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              ...patch,
+            }
           : item
       )
     );
   };
 
-  const removeItem = (id: string) => {
+  const removeItem = (index: number) => {
     onChange(
-      items.filter((item) => item.id !== id)
+      items.filter(
+        (_, itemIndex) => itemIndex !== index
+      )
     );
+
+    // Close the combobox if the removed row had it open.
+    setOpenCombobox(null);
   };
 
   const addItem = () => {
-    onChange([...items, createLineItem()]);
+    onChange([
+      ...items,
+      createLineItem(
+        {},
+        defaultTaxRate ?? undefined
+      ),
+    ]);
   };
 
+  /*
+   * --------------------------------------------------------------------------
+   * Product selection
+   * --------------------------------------------------------------------------
+   */
+
   const applyProduct = (
-    id: string,
+    index: number,
     productId: string
   ) => {
     if (productId === "custom") {
-      updateItem(id, {
+      updateItem(index, {
         productId: undefined,
         variantSku: undefined,
         size: undefined,
@@ -148,16 +244,14 @@ export default function LineItemsEditor({
 
     if (!product) return;
 
-    // Picking a new product always clears any previously-chosen variant -
-    // a SKU/size from the last product has no meaning here, even if the
-    // new product also happens to have variants. `unitPrice` starts as the
-    // parent's price and is a placeholder for variant products until the
-    // staffer picks a size in VariantSizeSelect, which overwrites it.
-    updateItem(id, {
+    updateItem(index, {
       productId,
       name: product.name,
       description: product.description,
       unitPrice: product.price,
+
+      // A new product selection must clear the previous
+      // product's variant information.
       variantSku: undefined,
       size: undefined,
     });
@@ -165,26 +259,45 @@ export default function LineItemsEditor({
     setOpenCombobox(null);
   };
 
+  /*
+   * --------------------------------------------------------------------------
+   * Totals
+   * --------------------------------------------------------------------------
+   */
+
   const totals = computeTotals(items);
+
+  /*
+   * --------------------------------------------------------------------------
+   * Render
+   * --------------------------------------------------------------------------
+   */
 
   return (
     <div className="flex max-h-[60vh] min-h-[250px] flex-col rounded-xl border border-border/60 bg-white shadow-sm dark:bg-gray-950">
       {/* Header */}
       {items.length > 0 && (
         <div className="grid shrink-0 grid-cols-12 gap-2 border-b border-border/40 px-4 py-2 text-xs font-medium text-muted-foreground">
-          <div className="col-span-4">Item</div>
+          <div className="col-span-4">
+            Item
+          </div>
+
           <div className="col-span-2 text-right">
             Qty
           </div>
+
           <div className="col-span-2 text-right">
             Price
           </div>
+
           <div className="col-span-1 text-right">
             Disc %
           </div>
+
           <div className="col-span-1 text-right">
             Tax %
           </div>
+
           <div className="col-span-2 text-right">
             Total
           </div>
@@ -208,44 +321,66 @@ export default function LineItemsEditor({
             </Button>
           </div>
         ) : (
-          items.map((item) => (
-            <LineItemRow
-              key={item.id}
-              item={item}
-              products={products}
-              availability={
-                item.productId
-                  ? availability.get(item.productId)
-                  : undefined
-              }
-              stockAware={stockAware}
-              comboboxOpen={
-                openCombobox === item.id
-              }
-              onComboboxOpenChange={(open) =>
-                setOpenCombobox(
-                  open ? item.id : null
-                )
-              }
-              onProductSelect={(productId) =>
-                applyProduct(
-                  item.id,
-                  productId
-                )
-              }
-              onChange={(patch) =>
-                updateItem(item.id, patch)
-              }
-              onRemove={() =>
-                removeItem(item.id)
-              }
-              onFulfillmentChange={(plan) =>
-                updateItem(item.id, {
-                  fulfillmentPlan: plan,
-                })
-              }
-            />
-          ))
+          items.map((item, index) => {
+            /*
+             * React keys must ALWAYS be unique.
+             *
+             * Existing invoice records may contain duplicate/missing IDs,
+             * so item.id alone is not safe.
+             *
+             * Combining the ID with the current index guarantees uniqueness
+             * even when:
+             *
+             *   - item.id === undefined
+             *   - item.id === ""
+             *   - two database records have the same ID
+             */
+            const rowKey = `${item.id || "line-item"}-${index}`;
+
+            return (
+              <LineItemRow
+                key={rowKey}
+                item={item}
+                products={products}
+                availability={
+                  item.productId
+                    ? availability.get(
+                        item.productId
+                      )
+                    : undefined
+                }
+                stockAware={stockAware}
+                comboboxOpen={
+                  openCombobox === rowKey
+                }
+                onComboboxOpenChange={(open) =>
+                  setOpenCombobox(
+                    open ? rowKey : null
+                  )
+                }
+                onProductSelect={(productId) =>
+                  applyProduct(
+                    index,
+                    productId
+                  )
+                }
+                onChange={(patch) =>
+                  updateItem(
+                    index,
+                    patch
+                  )
+                }
+                onRemove={() =>
+                  removeItem(index)
+                }
+                onFulfillmentChange={(plan) =>
+                  updateItem(index, {
+                    fulfillmentPlan: plan,
+                  })
+                }
+              />
+            );
+          })
         )}
       </div>
 

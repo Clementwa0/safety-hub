@@ -30,6 +30,8 @@ export interface WhatsAppOrderTotals {
   subtotal: number;
   shippingFee: number;
   tax: number;
+  /** Admin-configured Settings.taxRate (0-100) `tax` was computed with, e.g. 0 for "no tax". */
+  taxRatePercent: number;
   total: number;
 }
 
@@ -85,7 +87,7 @@ export function buildWhatsAppOrderMessage(input: BuildWhatsAppOrderMessageInput)
     "",
     `Subtotal: ${formatKES(totals.subtotal)}`,
     `Shipping: ${totals.shippingFee === 0 ? "Free" : formatKES(totals.shippingFee)}`,
-    `VAT (16%): ${formatKES(totals.tax)}`,
+    `VAT (${totals.taxRatePercent}%): ${formatKES(totals.tax)}`,
     `Total: ${formatKES(totals.total)}`,
     "",
     "Preferred Payment:",

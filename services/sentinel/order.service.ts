@@ -7,6 +7,8 @@ import type { Invoice } from "@/types/sentinel/invoice";
 export interface OrderQuery {
   search?: string;
   status?: OrderStatus | "all";
+  limit?: number;
+  sort?: string;
 }
 
 export const orderService = {
@@ -14,6 +16,8 @@ export const orderService = {
     const params = new URLSearchParams();
     if (query.search) params.set("q", query.search);
     if (query.status && query.status !== "all") params.set("status", query.status);
+    if (query.limit) params.set("limit", String(query.limit));
+    if (query.sort) params.set("sort", query.sort);
 
     const payload = await apiRequest<{ items: Order[]; pagination: unknown }>(`/api/orders${params.toString() ? `?${params.toString()}` : ""}`);
     return payload.items;

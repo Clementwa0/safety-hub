@@ -15,19 +15,39 @@ interface VariantSizeSelectProps {
   onSelect: (variantSku: string) => void;
 }
 
-/** Per-variant size picker shown under a line item once a variant-enabled
- *  product is selected. Surfaces live stock per size right in the option
- *  list so staff can see (e.g.) "M — 2 left" without leaving the row. */
 export function VariantSizeSelect({
   variants,
   value,
   onSelect,
 }: VariantSizeSelectProps) {
+ 
+  const selectedValue = value ?? "";
+
   return (
     <Select
-      value={value}
+      value={selectedValue}
       onValueChange={(nextValue) => {
-        if (nextValue) onSelect(nextValue);
+        if (!nextValue) {
+          return;
+        }
+
+        const selectedVariant = variants.find(
+          (variant) => variant.sku === nextValue,
+        );
+        if (!selectedVariant) {
+          return;
+        }
+
+        const available = Math.max(
+          0,
+          selectedVariant.stock - selectedVariant.reserved,
+        );
+
+        if (available <= 0) {
+          return;
+        }
+
+        onSelect(nextValue);
       }}
     >
       <SelectTrigger
@@ -38,26 +58,44 @@ export function VariantSizeSelect({
       </SelectTrigger>
 
       <SelectContent>
-        {variants.map((variant) => {
-          const available = Math.max(0, variant.stock - variant.reserved);
+        {variants.length > 0 ? (
+          variants.map((variant) => {
+            const available = Math.max(
+              0,
+              variant.stock - variant.reserved,
+            );
 
-          return (
-            <SelectItem key={variant.sku} value={variant.sku}>
-              <span className="flex w-full items-center justify-between gap-4">
-                <span>{variant.size}</span>
-                <span
-                  className={
-                    available > 0
-                      ? "text-xs text-muted-foreground"
-                      : "text-xs text-destructive"
-                  }
-                >
-                  {available > 0 ? `${available} in stock` : "Out of stock"}
+            const isOutOfStock = available <= 0;
+
+            return (
+              <SelectItem
+                key={variant.sku}
+                value={variant.sku}
+                disabled={isOutOfStock}
+              >
+                <span className="flex w-full items-center justify-between gap-4">
+                  <span>{variant.size}</span>
+
+                  <span
+                    className={
+                      isOutOfStock
+                        ? "text-xs text-destructive"
+                        : "text-xs text-muted-foreground"
+                    }
+                  >
+                    {isOutOfStock
+                      ? "Out of stock"
+                      : `${available} in stock`}
+                  </span>
                 </span>
-              </span>
-            </SelectItem>
-          );
-        })}
+              </SelectItem>
+            );
+          })
+        ) : (
+          <SelectItem value="__no_variants__" disabled>
+            No sizes available
+          </SelectItem>
+        )}
       </SelectContent>
     </Select>
   );

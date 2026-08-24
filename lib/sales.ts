@@ -6,7 +6,7 @@ import {
   calculateLineItemTotal,
 } from "@/modules/invoicing/calculations";
 
-export function createLineItem(overrides: Partial<LineItem> = {}): LineItem {
+export function createLineItem(overrides: Partial<LineItem> = {}, defaultTaxRate = 16): LineItem {
   return {
     id:
       typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -16,7 +16,7 @@ export function createLineItem(overrides: Partial<LineItem> = {}): LineItem {
     description: "",
     quantity: 1,
     unitPrice: 0,
-    taxRate: 16,
+    taxRate: defaultTaxRate,
     discount: 0,
     ...overrides,
   };

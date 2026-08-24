@@ -222,6 +222,122 @@ describe("buildSalesDashboard - cash-flow reporting uses payment date", () => {
   });
 });
 
+describe("buildSalesDashboard - Revenue Recognized values the paid invoice, not the order snapshot", () => {
+  it("uses the invoice's (possibly edited) items, not the order's original items, once delivered and paid", async () => {
+    // The order was placed at 10,000, but the invoice was later
+    // discounted down to 8,000 before being paid in full - a legitimate
+    // independent edit (see PATCH /api/invoices/[id]). Revenue
+    // Recognized must reflect the 8,000 actually billed and paid, not
+    // the order's stale 10,000 snapshot.
+    const invoice = await createInvoice({
+      total: 8_000,
+      amountPaid: 8_000,
+      status: "paid",
+      issueDate: new Date(Date.UTC(2026, 1, 1, 12)),
+    });
+    await createPayment({ invoiceId: invoice._id, amount: 8_000, date: new Date(Date.UTC(2026, 1, 2, 12)) });
+
+    const order = await OrderModel.create({
+      number: "ORD-DASH-1",
+      customer: new mongoose.Types.ObjectId(),
+      items: [{ name: "Item", quantity: 1, unitPrice: 10_000, taxRate: 0, discount: 0 }],
+      status: "delivered",
+      invoiceId: invoice._id,
+      createdAt: new Date(Date.UTC(2026, 1, 1, 12)),
+    });
+    void order;
+
+    const dashboard = await buildSalesDashboard({ range: "custom", start: FEB_START, end: FEB_END });
+
+    assert.equal(dashboard.kpis.revenueRecognized.value, 8_000);
+    const paidStage = dashboard.pipeline.find((s) => s.key === "paid");
+    const recognizedStage = dashboard.pipeline.find((s) => s.key === "revenueRecognized");
+    // The two stages describe the same underlying paid invoice, so once
+    // everything eligible for "paid" is also delivered, they must agree.
+    assert.equal(paidStage?.value, recognizedStage?.value);
+  });
+
+  it("still recognizes nothing for a delivered order whose invoice is only partially paid", async () => {
+    const invoice = await createInvoice({
+      total: 10_000,
+      amountPaid: 4_000,
+      status: "partially_paid",
+      issueDate: new Date(Date.UTC(2026, 1, 1, 12)),
+    });
+    await createPayment({ invoiceId: invoice._id, amount: 4_000, date: new Date(Date.UTC(2026, 1, 2, 12)) });
+
+    await OrderModel.create({
+      number: "ORD-DASH-2",
+      customer: new mongoose.Types.ObjectId(),
+      items: [{ name: "Item", quantity: 1, unitPrice: 10_000, taxRate: 0, discount: 0 }],
+      status: "delivered",
+      invoiceId: invoice._id,
+      createdAt: new Date(Date.UTC(2026, 1, 1, 12)),
+    });
+
+    const dashboard = await buildSalesDashboard({ range: "custom", start: FEB_START, end: FEB_END });
+
+    assert.equal(dashboard.kpis.revenueRecognized.value, 0);
+  });
+
+  it("recognizes revenue in-range even when the order itself was created outside the range", async () => {
+    // Order created in January (outside the Feb window) but delivered
+    // and its invoice fully paid in February. Old behavior kept this
+    // out entirely because it gated on `inRange(order.createdAt)`, the
+    // same bug class already fixed for Cash Collected.
+    const invoice = await createInvoice({
+      total: 10_000,
+      amountPaid: 10_000,
+      status: "paid",
+      issueDate: new Date(Date.UTC(2026, 0, 5, 12)),
+    });
+    await createPayment({ invoiceId: invoice._id, amount: 10_000, date: new Date(Date.UTC(2026, 1, 20, 12)) });
+
+    await OrderModel.create({
+      number: "ORD-DASH-3",
+      customer: new mongoose.Types.ObjectId(),
+      items: [{ name: "Item", quantity: 1, unitPrice: 10_000, taxRate: 0, discount: 0 }],
+      status: "delivered",
+      invoiceId: invoice._id,
+      createdAt: new Date(Date.UTC(2026, 0, 1, 12)),
+    });
+
+    const dashboard = await buildSalesDashboard({ range: "custom", start: FEB_START, end: FEB_END });
+
+    assert.equal(dashboard.kpis.revenueRecognized.value, 10_000);
+    const seriesTotal = dashboard.series.reduce((sum, p) => sum + p.revenueRecognized, 0);
+    assert.equal(seriesTotal, dashboard.kpis.revenueRecognized.value);
+    // Bucketed on the payment date (Feb 20), not the order's January
+    // createdAt.
+    assert.equal(pointAt(dashboard.series, "2026-02-20")?.revenueRecognized, 10_000);
+  });
+
+  it("excludes revenue that was recognized outside the range, even if the order was created inside it", async () => {
+    // Symmetric case: order created in Feb, but the invoice wasn't paid
+    // off until March - should not count toward Feb's recognized revenue.
+    const invoice = await createInvoice({
+      total: 10_000,
+      amountPaid: 10_000,
+      status: "paid",
+      issueDate: new Date(Date.UTC(2026, 1, 5, 12)),
+    });
+    await createPayment({ invoiceId: invoice._id, amount: 10_000, date: new Date(Date.UTC(2026, 2, 3, 12)) });
+
+    await OrderModel.create({
+      number: "ORD-DASH-4",
+      customer: new mongoose.Types.ObjectId(),
+      items: [{ name: "Item", quantity: 1, unitPrice: 10_000, taxRate: 0, discount: 0 }],
+      status: "delivered",
+      invoiceId: invoice._id,
+      createdAt: new Date(Date.UTC(2026, 1, 6, 12)),
+    });
+
+    const dashboard = await buildSalesDashboard({ range: "custom", start: FEB_START, end: FEB_END });
+
+    assert.equal(dashboard.kpis.revenueRecognized.value, 0);
+  });
+});
+
 describe("buildSalesDashboard - balances use the centralized calculation", () => {
   it("computes outstanding value from calculateInvoiceBalance for a partially paid invoice", async () => {
     const invoice = await createInvoice({

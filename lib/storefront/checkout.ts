@@ -7,6 +7,7 @@ import { getNextOrderNumber } from "@/lib/storefront/order-number";
 import type { CartIdentity } from "@/lib/storefront/session";
 import { CartError } from "@/lib/storefront/cart";
 import { findOrCreateCustomer } from "@/lib/server/customers";
+import { getSettings } from "@/lib/settings/get-settings.server";
 
 export interface CheckoutInput {
   customer: { name: string; email: string; phone: string };
@@ -111,9 +112,13 @@ export async function performCheckout(
         });
       }
 
+      // Tax rate is read fresh from admin Settings on every checkout — never
+      // hardcoded — so a rate of 0 (or any change) takes effect immediately.
+      const settings = await getSettings();
+
       const subtotal = calculateSubtotal(orderItems.map((item) => ({ price: item.price, quantity: item.quantity })));
       const shippingFee = calculateShippingFee(subtotal);
-      const tax = calculateTax(subtotal);
+      const tax = calculateTax(subtotal, settings.taxRate);
       const total = calculateTotal(subtotal, shippingFee, tax);
 
       const orderNumber = await getNextOrderNumber(session);
@@ -165,14 +170,28 @@ export async function performCheckout(
       // ships (see the "shipped" transition in
       // app/api/admin/store-orders/[id]/route.ts).
       for (const item of orderItems) {
+        // $expr can only appear at the TOP level of a query document — it
+        // cannot be nested inside $elemMatch (MongoDB rejects that with
+        // "$expr can only be applied to the top-level document"). For the
+        // variant case, the "does this specific variant have enough
+        // available stock" check is instead expressed as a top-level $expr
+        // that scans the variants array with $filter/$anyElementTrue.
         const result = item.variantSku
           ? await ProductModel.updateOne(
               {
                 _id: item.product,
-                variants: {
-                  $elemMatch: {
-                    sku: item.variantSku,
-                    $expr: { $gte: [{ $subtract: ["$stock", "$reserved"] }, item.quantity] },
+                $expr: {
+                  $anyElementTrue: {
+                    $map: {
+                      input: "$variants",
+                      as: "v",
+                      in: {
+                        $and: [
+                          { $eq: ["$$v.sku", item.variantSku] },
+                          { $gte: [{ $subtract: ["$$v.stock", "$$v.reserved"] }, item.quantity] },
+                        ],
+                      },
+                    },
                   },
                 },
               },

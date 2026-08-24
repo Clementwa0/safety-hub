@@ -3,7 +3,6 @@
 
 import { useEffect } from "react";
 import { useServerCartStore } from "@/store/server-cart-store";
-import { calculateShippingFee, calculateTax, calculateTotal } from "@/lib/storefront/pricing";
 
 export function useCart() {
   const cart = useServerCartStore((state) => state.cart);
@@ -23,18 +22,18 @@ export function useCart() {
     }
   }, [hasLoaded, loading, fetchCart]);
 
-  const shippingFee = calculateShippingFee(cart.subtotal);
-  const tax = calculateTax(cart.subtotal);
-  const total = calculateTotal(cart.subtotal, shippingFee, tax);
-
+  // shippingFee/tax/total come straight from the server (lib/storefront/cart.ts),
+  // computed against the live admin Settings.taxRate — never re-derived here,
+  // so a 0% tax rate (or any change) shows up correctly without a stale/guessed rate.
   return {
     cart,
     items: cart.items,
     itemCount: cart.itemCount,
     subtotal: cart.subtotal,
-    shippingFee,
-    tax,
-    total,
+    shippingFee: cart.shippingFee,
+    tax: cart.tax,
+    taxRatePercent: cart.taxRatePercent,
+    total: cart.total,
     loading,
     mutating,
     error,

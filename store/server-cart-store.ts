@@ -21,6 +21,10 @@ const initialCart: StoreCart = {
   items: [],
   itemCount: 0,
   subtotal: 0,
+  shippingFee: 0,
+  tax: 0,
+  taxRatePercent: 0,
+  total: 0,
 };
 
 export const useServerCartStore = create<ServerCartState>((set) => ({

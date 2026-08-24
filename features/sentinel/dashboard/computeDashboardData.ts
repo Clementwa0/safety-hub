@@ -12,6 +12,9 @@ import {
 
 import type { Product } from "@/types/product";
 import type { StoreOrder, StoreOrderStatus } from "@/types/storefront/store-order";
+import type { Order } from "@/types/sentinel/order";
+import type { Invoice } from "@/types/sentinel/invoice";
+import { calculateInvoiceTotals } from "@/modules/invoicing/calculations";
 import { getStockBucket } from "../inventory/stockStatus";
 
 export type TrendRange = "week" | "month";
@@ -27,6 +30,57 @@ export interface TrendPoint {
   label: string;
   current: number;
   previous: number;
+}
+
+/** One dated money event feeding the Business Activity trend. */
+export interface IncomeEvent {
+  date: string | number | Date;
+  amount: number;
+}
+
+/**
+ * Business Activity used to read from storefront orders only, which
+ * under-reported income for the B2B side of the business (orders placed
+ * by admins/quotations, and invoices raised directly). This builds the
+ * combined income timeline the Dashboard trend chart and KPIs read from:
+ *
+ * - Storefront orders, excluding cancelled (unchanged from before).
+ * - B2B/manual orders (`Order`) that are confirmed-or-beyond and not yet
+ *   linked to an invoice — once an order is converted to an invoice
+ *   (`order.invoiceId` set), it stops being counted here so it isn't
+ *   double-counted alongside the invoice below.
+ * - Issued invoices (excludes drafts, which aren't a real financial
+ *   document yet, and cancelled invoices), dated by `issueDate`.
+ *
+ * Money math for orders/invoices delegates to
+ * modules/invoicing/calculations.ts, the shared source of truth also used
+ * by the full Sales Report (see lib/server/sales-dashboard.ts), so this
+ * stays consistent with the rest of the app instead of re-deriving totals.
+ */
+export function buildIncomeEvents(
+  storeOrders: StoreOrder[],
+  orders: Order[],
+  invoices: Invoice[],
+): IncomeEvent[] {
+  const events: IncomeEvent[] = [];
+
+  for (const so of storeOrders) {
+    if (so.status === "cancelled") continue;
+    events.push({ date: so.createdAt, amount: so.total });
+  }
+
+  for (const o of orders) {
+    if (o.status === "cancelled" || o.status === "pending") continue;
+    if (o.invoiceId) continue; // superseded by its invoice, counted below instead
+    events.push({ date: o.createdAt, amount: calculateInvoiceTotals(o.items).total });
+  }
+
+  for (const inv of invoices) {
+    if (inv.status === "draft" || inv.status === "cancelled") continue;
+    events.push({ date: inv.issueDate, amount: calculateInvoiceTotals(inv.items).total });
+  }
+
+  return events;
 }
 
 export interface TopProductRow {
@@ -150,7 +204,12 @@ export function computeKpis(orders: StoreOrder[], now: Date): DashboardKpis {
   };
 }
 
-export function computeSalesTrend(orders: StoreOrder[], now: Date, range: TrendRange): TrendPoint[] {
+export function computeSalesTrend(events: IncomeEvent[], now: Date, range: TrendRange): TrendPoint[] {
+  const sumOnDate = (day: Date) =>
+    events
+      .filter((e) => new Date(e.date).toDateString() === day.toDateString())
+      .reduce((sum, e) => sum + e.amount, 0);
+
   if (range === "week") {
     const { weekStart, weekEnd, prevWeekStart } = buildWeekWindows(now);
     const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -159,23 +218,7 @@ export function computeSalesTrend(orders: StoreOrder[], now: Date, range: TrendR
       const prevDay = new Date(prevWeekStart);
       prevDay.setDate(prevDay.getDate() + index);
 
-      const current = orders
-        .filter((o) => o.status !== "cancelled")
-        .filter((o) => {
-          const d = new Date(o.createdAt);
-          return d.toDateString() === day.toDateString();
-        })
-        .reduce((sum, o) => sum + o.total, 0);
-
-      const previous = orders
-        .filter((o) => o.status !== "cancelled")
-        .filter((o) => {
-          const d = new Date(o.createdAt);
-          return d.toDateString() === prevDay.toDateString();
-        })
-        .reduce((sum, o) => sum + o.total, 0);
-
-      return { label: format(day, "EEE"), current, previous };
+      return { label: format(day, "EEE"), current: sumOnDate(day), previous: sumOnDate(prevDay) };
     });
   }
 
@@ -188,17 +231,7 @@ export function computeSalesTrend(orders: StoreOrder[], now: Date, range: TrendR
     const prevDay = new Date(prevMonthStart);
     prevDay.setDate(prevDay.getDate() + index);
 
-    const current = orders
-      .filter((o) => o.status !== "cancelled")
-      .filter((o) => new Date(o.createdAt).toDateString() === day.toDateString())
-      .reduce((sum, o) => sum + o.total, 0);
-
-    const previous = orders
-      .filter((o) => o.status !== "cancelled")
-      .filter((o) => new Date(o.createdAt).toDateString() === prevDay.toDateString())
-      .reduce((sum, o) => sum + o.total, 0);
-
-    return { label: format(day, "d"), current, previous };
+    return { label: format(day, "d"), current: sumOnDate(day), previous: sumOnDate(prevDay) };
   });
 }
 
@@ -290,7 +323,16 @@ export function computeStatusBreakdown(orders: StoreOrder[]): StatusSlice[] {
     .filter((slice) => slice.count > 0);
 }
 
-
+/**
+ * Lightweight, executive-level snapshot of the catalogue for the Dashboard's
+ * Catalog/Inventory KPI cards. Deliberately reuses the same stock-bucket
+ * thresholds as the Inventory page (`getStockBucket`) so "low stock" means
+ * the same thing everywhere in Sentinel. This intentionally does NOT
+ * replicate the Inventory page's `reserved`/`available` split (which
+ * requires a per-product availability fetch) — the Dashboard already has
+ * the product list in memory, so this stays a single, cheap pass over data
+ * that's already loaded rather than firing extra requests.
+ */
 export interface CatalogSnapshot {
   totalProducts: number;
   totalUnits: number;

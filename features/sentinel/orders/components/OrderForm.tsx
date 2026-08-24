@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,10 +26,25 @@ import { orderService } from "@/services/sentinel/order.service";
 import { ORDER_STATUSES, type Order, type OrderInput, type OrderStatus } from "@/types/sentinel/order";
 import type { Customer, LineItem } from "@/types/sentinel/sales";
 import { createLineItem } from "@/lib/sales";
+import { settingsService } from "@/services/sentinel/settings.service";
 import CustomerFields from "@/components/sentinel/sales/CustomerFields";
 import LineItemsEditor from "@/components/sentinel/sales/LineItemsEditor";
 
 const EMPTY_CUSTOMER: Customer = { name: "" };
+
+// True for a line item that still matches createLineItem()'s blank
+// defaults (minus id/taxRate) — i.e. the staffer hasn't touched it yet, so
+// it's safe to swap in the real admin-configured tax rate once it loads.
+function isUntouchedLineItem(item: LineItem): boolean {
+  return (
+    !item.productId &&
+    item.name === "" &&
+    item.description === "" &&
+    item.quantity === 1 &&
+    item.unitPrice === 0 &&
+    item.discount === 0
+  );
+}
 
 interface OrderFormProps {
   order?: Order;
@@ -48,6 +63,34 @@ export default function OrderForm({ order }: OrderFormProps) {
   const [notes, setNotes] = useState(order?.notes ?? "");
   const [errors, setErrors] = useState<{ customer?: string; items?: string }>({});
   const [saving, setSaving] = useState(false);
+
+  // For a brand-new order, the pre-populated first row above was created
+  // before the real Settings.taxRate could be fetched. Swap it in once
+  // loaded — but only while that row is still untouched, so it never
+  // overwrites something the staffer already edited.
+  useEffect(() => {
+    if (order) return;
+
+    let mounted = true;
+
+    settingsService
+      .get()
+      .then((settings) => {
+        if (!mounted) return;
+        setItems((prev) =>
+          prev.length === 1 && isUntouchedLineItem(prev[0])
+            ? [{ ...prev[0], taxRate: settings.taxRate }]
+            : prev,
+        );
+      })
+      .catch(() => {
+        // Fetch failed — the pre-populated row just keeps its fallback rate.
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [order]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

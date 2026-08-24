@@ -79,7 +79,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session, status: sessionStatus } = useCustomerSession();
-  const { items, itemCount, subtotal, shippingFee, tax, total, loading, refresh } = useCart();
+  const { items, itemCount, subtotal, shippingFee, tax, taxRatePercent, total, loading, refresh } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<CheckoutSelection>("cod");
   const [whatsappPreferredPayment, setWhatsappPreferredPayment] = useState<WhatsAppPreferredPayment>("cod");
   const [submitting, setSubmitting] = useState(false);
@@ -178,7 +178,7 @@ export default function CheckoutPage() {
             quantity: item.quantity,
             lineTotal: item.subtotal,
           })),
-          totals: { subtotal, shippingFee, tax, total },
+          totals: { subtotal, shippingFee, tax, taxRatePercent, total },
           preferredPayment: whatsappPreferredPayment,
           reference: generateWhatsAppReference(),
         });

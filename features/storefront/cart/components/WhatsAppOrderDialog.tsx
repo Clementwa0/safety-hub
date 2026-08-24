@@ -37,7 +37,7 @@ const EMPTY_FORM: GuestInfoForm = { name: "", phone: "", address: "" };
 
 export function WhatsAppOrderDialog() {
   const { data: session } = useCustomerSession();
-  const { items, itemCount, subtotal, shippingFee, tax, total } = useCart();
+  const { items, itemCount, subtotal, shippingFee, tax, taxRatePercent, total } = useCart();
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<GuestInfoForm>(EMPTY_FORM);
@@ -97,7 +97,7 @@ export function WhatsAppOrderDialog() {
           quantity: item.quantity,
           lineTotal: item.price * item.quantity,
         })),
-        totals: { subtotal, shippingFee, tax, total },
+        totals: { subtotal, shippingFee, tax, taxRatePercent, total },
         preferredPayment,
         reference: generateWhatsAppReference(),
       });

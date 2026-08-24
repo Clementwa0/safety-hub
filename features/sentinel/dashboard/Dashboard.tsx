@@ -11,11 +11,16 @@ import { productService } from "@/services/shared/product.service";
 import { customerService } from "@/services/sentinel/customer.service";
 import { contactMessageService } from "@/services/sentinel/contact-message.service";
 import { quotationService } from "@/services/sentinel/quotation.service";
+import { orderService } from "@/services/sentinel/order.service";
+import { invoiceService } from "@/services/sentinel/invoice.service";
 import type { Product } from "@/types/product";
 import type { StoreOrder } from "@/types/storefront/store-order";
+import type { Order } from "@/types/sentinel/order";
+import type { Invoice } from "@/types/sentinel/invoice";
 import type { ContactMessageStats } from "@/types/sentinel/contact-message";
 
 import {
+  buildIncomeEvents,
   computeCatalogSnapshot,
   computeKpis,
   computeSalesTrend,
@@ -33,6 +38,8 @@ export default function Dashboard() {
   const { data: session } = useSession();
   const firstName = session?.user?.name?.split(" ")[0] ?? "Admin";
   const [orders, setOrders] = useState<StoreOrder[]>([]);
+  const [b2bOrders, setB2bOrders] = useState<Order[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [customerCount, setCustomerCount] = useState(0);
   const [contactStats, setContactStats] = useState<ContactMessageStats | null>(
@@ -56,12 +63,16 @@ export default function Dashboard() {
     try {
       const [
         orderPage,
+        b2bOrderList,
+        invoiceList,
         productList,
         customerTotal,
         contactMessageStats,
         sentQuotations,
       ] = await Promise.all([
         adminStoreOrderService.list({ limit: 500, sort: "-createdAt" }),
+        orderService.list({ limit: 50, sort: "-createdAt" }),
+        invoiceService.list({ limit: 50, sort: "-issueDate" }),
         productService.list(),
         customerService.count(),
         contactMessageService.stats({ signal: controller.signal }),
@@ -69,6 +80,8 @@ export default function Dashboard() {
       ]);
 
       setOrders(orderPage.items);
+      setB2bOrders(b2bOrderList);
+      setInvoices(invoiceList);
       setProducts(productList);
       setCustomerCount(customerTotal);
       setContactStats(contactMessageStats);
@@ -92,9 +105,13 @@ export default function Dashboard() {
 
   const kpis = useMemo(() => computeKpis(orders, now), [orders, now]);
   const catalog = useMemo(() => computeCatalogSnapshot(products), [products]);
+  const incomeEvents = useMemo(
+    () => buildIncomeEvents(orders, b2bOrders, invoices),
+    [orders, b2bOrders, invoices],
+  );
   const salesTrend = useMemo(
-    () => computeSalesTrend(orders, now, trendRange),
-    [orders, now, trendRange],
+    () => computeSalesTrend(incomeEvents, now, trendRange),
+    [incomeEvents, now, trendRange],
   );
 
   const attentionItems: AttentionItem[] = useMemo(() => {

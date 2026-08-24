@@ -7,6 +7,8 @@ import { effectiveInvoiceStatus, invoiceOutstandingBalance } from "@/lib/sales";
 export interface InvoiceQuery {
   search?: string;
   status?: InvoiceStatus | "all";
+  limit?: number;
+  sort?: string;
 }
 
 export const invoiceService = {
@@ -14,6 +16,8 @@ export const invoiceService = {
     const params = new URLSearchParams();
     if (query.search) params.set("q", query.search);
     if (query.status && query.status !== "all") params.set("status", query.status);
+    if (query.limit) params.set("limit", String(query.limit));
+    if (query.sort) params.set("sort", query.sort);
 
     const payload = await apiRequest<{ items: Invoice[]; pagination: unknown }>(`/api/invoices${params.toString() ? `?${params.toString()}` : ""}`);
     return payload.items;

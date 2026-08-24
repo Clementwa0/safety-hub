@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import { CartModel, type ICart, type ICartItem } from "@/lib/models/Cart";
 import { ProductModel, type IProduct, type IProductVariant } from "@/lib/models/Product";
-import { calculateSubtotal } from "@/lib/storefront/pricing";
+import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/lib/storefront/pricing";
+import { getSettings } from "@/lib/settings/get-settings.server";
 import type { CartIdentity } from "@/lib/storefront/session";
 
 export class CartError extends Error {
@@ -86,6 +87,11 @@ export interface SerializedCart {
   items: SerializedCartItem[];
   itemCount: number;
   subtotal: number;
+  shippingFee: number;
+  tax: number;
+  /** Admin-configured Settings.taxRate (0-100) this cart's `tax` was computed with — shown to the shopper, e.g. "VAT (0%)". */
+  taxRatePercent: number;
+  total: number;
 }
 
 /**
@@ -95,6 +101,11 @@ export interface SerializedCart {
  * `unavailable` rather than silently dropped, so the UI can tell the shopper
  * what happened instead of the item just vanishing. For variant items, price
  * and stock come from the matching variant, not the parent product.
+ *
+ * Shipping/tax/total are computed here too (not left to the client) so the
+ * displayed numbers always reflect the current admin Settings.taxRate —
+ * including a deliberate 0% rate — the same way `performCheckout` computes
+ * the authoritative order totals.
  */
 export async function serializeCart(cart: ICart): Promise<SerializedCart> {
   const products = await loadProductsForCart(cart);
@@ -182,11 +193,20 @@ export async function serializeCart(cart: ICart): Promise<SerializedCart> {
     items.filter((item) => !item.unavailable).map((item) => ({ price: item.price, quantity: item.quantity })),
   );
 
+  const settings = await getSettings();
+  const shippingFee = calculateShippingFee(subtotal);
+  const tax = calculateTax(subtotal, settings.taxRate);
+  const total = calculateTotal(subtotal, shippingFee, tax);
+
   return {
     id: String(cart._id),
     items,
     itemCount,
     subtotal,
+    shippingFee,
+    tax,
+    taxRatePercent: settings.taxRate,
+    total,
   };
 }
 

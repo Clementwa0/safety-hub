@@ -25,4 +25,9 @@ export interface StoreCart {
   items: StoreCartItem[];
   itemCount: number;
   subtotal: number;
+  shippingFee: number;
+  tax: number;
+  /** Admin-configured Settings.taxRate (0-100) this cart's `tax` was computed with. */
+  taxRatePercent: number;
+  total: number;
 }

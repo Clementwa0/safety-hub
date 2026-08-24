@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCustomerSession } from "@/hooks/use-customer-session";
 import { ArrowLeft } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +11,21 @@ import { storeOrderService } from "@/services/storefront/store-order.service";
 import type { StoreOrder } from "@/types/storefront/store-order";
 import { OrderStatusBadge } from "../OrderStatusBadge";
 
+/**
+ * Deliberately does NOT gate the fetch behind useCustomerSession().
+ * GET /api/store-orders/[id] already supports two ownership checks:
+ * a logged-in customer's id, or (for guests) the cart/session identity
+ * cookie set during checkout - see resolveCartIdentity() server-side.
+ * A guest who just checked out and taps "View Order" from the success
+ * page must land here and still see their order; requiring login first
+ * would contradict the "save this order to an account" prompt shown on
+ * that same success page, which implies the order is already viewable
+ * before it's saved. The API itself still enforces ownership either way,
+ * so this stays safe for both guests and logged-in customers.
+ */
 export default function AccountOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const orderId = params?.id;
-  const { status } = useCustomerSession();
   const [order, setOrder] = useState<StoreOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +33,7 @@ export default function AccountOrderDetailPage() {
   useEffect(() => {
     let cancelled = false;
 
-    if (status !== "authenticated" || !orderId) {
+    if (!orderId) {
       setLoading(false);
       return;
     }
@@ -48,9 +58,9 @@ export default function AccountOrderDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [orderId, status]);
+  }, [orderId]);
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <div className="space-y-6" aria-hidden>
         <Skeleton className="h-8 w-48 rounded-xl" />
