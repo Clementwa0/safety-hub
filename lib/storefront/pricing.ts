@@ -8,7 +8,7 @@
 export const TAX_RATE = 0.16;
 
 const FLAT_SHIPPING_FEE = 500;
-const FREE_SHIPPING_THRESHOLD = 10000;
+export const FREE_SHIPPING_THRESHOLD = 10000;
 
 const round = (value: number) => Math.round(value * 100) / 100;
 

@@ -93,7 +93,7 @@ export function WhatsAppOrderDialog() {
       const message = buildWhatsAppOrderMessage({
         customer: { name: form.name.trim(), phone: form.phone.trim(), email, address: form.address.trim() },
         items: items.map((item) => ({
-          name: item.name,
+          name: item.size ? `${item.name} (${item.size})` : item.name,
           quantity: item.quantity,
           lineTotal: item.price * item.quantity,
         })),

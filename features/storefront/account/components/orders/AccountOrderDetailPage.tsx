@@ -96,11 +96,13 @@ export default function AccountOrderDetailPage() {
             <ul className="divide-y divide-border">
               {order.items.map((item, index) => (
                 <li
-                  key={`${item.sku ?? item.name}-${index}`}
+                  key={`${item.variantSku ?? item.sku ?? item.name}-${index}`}
                   className="flex items-center justify-between gap-4 px-5 py-4"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {item.size ? `${item.name} (${item.size})` : item.name}
+                    </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {item.quantity} × {formatKES(item.price)}
                     </p>

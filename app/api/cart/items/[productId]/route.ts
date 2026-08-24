@@ -21,7 +21,12 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     await connectToDatabase();
     const identity = await resolveCartIdentity(request);
-    const cart = await updateCartItemQuantity(identity, productId, parsed.data.quantity);
+    const cart = await updateCartItemQuantity(
+      identity,
+      productId,
+      parsed.data.variantSku,
+      parsed.data.quantity,
+    );
     const serialized = await serializeCart(cart);
 
     const response = apiSuccess(serialized, "Cart updated");
@@ -38,10 +43,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const { productId } = await params;
+    const variantSku = request.nextUrl.searchParams.get("variantSku") ?? undefined;
 
     await connectToDatabase();
     const identity = await resolveCartIdentity(request);
-    const cart = await removeCartItem(identity, productId);
+    const cart = await removeCartItem(identity, productId, variantSku);
     const serialized = await serializeCart(cart);
 
     const response = apiSuccess(serialized, "Item removed from cart");

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { CartModel } from "@/lib/models/Cart";
-import { ProductModel } from "@/lib/models/Product";
+import { ProductModel, type IProductVariant } from "@/lib/models/Product";
 import { StoreOrderModel, type IStoreOrder, type IStoreOrderItem } from "@/lib/models/StoreOrder";
 import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/lib/storefront/pricing";
 import { getNextOrderNumber } from "@/lib/storefront/order-number";
@@ -59,6 +59,22 @@ export async function performCheckout(
         if (cartItem.quantity <= 0) {
           throw new CartError("Invalid quantity in cart", 400);
         }
+
+        // A cart item selected a specific size/variant when it carries a
+        // variantSku — resolve stock/reserved/price against that variant
+        // rather than the parent product in that case (mirrors the
+        // pre-validate rollup in lib/models/Product.ts, which treats the
+        // parent's stock/reserved as just the sum across variants).
+        const variant = cartItem.variantSku
+          ? product.variants.find(
+              (v: IProductVariant) => v.sku === cartItem.variantSku,
+            )
+          : undefined;
+
+        if (cartItem.variantSku && !variant) {
+          throw new CartError(`The selected size for "${product.name}" is no longer available`, 400);
+        }
+
         // Available = stock minus whatever's already reserved by other
         // pending/unshipped orders and accepted quotations — not raw
         // stock. Checkout no longer decrements `stock` directly (that now
@@ -66,18 +82,19 @@ export async function performCheckout(
         // app/api/admin/store-orders/[id]/route.ts); it holds a
         // reservation instead, the same mechanism the B2B quotation flow
         // already uses (see lib/server/availability.ts).
-        const available = Math.max(0, product.stock - product.reserved);
+        const stockSource = variant ?? product;
+        const available = Math.max(0, stockSource.stock - stockSource.reserved);
         if (cartItem.quantity > available) {
           throw new CartError(
             available > 0
-              ? `Only ${available} unit(s) of "${product.name}" are in stock`
-              : `"${product.name}" is out of stock`,
+              ? `Only ${available} unit(s) of "${product.name}"${variant ? ` (${variant.size})` : ""} are in stock`
+              : `"${product.name}"${variant ? ` (${variant.size})` : ""} is out of stock`,
             400,
           );
         }
 
         // Server reads the current price — the frontend's price is never trusted.
-        const price = product.price;
+        const price = variant ? variant.price : product.price;
         const subtotal = Math.round(price * cartItem.quantity * 100) / 100;
 
         orderItems.push({
@@ -85,7 +102,9 @@ export async function performCheckout(
           name: product.name,
           slug: product.slug,
           sku: product.sku,
-          image: product.image,
+          variantSku: variant?.sku,
+          size: variant?.size,
+          image: variant?.image || product.image,
           price,
           quantity: cartItem.quantity,
           subtotal,
@@ -146,19 +165,42 @@ export async function performCheckout(
       // ships (see the "shipped" transition in
       // app/api/admin/store-orders/[id]/route.ts).
       for (const item of orderItems) {
-        const result = await ProductModel.updateOne(
-          {
-            _id: item.product,
-            $expr: { $gte: [{ $subtract: ["$stock", "$reserved"] }, item.quantity] },
-          },
-          { $inc: { reserved: item.quantity } },
-          { session },
-        );
+        const result = item.variantSku
+          ? await ProductModel.updateOne(
+              {
+                _id: item.product,
+                variants: {
+                  $elemMatch: {
+                    sku: item.variantSku,
+                    $expr: { $gte: [{ $subtract: ["$stock", "$reserved"] }, item.quantity] },
+                  },
+                },
+              },
+              // $inc bypasses the schema's pre-validate rollup hook (that
+              // hook only runs on .save()), so the parent-level `reserved`
+              // — which is supposed to be the sum across variants — has to
+              // be incremented in the same atomic op or it drifts out of
+              // sync with the variant it's tracking.
+              { $inc: { "variants.$[v].reserved": item.quantity, reserved: item.quantity } },
+              { session, arrayFilters: [{ "v.sku": item.variantSku }] },
+            )
+          : await ProductModel.updateOne(
+              {
+                _id: item.product,
+                $expr: { $gte: [{ $subtract: ["$stock", "$reserved"] }, item.quantity] },
+              },
+              { $inc: { reserved: item.quantity } },
+              { session },
+            );
 
         if (result.matchedCount === 0) {
-          throw new CartError(`"${item.name}" went out of stock while placing your order`, 409);
+          throw new CartError(
+            `"${item.name}"${item.size ? ` (${item.size})` : ""} went out of stock while placing your order`,
+            409,
+          );
         }
       }
+
 
       cart.items = [] as typeof cart.items;
       await cart.save({ session });

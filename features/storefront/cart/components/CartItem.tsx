@@ -9,6 +9,8 @@ import { formatKES } from "@/lib/format";
 
 interface CartItemProps {
   productId: string;
+  variantSku?: string;
+  size?: string;
   name: string;
   price: number;
   quantity: number;
@@ -20,13 +22,19 @@ interface CartItemProps {
   disabled?: boolean;
   onUpdateQuantity: (
     productId: string,
+    variantSku: string | undefined,
     quantity: number,
   ) => void | Promise<void>;
-  onRemove: (productId: string) => void | Promise<void>;
+  onRemove: (
+    productId: string,
+    variantSku: string | undefined,
+  ) => void | Promise<void>;
 }
 
 export default function CartItem({
   productId,
+  variantSku,
+  size,
   name,
   price,
   quantity,
@@ -52,7 +60,7 @@ export default function CartItem({
   const decreaseQuantity = () => {
     if (disabled || unavailable || safeQuantity <= 1) return;
 
-    void onUpdateQuantity(productId, Math.max(1, safeQuantity - 1));
+    void onUpdateQuantity(productId, variantSku, Math.max(1, safeQuantity - 1));
   };
 
   const increaseQuantity = () => {
@@ -60,6 +68,7 @@ export default function CartItem({
 
     void onUpdateQuantity(
       productId,
+      variantSku,
       Math.min(safeStock, safeQuantity + 1),
     );
   };
@@ -79,7 +88,7 @@ export default function CartItem({
     );
 
     if (nextQuantity !== safeQuantity) {
-      void onUpdateQuantity(productId, nextQuantity);
+      void onUpdateQuantity(productId, variantSku, nextQuantity);
     }
   };
 
@@ -150,7 +159,11 @@ export default function CartItem({
 
             {category ? (
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {category}
+                {size ? `${category} · Size ${size}` : category}
+              </p>
+            ) : size ? (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Size {size}
               </p>
             ) : null}
           </div>
@@ -216,6 +229,7 @@ export default function CartItem({
                     if (normalizedQuantity !== quantity) {
                       void onUpdateQuantity(
                         productId,
+                        variantSku,
                         normalizedQuantity,
                       );
                     }
@@ -265,7 +279,7 @@ export default function CartItem({
           {/* Remove */}
           <button
             type="button"
-            onClick={() => void onRemove(productId)}
+            onClick={() => void onRemove(productId, variantSku)}
             disabled={disabled}
             className="ml-auto rounded-sm text-sm text-muted-foreground transition hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
             aria-label={`Remove ${name} from cart`}

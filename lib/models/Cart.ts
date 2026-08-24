@@ -4,6 +4,8 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
 export interface ICartItem {
   id: string;
   product: mongoose.Types.ObjectId;
+  /** SKU of the selected variant (e.g. size). Undefined for simple products. */
+  variantSku?: string;
   quantity: number;
 }
 
@@ -33,6 +35,11 @@ const cartItemSchema = new Schema<ICartItem>(
       type: Schema.Types.ObjectId,
       ref: "Product",
       required: true,
+    },
+    variantSku: {
+      type: String,
+      trim: true,
+      default: undefined,
     },
     quantity: {
       type: Number,

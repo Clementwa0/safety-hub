@@ -173,7 +173,11 @@ export default function CheckoutPage() {
       try {
         const message = buildWhatsAppOrderMessage({
           customer: { name: values.name, phone: values.phone, email: values.email, address: fullShippingAddress },
-          items: items.map((item) => ({ name: item.name, quantity: item.quantity, lineTotal: item.subtotal })),
+          items: items.map((item) => ({
+            name: item.size ? `${item.name} (${item.size})` : item.name,
+            quantity: item.quantity,
+            lineTotal: item.subtotal,
+          })),
           totals: { subtotal, shippingFee, tax, total },
           preferredPayment: whatsappPreferredPayment,
           reference: generateWhatsAppReference(),
@@ -435,9 +439,11 @@ export default function CheckoutPage() {
           <CardContent className="space-y-4">
             <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
               {items.map((item) => (
-                <div key={item.productId} className="flex items-center justify-between gap-3 text-sm">
+                <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">{item.name}</p>
+                    <p className="truncate font-medium text-foreground">
+                      {item.size ? `${item.name} (${item.size})` : item.name}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {formatKES(item.price)} × {item.quantity}
                     </p>

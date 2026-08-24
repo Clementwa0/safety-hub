@@ -95,6 +95,8 @@ export default function CartPage() {
                   <CartItem
                     key={item.id} // Using unique cart item ID
                     productId={item.productId}
+                    variantSku={item.variantSku}
+                    size={item.size}
                     name={item.name}
                     price={item.price}
                     quantity={item.quantity}
@@ -104,13 +106,13 @@ export default function CartPage() {
                     unavailable={item.unavailable}
                     unavailableReason={item.unavailableReason}
                     disabled={mutating}
-                    onUpdateQuantity={(id, qty) => {
-                      updateItem(id, qty).catch((error) => {
+                    onUpdateQuantity={(id, variantSku, qty) => {
+                      updateItem(id, variantSku, qty).catch((error) => {
                         toast.error(error instanceof Error ? error.message : "Could not update quantity");
                       });
                     }}
-                    onRemove={(id) => {
-                      removeItem(id).then(() => {
+                    onRemove={(id, variantSku) => {
+                      removeItem(id, variantSku).then(() => {
                         toast.success("Product removed from cart");
                       }).catch((error) => {
                         toast.error(error instanceof Error ? error.message : "Could not remove item");

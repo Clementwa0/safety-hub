@@ -1,5 +1,7 @@
 // types/shop.ts
 
+import type { ProductVariant } from "@/types/product";
+
 export type ViewMode = "grid" | "list";
 
 export type SortKey =
@@ -29,6 +31,8 @@ export interface Product {
   featured?: boolean;
   isNewArrival?: boolean;
   createdAt?: number;
+  /** Present only for variant products. Empty/undefined = simple product. */
+  variants?: ProductVariant[];
 }
 
 export type Availability = "in-stock" | "out-of-stock";

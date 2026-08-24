@@ -16,7 +16,12 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
     const identity = await resolveCartIdentity(request);
-    const cart = await addItemToCart(identity, parsed.data.productId, parsed.data.quantity);
+    const cart = await addItemToCart(
+      identity,
+      parsed.data.productId,
+      parsed.data.variantSku,
+      parsed.data.quantity,
+    );
     const serialized = await serializeCart(cart);
 
     const response = apiSuccess(serialized, "Item added to cart");

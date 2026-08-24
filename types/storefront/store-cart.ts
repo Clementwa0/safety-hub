@@ -1,6 +1,12 @@
 export interface StoreCartItem {
   id: string; // Unique cart item ID
   productId: string;
+  /** SKU of the selected variant (e.g. size). Undefined for simple products. */
+  variantSku?: string;
+  /** Selected size label, when this line is a variant. */
+  size?: string;
+  /** Effective SKU shown to the shopper: the variant SKU, or the product SKU. */
+  sku?: string;
   name: string;
   slug: string;
   image: string;

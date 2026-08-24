@@ -10,9 +10,9 @@ interface ServerCartState {
   error: Error | null;
   hasLoaded: boolean;
   fetchCart: () => Promise<void>;
-  addItem: (productId: string, quantity?: number) => Promise<StoreCart>;
-  updateItem: (productId: string, quantity: number) => Promise<StoreCart>;
-  removeItem: (productId: string) => Promise<StoreCart>;
+  addItem: (productId: string, variantSku?: string, quantity?: number) => Promise<StoreCart>;
+  updateItem: (productId: string, variantSku: string | undefined, quantity: number) => Promise<StoreCart>;
+  removeItem: (productId: string, variantSku?: string) => Promise<StoreCart>;
   clear: () => Promise<StoreCart>;
 }
 
@@ -44,10 +44,10 @@ export const useServerCartStore = create<ServerCartState>((set) => ({
     }
   },
 
-  addItem: async (productId: string, quantity = 1) => {
+  addItem: async (productId: string, variantSku?: string, quantity = 1) => {
     set({ mutating: true, error: null });
     try {
-      const updatedCart = await storeCartService.addItem(productId, quantity);
+      const updatedCart = await storeCartService.addItem(productId, variantSku, quantity);
       set({ cart: updatedCart, mutating: false });
       return updatedCart;
     } catch (error) {
@@ -59,10 +59,10 @@ export const useServerCartStore = create<ServerCartState>((set) => ({
     }
   },
 
-  updateItem: async (productId: string, quantity: number) => {
+  updateItem: async (productId: string, variantSku: string | undefined, quantity: number) => {
     set({ mutating: true, error: null });
     try {
-      const updatedCart = await storeCartService.updateItem(productId, quantity);
+      const updatedCart = await storeCartService.updateItem(productId, variantSku, quantity);
       set({ cart: updatedCart, mutating: false });
       return updatedCart;
     } catch (error) {
@@ -74,10 +74,10 @@ export const useServerCartStore = create<ServerCartState>((set) => ({
     }
   },
 
-  removeItem: async (productId: string) => {
+  removeItem: async (productId: string, variantSku?: string) => {
     set({ mutating: true, error: null });
     try {
-      const updatedCart = await storeCartService.removeItem(productId);
+      const updatedCart = await storeCartService.removeItem(productId, variantSku);
       set({ cart: updatedCart, mutating: false });
       return updatedCart;
     } catch (error) {

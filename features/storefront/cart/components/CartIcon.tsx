@@ -15,6 +15,8 @@ interface CartIconProps {
   disableDrawer?: boolean;
   productId?: string;
   productName?: string;
+  /** SKU of the selected variant (e.g. size). Omit for simple products. */
+  variantSku?: string;
   quantity?: number;
   disabled?: boolean;
   showText?: boolean;
@@ -26,6 +28,7 @@ export default function CartIcon({
   disableDrawer = false,
   productId,
   productName,
+  variantSku,
   quantity = 1,
   disabled = false,
   showText = true,
@@ -49,7 +52,7 @@ export default function CartIcon({
 
     setLoading(true);
     try {
-      await addItem(productId, quantity);
+      await addItem(productId, variantSku, quantity);
       openCart();
       toast.success(`${productName || "Product"} added to cart`);
     } catch (err) {

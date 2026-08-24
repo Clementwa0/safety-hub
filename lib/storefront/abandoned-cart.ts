@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 
 import { connectToDatabase } from "@/lib/db";
 import { CartModel } from "@/lib/models/Cart";
-import { ProductModel } from "@/lib/models/Product";
+import { ProductModel, type IProductVariant } from "@/lib/models/Product";
 import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { formatKES } from "@/lib/format";
 
@@ -148,10 +148,19 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
         const product = productMap.get(String(item.product));
         if (!product) return null;
 
+        // Mirror serializeCart/checkout: a cart line with a variantSku
+        // prices and labels off that variant, not the parent product,
+        // so the reminder email doesn't quote a stale rolled-up price.
+        const variant = item.variantSku
+          ? product.variants?.find(
+              (v: IProductVariant) => v.sku === item.variantSku,
+            )
+          : undefined;
+
         return {
-          name: product.name,
+          name: variant ? `${product.name} (${variant.size})` : product.name,
           quantity: item.quantity,
-          lineTotal: product.price * item.quantity,
+          lineTotal: (variant ? variant.price : product.price) * item.quantity,
         };
       })
       .filter(
