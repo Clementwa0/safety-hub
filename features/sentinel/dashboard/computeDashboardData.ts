@@ -290,16 +290,7 @@ export function computeStatusBreakdown(orders: StoreOrder[]): StatusSlice[] {
     .filter((slice) => slice.count > 0);
 }
 
-/**
- * Lightweight, executive-level snapshot of the catalogue for the Dashboard's
- * Catalog/Inventory KPI cards. Deliberately reuses the same stock-bucket
- * thresholds as the Inventory page (`getStockBucket`) so "low stock" means
- * the same thing everywhere in Sentinel. This intentionally does NOT
- * replicate the Inventory page's `reserved`/`available` split (which
- * requires a per-product availability fetch) — the Dashboard already has
- * the product list in memory, so this stays a single, cheap pass over data
- * that's already loaded rather than firing extra requests.
- */
+
 export interface CatalogSnapshot {
   totalProducts: number;
   totalUnits: number;

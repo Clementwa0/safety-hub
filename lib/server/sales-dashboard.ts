@@ -4,6 +4,7 @@ import { OrderModel, type IOrder } from "@/lib/models/Order";
 import { InvoiceModel, type IInvoice } from "@/lib/models/Invoice";
 import { StoreOrderModel, type IStoreOrder } from "@/lib/models/StoreOrder";
 import { PaymentModel, type IPayment } from "@/lib/models/Payment";
+import { calculateInvoiceBalance, calculateInvoiceTotals } from "@/modules/invoicing/calculations";
 import type {
   AgingBucket,
   DashboardQuery,
@@ -34,11 +35,19 @@ import type {
  *   document, and cancelled invoices).
  *
  * - CASH COLLECTED: money that has actually changed hands. For B2B this
- *   is `invoice.amountPaid` (a field staff update via "Record Payment"),
- *   NOT inferred from invoice.status — a partially paid invoice
- *   contributes its actual paid amount, not its full total and not
- *   zero. For the storefront it's the total of orders whose
- *   paymentStatus is "paid".
+ *   is the sum of active (non-voided) `Payment` ledger rows whose own
+ *   `date` — the date the cash was actually received, not the date the
+ *   invoice was issued — falls in the selected range. This is NOT
+ *   `invoice.amountPaid` (that field is the invoice's current
+ *   cumulative total, and dating it by `invoice.issueDate` would book a
+ *   payment collected in March against a January-issued invoice as
+ *   January cash, and would collapse several payments spread across
+ *   different periods onto a single date). A partially paid invoice
+ *   contributes only the payments actually collected in range, not its
+ *   full total and not zero. For the storefront it's the total of
+ *   orders whose paymentStatus is "paid" (the storefront has no
+ *   separate payment-date ledger, so order creation date is the closest
+ *   available proxy).
  *
  * - OUTSTANDING: invoice balances still owed (total − amountPaid, for
  *   any non-draft, non-cancelled invoice) plus storefront orders still
@@ -67,22 +76,21 @@ import type {
 type MoneyItem = { quantity: number; unitPrice: number; taxRate: number; discount: number };
 
 /**
- * Mirrors lib/sales.ts#computeTotals exactly (gross → discount → tax on the
- * discounted amount → sum). Reimplemented locally rather than imported
- * because computeTotals is typed against the client-side `LineItem` shape
- * (which requires a React-only `id` field); the persisted Mongoose
- * documents here never have one. The math must stay identical to the
- * client's — if lib/sales.ts changes, this needs to change with it.
+ * Delegates to modules/invoicing/calculations.ts, the single source of
+ * truth for this math - see that file's doc comment. This used to be a
+ * hand-copied reimplementation of lib/sales.ts#computeTotals (kept
+ * separate only because computeTotals was typed against the client-side
+ * `LineItem` shape); calculateInvoiceTotals() is typed structurally
+ * against MoneyItem instead, so both the persisted Mongoose documents
+ * here and the client LineItem shape satisfy it without a cast.
  */
 function total(items: MoneyItem[]): number {
-  let sum = 0;
-  for (const item of items) {
-    const gross = item.quantity * item.unitPrice;
-    const discounted = Math.max(0, gross - gross * (item.discount / 100));
-    const tax = discounted * (item.taxRate / 100);
-    sum += discounted + tax;
-  }
-  return sum;
+  return calculateInvoiceTotals(items).total;
+}
+
+/** A payment that's been voided/refunded no longer counts as cash collected. */
+function isActivePayment(payment: IPayment): boolean {
+  return payment.status !== "voided";
 }
 
 function isOrderActive(status: string): boolean {
@@ -174,7 +182,12 @@ export async function buildSalesDashboard(
   const ordersInRange = orders.filter((o) => inRange(o.createdAt));
   const invoicesInRange = invoices.filter((inv) => inRange(inv.issueDate));
   const storeOrdersInRange = storeOrders.filter((so) => inRange(so.createdAt));
-  const paymentsInRange = payments.filter((p) => inRange(p.date));
+  // Voided/refunded payments are excluded up front - every downstream use
+  // of paymentsInRange is a money figure (cash collected, payment method
+  // breakdown), and a voided payment no longer represents cash actually
+  // held. See modules/invoicing/calculations.ts#sumActivePayments for the
+  // equivalent rule applied to a single invoice's amountPaid.
+  const paymentsInRange = payments.filter((p) => inRange(p.date) && isActivePayment(p));
 
   // ---------- KPI cards ----------
 
@@ -211,14 +224,14 @@ export async function buildSalesDashboard(
 
   const outstandingFromInvoices = issuedInvoices
     .filter((inv) => inv.status !== "paid")
-    .reduce((sum, inv) => sum + Math.max(0, total(inv.items) - inv.amountPaid), 0);
+    .reduce((sum, inv) => sum + calculateInvoiceBalance(total(inv.items), inv.amountPaid), 0);
   const outstandingFromStoreOrders = storeOrdersInRange
     .filter((so) => so.paymentStatus === "pending" && so.status !== "cancelled")
     .reduce((sum, so) => sum + so.total, 0);
   const outstandingValue = outstandingFromInvoices + outstandingFromStoreOrders;
   const outstandingCount =
     issuedInvoices.filter(
-      (inv) => inv.status !== "paid" && total(inv.items) - inv.amountPaid > 0,
+      (inv) => inv.status !== "paid" && calculateInvoiceBalance(total(inv.items), inv.amountPaid) > 0,
     ).length +
     storeOrdersInRange.filter((so) => so.paymentStatus === "pending" && so.status !== "cancelled")
       .length;
@@ -333,9 +346,21 @@ export async function buildSalesDashboard(
   for (const inv of issuedInvoices) {
     bump(periodKey(new Date(inv.issueDate), granularity), "invoiced", total(inv.items));
   }
-  for (const inv of invoices) {
-    if (!inRange(inv.issueDate) || inv.status === "cancelled" || inv.amountPaid <= 0) continue;
-    bump(periodKey(new Date(inv.issueDate), granularity), "cashCollected", inv.amountPaid);
+  // Bucket by when the cash actually came in (payment.date), not when the
+  // invoice was issued — an invoice issued in one period is often paid
+  // (fully or partially, in one or several installments) in a later one.
+  // `paymentsInRange` is already scoped to that window and to
+  // non-voided/non-refunded payments (see its definition above), and using
+  // the per-payment amount here — instead of the invoice's cumulative
+  // `amountPaid` — is what correctly spreads multiple/partial payments
+  // across the periods they were each actually collected in rather than
+  // dumping the invoice's whole running total onto one date. This also
+  // keeps the chart consistent with the `cashFromInvoices` KPI above,
+  // which sums this same filtered set.
+  for (const p of paymentsInRange) {
+    const inv = invoiceById.get(String(p.invoiceId));
+    if (inv && inv.status === "cancelled") continue;
+    bump(periodKey(new Date(p.date), granularity), "cashCollected", p.amount);
   }
   for (const so of storeOrdersInRange) {
     if (so.paymentStatus !== "paid") continue;
@@ -407,7 +432,7 @@ export async function buildSalesDashboard(
   ];
   for (const inv of invoices) {
     if (inv.status === "draft" || inv.status === "cancelled" || inv.status === "paid") continue;
-    const balance = total(inv.items) - inv.amountPaid;
+    const balance = calculateInvoiceBalance(total(inv.items), inv.amountPaid);
     if (balance <= 0) continue;
     const daysPastDue = Math.floor((now - new Date(inv.dueDate).getTime()) / DAY);
     const bucket =
