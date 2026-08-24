@@ -3,7 +3,7 @@
 import { FaBoxOpen } from "react-icons/fa6";
 import { motion } from "framer-motion";
 
-import type { Product } from "@/types/product";
+import { hasVariants, type Product } from "@/types/product";
 import ProductCard from "./ProductCard";
 
 interface ProductGridProps {
@@ -80,7 +80,7 @@ export default function ProductGrid({
               duration: 0.25,
             }}
           >
-            <ProductCard product={product} />
+            <ProductCard product={{ ...product, hasVariants: hasVariants(product) }} />
           </motion.div>
         ))}
       </motion.div>

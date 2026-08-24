@@ -19,6 +19,7 @@ import ImagesSection from "./ImagesSection";
 import InventorySection from "./InventorySection";
 import OptionsSection from "./OptionsSection";
 import PricingSection from "./PricingSection";
+import VariantsSection from "./VariantsSection";
 
 
 interface ProductFormProps {
@@ -29,6 +30,7 @@ const TABS = [
   { value: "basic", label: "Basic info" },
   { value: "pricing", label: "Pricing" },
   { value: "inventory", label: "Inventory" },
+  { value: "variants", label: "Variants" },
   { value: "images", label: "Images" },
   { value: "options", label: "Options" },
   { value: "details", label: "Details" },
@@ -41,6 +43,7 @@ const TAB_FIELDS: Record<TabValue, (keyof ProductFormInput)[]> = {
   basic: ["name", "description", "category", "subcategory", "brand", "sku"],
   pricing: ["price", "compareAtPrice"],
   inventory: ["stock", "status"],
+  variants: ["variants"],
   images: ["image", "images"],
   options: ["featured", "isNewArrival"],
   details: ["features", "specs"],
@@ -67,6 +70,7 @@ function buildDefaultValues(product?: Product): ProductFormInput {
     isNewArrival: product?.isNewArrival ?? false,
     features: product?.features ?? [],
     specs: product?.specs ?? [],
+    variants: product?.variants ?? [],
     weight: product?.weight ?? "",
     dimensions: product?.dimensions ?? "",
     warranty: product?.warranty ?? "",
@@ -149,6 +153,9 @@ export default function ProductForm({ product }: ProductFormProps) {
           </TabsContent>
           <TabsContent value="inventory" className="mt-4">
             <InventorySection />
+          </TabsContent>
+          <TabsContent value="variants" className="mt-4">
+            <VariantsSection />
           </TabsContent>
           <TabsContent value="images" className="mt-4">
             <ImagesSection />

@@ -27,8 +27,24 @@ export async function GET(request: NextRequest) {
       return apiSuccess({ items: [] }, "No ids requested");
     }
 
+    // Optional `variants=productId:sku,productId2:sku2` - lets callers that
+    // know a specific variant (LineItemsEditor, once a size is picked) get
+    // that variant's stock instead of the parent product's rolled-up total.
+    // Same format snapshotLineItemAvailability builds server-side, just
+    // serialized for the querystring.
+    const variantSkusByProductId = new Map<string, string>();
+    for (const pair of (searchParams.get("variants") ?? "").split(",")) {
+      const [productId, variantSku] = pair.split(":");
+      if (productId && variantSku) {
+        variantSkusByProductId.set(productId.trim(), variantSku.trim());
+      }
+    }
+
     await connectToDatabase();
-    const availability = await getProductAvailability(ids);
+    const availability = await getProductAvailability(
+      ids,
+      variantSkusByProductId.size > 0 ? variantSkusByProductId : undefined,
+    );
 
     return apiSuccess(
       { items: Array.from(availability.values()) },

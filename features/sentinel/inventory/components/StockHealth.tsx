@@ -183,9 +183,9 @@ export default function StockHealth({
 
   // ─── Donut Configuration ─────────────────────────────────
 
-  const radius = 36;
-  const strokeWidth = 10;
-  const center = 48;
+  const radius = 37;
+  const strokeWidth = 15;
+  const center = 50;
 
   const circumference = 2 * Math.PI * radius;
 
@@ -220,10 +220,6 @@ export default function StockHealth({
       <CardContent>
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
 
-          {/* ─────────────────────────────────────────────── */}
-          {/* DONUT */}
-          {/* ─────────────────────────────────────────────── */}
-
           <div className="relative w-40 shrink-0 sm:w-44">
             <svg
               viewBox="0 0 96 96"
@@ -245,10 +241,6 @@ export default function StockHealth({
                 strokeWidth={strokeWidth}
               />
 
-              {/* ───────────────────────────────────────── */}
-              {/* ACTUAL DONUT SEGMENTS */}
-              {/* ───────────────────────────────────────── */}
-
               {(() => {
                 let cumulativePercent = 0;
 
@@ -264,12 +256,6 @@ export default function StockHealth({
                     (slice.percent / 100) *
                     circumference;
 
-                  /*
-                   * IMPORTANT:
-                   *
-                   * Each segment starts where the previous
-                   * segment ended.
-                   */
                   const segmentOffset =
                     -(cumulativePercent / 100) *
                     circumference;
@@ -283,7 +269,6 @@ export default function StockHealth({
                     0,
                   );
 
-                  // Move cumulative position forward.
                   cumulativePercent += slice.percent;
 
                   return (
@@ -325,11 +310,6 @@ export default function StockHealth({
                   );
                 });
               })()}
-
-              {/* ───────────────────────────────────────── */}
-              {/* PERCENTAGE LABELS */}
-              {/* ───────────────────────────────────────── */}
-
               {mounted &&
                 (() => {
                   let cumulativePercent = 0;
@@ -344,7 +324,6 @@ export default function StockHealth({
 
                     cumulativePercent += slice.percent;
 
-                    // Don't place labels on tiny slices.
                     if (slice.percent < 10) {
                       return null;
                     }

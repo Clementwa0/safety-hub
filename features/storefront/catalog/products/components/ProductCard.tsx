@@ -9,6 +9,7 @@ import { AiOutlineEye } from 'react-icons/ai'
 import { FaCartPlus, FaStar, FaCircleCheck } from 'react-icons/fa6'
 import { toast } from 'sonner'
 
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { formatKES } from '@/lib/format'
 import { useCart } from '@/hooks/useCart'
@@ -29,6 +30,9 @@ export interface ProductCardItem {
   brand?: string
   rating?: number
   reviews?: number
+  /** True when sizes/variants must be picked on the product page before
+   *  this product can be added to a cart — the card can't add it directly. */
+  hasVariants?: boolean
 }
 
 export interface ProductCardProps {
@@ -49,10 +53,12 @@ export default function ProductCard ({
   className = ''
 }: ProductCardProps) {
   const { addItem } = useCart()
+  const router = useRouter()
   const shouldReduceMotion = useReducedMotion()
   const [adding, setAdding] = useState(false)
 
   const isFeatured = featured ?? product.featured
+  const isVariantProduct = Boolean(product.hasVariants)
   const isOutOfStock = product.stock <= 0
   const isInStock = product.stock > 0
   const isLowStock = !isOutOfStock && product.stock < 10
@@ -67,6 +73,13 @@ export default function ProductCard ({
   const productHref = `/products/${product.id}`
 
   const handleAddToCart = async () => {
+    // Variant products must have a size chosen on the product page — the
+    // card can't guess which one, so it navigates there instead of adding.
+    if (isVariantProduct) {
+      router.push(productHref)
+      return
+    }
+
     if (isOutOfStock) {
       toast.error('This product is out of stock')
       return
@@ -74,7 +87,7 @@ export default function ProductCard ({
 
     setAdding(true)
     try {
-      await addItem(product.id, 1)
+      await addItem(product.id, undefined, 1)
       toast.success(`${product.name} added to cart`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not add to cart')
@@ -263,23 +276,25 @@ export default function ProductCard ({
         <button
           type='button'
           onClick={() => void handleAddToCart()}
-          disabled={isOutOfStock || adding}
+          disabled={(isOutOfStock && !isVariantProduct) || adding}
           className={cn(
             'flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition active:scale-95 sm:px-3',
-            isOutOfStock || adding
+            (isOutOfStock && !isVariantProduct) || adding
               ? 'cursor-not-allowed bg-gray-200 text-gray-500 active:scale-100'
               : 'bg-slate-600 text-white hover:bg-slate-700'
           )}
           aria-label={
-            isOutOfStock
-              ? `${product.name} is out of stock`
-              : `Add ${product.name} to cart`
+            isVariantProduct
+              ? `Select options for ${product.name}`
+              : isOutOfStock
+                ? `${product.name} is out of stock`
+                : `Add ${product.name} to cart`
           }
         >
           <FaCartPlus className='text-xs sm:text-sm' />
           {showActionText && (
             <span className='hidden sm:inline'>
-              {isOutOfStock ? 'Out of Stock' : 'Add'}
+              {isVariantProduct ? 'Select Options' : isOutOfStock ? 'Out of Stock' : 'Add'}
             </span>
           )}
         </button>

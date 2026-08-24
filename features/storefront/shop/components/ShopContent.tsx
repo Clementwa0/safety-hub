@@ -17,6 +17,7 @@ import {
 } from "@/lib/shopFilters";
 import { cn } from "@/lib/utils";
 import type { Product} from "@/types/storefront/shop";
+import { hasVariants } from "@/types/product";
 import type { CategoryWithCount } from "@/types/category";
 import { MobileFilters } from "./MobileFilters";
 import { ShopSidebar } from "./ShopSidebar";
@@ -50,6 +51,7 @@ function adaptProductForShop(dbProduct: any): Product | null {
     featured: dbProduct.featured ?? false,
     isNewArrival: dbProduct.isNewArrival ?? false,
     createdAt: dbProduct.createdAt,
+    variants: Array.isArray(dbProduct.variants) ? dbProduct.variants : undefined,
   };
 }
 
@@ -67,6 +69,7 @@ function mapToProductCardItem(product: Product): ProductCardItem {
     rating: product.rating,
     reviews: product.reviews,
     isNewArrival: product.isNewArrival ?? false,
+    hasVariants: hasVariants(product),
   };
 }
 

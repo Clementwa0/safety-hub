@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/types/product";
 import { SafeImage } from "@/components/shared/SafeImage";
@@ -9,15 +9,36 @@ import { cn } from "@/lib/utils";
 
 interface ProductGalleryProps {
   product: Product;
+  /** When set (the customer picked a size with its own photo), that image
+   *  becomes the active view instead of the product's default gallery order. */
+  selectedVariantImage?: string;
 }
 
-export function ProductGallery({ product }: ProductGalleryProps) {
-  const images = product.images && product.images.length > 0 
-    ? product.images 
+export function ProductGallery({ product, selectedVariantImage }: ProductGalleryProps) {
+  const baseImages = product.images && product.images.length > 0
+    ? product.images
     : [product.image];
-  
+
+  // Bring the selected variant's photo to the front of the gallery (and add
+  // it if it isn't already one of the product's images) so it becomes the
+  // hero shot the moment a size with its own image is picked.
+  const images = selectedVariantImage
+    ? [
+        selectedVariantImage,
+        ...baseImages.filter((image) => image !== selectedVariantImage),
+      ]
+    : baseImages;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+
+  useEffect(() => {
+    // Jump back to the hero shot whenever the selected variant's image
+    // changes, rather than leaving the viewer on whatever index the
+    // customer had scrolled to for the previous size.
+    setCurrentIndex(0);
+    setIsZoomed(false);
+  }, [selectedVariantImage]);
 
   const hasMultipleImages = images.length > 1;
 

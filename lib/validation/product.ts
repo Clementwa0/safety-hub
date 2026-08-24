@@ -22,6 +22,50 @@ export const productSpecSchema = z.object({
   value: z.string().trim().min(1, "Required"),
 });
 
+export const productVariantSchema = z
+  .object({
+    sku: z.string().trim().min(1, "SKU is required."),
+    size: z.string().trim().min(1, "Size is required."),
+    price: z.coerce.number().gt(0, "Variant price must be greater than 0."),
+    compareAtPrice: z
+      .union([z.literal(""), z.undefined(), z.nan(), z.coerce.number()])
+      .transform((value) => (typeof value === "number" && !Number.isNaN(value) ? value : undefined))
+      .optional(),
+    stock: z.coerce
+      .number()
+      .int("Stock must be a whole number.")
+      .nonnegative("Stock cannot be negative."),
+    reserved: z.coerce
+      .number()
+      .int("Reserved must be a whole number.")
+      .nonnegative("Reserved cannot be negative.")
+      .optional()
+      .default(0),
+    image: z
+      .string()
+      .trim()
+      .refine((value) => value === "" || validateImageUrlFormat(value).valid, {
+        message: "Enter a valid public HTTPS image URL.",
+      })
+      .optional(),
+  })
+  .refine((data) => data.compareAtPrice === undefined || data.compareAtPrice > data.price, {
+    message: "Original price must be greater than the selling price.",
+    path: ["compareAtPrice"],
+  })
+  .refine((data) => data.reserved <= data.stock, {
+    message: "Reserved cannot exceed stock.",
+    path: ["reserved"],
+  });
+
+/** Rejects duplicate SKUs/sizes across a variant array (case-insensitive). */
+function noDuplicateVariants(variants: z.infer<typeof productVariantSchema>[] | undefined) {
+  if (!variants || variants.length === 0) return true;
+  const skus = variants.map((v) => v.sku.trim().toUpperCase());
+  const sizes = variants.map((v) => v.size.trim().toUpperCase());
+  return new Set(skus).size === skus.length && new Set(sizes).size === sizes.length;
+}
+
 export const productSchema = z
   .object({
     name: z.string().trim().min(3, "Name must be at least 3 characters."),
@@ -62,6 +106,10 @@ export const productSchema = z
     dimensions: z.string().trim().optional(),
     warranty: z.string().trim().optional(),
     certifications: z.array(z.string().trim().min(1)).optional(),
+
+    // When present and non-empty, this product is sold by size/variant and
+    // the top-level price/stock become display-only rollups computed server-side.
+    variants: z.array(productVariantSchema).optional(),
   })
   .refine(
     (data) => data.compareAtPrice === undefined || data.compareAtPrice > data.price,
@@ -69,7 +117,11 @@ export const productSchema = z
       message: "Original price must be greater than the selling price.",
       path: ["compareAtPrice"],
     },
-  );
+  )
+  .refine((data) => noDuplicateVariants(data.variants), {
+    message: "Each variant needs a unique SKU and a unique size.",
+    path: ["variants"],
+  });
 
 /** Raw shape RHF's `register`/`control` operate on, before parsing. */
 export type ProductFormInput = z.input<typeof productSchema>;
@@ -111,6 +163,7 @@ export const productPartialSchema = z
     dimensions: z.string().trim().optional(),
     warranty: z.string().trim().optional(),
     certifications: z.array(z.string().trim().min(1)).optional(),
+    variants: z.array(productVariantSchema).optional(),
   })
   .refine(
     (data) =>
@@ -121,7 +174,11 @@ export const productPartialSchema = z
       message: "Original price must be greater than the selling price.",
       path: ["compareAtPrice"],
     },
-  );
+  )
+  .refine((data) => noDuplicateVariants(data.variants), {
+    message: "Each variant needs a unique SKU and a unique size.",
+    path: ["variants"],
+  });
 
 export const bulkProductActionSchema = z.object({
   ids: z.array(z.string().min(1)).min(1, "Select at least one product."),

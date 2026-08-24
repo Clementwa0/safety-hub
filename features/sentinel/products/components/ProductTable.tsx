@@ -37,6 +37,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDate, formatKES } from "@/lib/format";
 import {
   getDiscountPercent,
+  hasVariants,
   PRODUCT_STATUS_LABELS,
   type Product,
   type ProductStatus,
@@ -75,6 +76,27 @@ const ProductBadges = ({
     )}
   </div>
 );
+
+const MAX_VARIANT_SIZES_SHOWN = 4;
+
+/** "4 variants · S · M · XL · XXL" — omitted entirely for simple products. */
+const VariantsBadge = ({ product }: { product: Product }) => {
+  if (!hasVariants(product)) return null;
+  const sizes = product.variants!.map((v) => v.size).filter(Boolean);
+  const shown = sizes.slice(0, MAX_VARIANT_SIZES_SHOWN);
+  const remainder = sizes.length - shown.length;
+  const label = [
+    `${product.variants!.length} variant${product.variants!.length === 1 ? "" : "s"}`,
+    ...shown,
+  ].join(" · ");
+
+  return (
+    <Badge variant="outline" className="mt-0.5 h-3.5 w-fit px-1 text-[8px] font-normal leading-none">
+      {label}
+      {remainder > 0 ? ` +${remainder}` : ""}
+    </Badge>
+  );
+};
 
 const ProductPrice = ({ price, compareAtPrice }: { price: number; compareAtPrice?: number }) => {
   const discount = getDiscountPercent(price, compareAtPrice);
@@ -156,6 +178,7 @@ export default function ProductTable({
             <p className="truncate text-sm font-medium leading-tight">{product.name}</p>
             <ProductBadges featured={product.featured} isNewArrival={product.isNewArrival} />
           </div>
+          <VariantsBadge product={product} />
         </div>
       </div>
     );
@@ -258,6 +281,7 @@ export default function ProductTable({
                     <p className="truncate text-xs font-medium leading-tight">{product.name}</p>
                     <ProductBadges featured={product.featured} isNewArrival={product.isNewArrival} />
                   </div>
+                  <VariantsBadge product={product} />
                 </div>
                 <div className="shrink-0 text-right">{priceCell}</div>
               </div>

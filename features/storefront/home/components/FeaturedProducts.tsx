@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa6";
 
 import ProductCard, { type ProductCardItem } from "@/features/storefront/catalog/products/components/ProductCard";
-import type { Product } from "@/types/product";
+import { hasVariants, type Product } from "@/types/product";
 
 interface FeaturedProductsProps {
   products: Product[];
@@ -22,6 +22,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
     brand: product.brand,
     rating: product.rating,
     reviews: product.reviews,
+    hasVariants: hasVariants(product),
   }));
 
   return (

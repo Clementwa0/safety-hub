@@ -1,4 +1,4 @@
-import type { Product } from '@/types/product';
+import { hasVariants, type Product } from '@/types/product';
 import ProductCard from '../components/ProductCard';
 
 interface ProductRelatedProps {
@@ -18,7 +18,10 @@ export function ProductRelated({ products }: ProductRelatedProps) {
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard
+            key={product.id}
+            product={{ ...product, hasVariants: hasVariants(product) }}
+          />
         ))}
       </div>
     </section>

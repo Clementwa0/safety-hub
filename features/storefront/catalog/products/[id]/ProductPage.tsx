@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -14,11 +14,15 @@ import { ProductGallery, ProductHeader, ProductNotFound, ProductPricing, Product
 
 function ProductPurchasePanel({
   product,
+  selectedVariantSku,
+  onSelectVariant,
   onAddToCart,
   onWhatsApp,
 }: {
   product: Product;
-  onAddToCart: (quantity: number) => void;
+  selectedVariantSku: string | undefined;
+  onSelectVariant: (sku: string) => void;
+  onAddToCart: (quantity: number, variantSku?: string) => void;
   onWhatsApp: () => void;
 }) {
   const [qty, setQty] = useState(1);
@@ -30,8 +34,11 @@ function ProductPurchasePanel({
       stock={product.stock}
       quantity={qty}
       onQuantityChange={setQty}
-      onAddToCart={() => onAddToCart(qty)}
+      onAddToCart={() => onAddToCart(qty, selectedVariantSku)}
       onWhatsApp={onWhatsApp}
+      variants={product.variants}
+      selectedVariantSku={selectedVariantSku}
+      onSelectVariant={onSelectVariant}
     />
   );
 }
@@ -43,11 +50,20 @@ export default function ProductPage() {
   const { product, relatedProducts, loading, error } = useProduct(slug);
   const { addItem } = useCart();
   const openCart = useCartUIStore((state) => state.openCart);
+  const [selectedVariantSku, setSelectedVariantSku] = useState<string | undefined>(undefined);
 
-  const handleAddToCart = async (quantity: number) => {
+  // Reset the picked size whenever the customer lands on a different
+  // product, so a stale size from the last product page never carries over.
+  useEffect(() => {
+    setSelectedVariantSku(undefined);
+  }, [product?.id]);
+
+  const selectedVariant = product?.variants?.find((variant) => variant.sku === selectedVariantSku);
+
+  const handleAddToCart = async (quantity: number, variantSku?: string) => {
     if (!product) return;
     try {
-      await addItem(product.id, quantity);
+      await addItem(product.id, variantSku, quantity);
       openCart();
       toast.success(`${product.name} added to cart`);
     } catch (err) {
@@ -81,7 +97,7 @@ export default function ProductPage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <ProductGallery product={product} />
+          <ProductGallery product={product} selectedVariantImage={selectedVariant?.image} />
         </motion.div>
 
         <motion.div
@@ -94,6 +110,8 @@ export default function ProductPage() {
           <ProductPurchasePanel
             key={product.id}
             product={product}
+            selectedVariantSku={selectedVariantSku}
+            onSelectVariant={setSelectedVariantSku}
             onAddToCart={handleAddToCart}
             onWhatsApp={handleWhatsApp}
           />

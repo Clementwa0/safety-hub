@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa6";
 
-import type { Product } from "@/types/product";
+import { hasVariants, type Product } from "@/types/product";
 import ProductCard from "../../catalog/products/components/ProductCard";
 
 interface NewArrivalsProps {
@@ -49,7 +49,7 @@ export default function NewArrivals({ products }: NewArrivalsProps) {
               key={product.id}
               className="w-[45vw] shrink-0 snap-start sm:w-auto"
             >
-              <ProductCard product={product} />
+              <ProductCard product={{ ...product, hasVariants: hasVariants(product) }} />
             </div>
           ))}
         </div>

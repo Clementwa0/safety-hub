@@ -35,6 +35,22 @@ export interface ProductSpec {
   value: string;
 }
 
+/**
+ * A single purchasable option under a product (e.g. a size). When a product
+ * has variants, the parent `price`/`stock`/`image` fields still exist for
+ * backward compatibility (listing cards, legacy carts) but the variant-level
+ * values are authoritative for anything that can differ per-size.
+ */
+export interface ProductVariant {
+  sku: string;
+  size: string;
+  price: number;
+  compareAtPrice?: number;
+  stock: number;
+  reserved: number;
+  image?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -62,6 +78,8 @@ export interface Product {
   dimensions?: string;
   warranty?: string;
   certifications?: string[];
+  /** Present only for variant products. Empty/undefined = simple product. */
+  variants?: ProductVariant[];
 }
 
 /** Payload accepted by the admin create/update product forms. */
@@ -86,6 +104,14 @@ export interface ProductInput {
   dimensions?: string;
   warranty?: string;
   certifications?: string[];
+  variants?: ProductVariant[];
+}
+
+/** True when a product's stock/price/SKU are tracked per-variant rather than
+ *  on the product record itself. Centralized here so callers never re-derive
+ *  the "has real variants" check with a slightly different condition. */
+export function hasVariants(product: Pick<Product, "variants">): boolean {
+  return Array.isArray(product.variants) && product.variants.length > 0;
 }
 
 /** Returns the discount percentage (rounded, positive) when `compareAtPrice`

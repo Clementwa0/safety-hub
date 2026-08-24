@@ -1,4 +1,5 @@
 import { ProductModel } from "@/lib/models/Product";
+import type { IProductVariant } from "@/lib/models/Product";
 import type { IQuotationLineItem, QuotationFulfillmentPlan } from "@/lib/models/Quotation";
 import type { LineItemDTO } from "@/lib/schemas/sales";
 
@@ -19,22 +20,35 @@ export interface ProductAvailability {
  * simply omitted from the result rather than throwing - callers treat a
  * missing entry as "unknown availability" for that line, same as a
  * custom/one-off line with no productId at all.
+ *
+ * `variantSkusByProductId` lets a caller ask for a specific variant's
+ * stock/reserved instead of the parent product's rolled-up totals - keyed
+ * by productId since the result map is also keyed that way (a quotation
+ * line only ever references one variant of one product, so there's no
+ * collision). Falls back to the parent-level numbers if the requested
+ * variant isn't found (e.g. it was deleted since the line was added).
  */
 export async function getProductAvailability(
   productIds: string[],
+  variantSkusByProductId?: Map<string, string>,
 ): Promise<Map<string, ProductAvailability>> {
   const uniqueIds = Array.from(new Set(productIds.filter(Boolean)));
   const result = new Map<string, ProductAvailability>();
   if (uniqueIds.length === 0) return result;
 
   const products = await ProductModel.find({ _id: { $in: uniqueIds } })
-    .select("stock reserved")
-    .lean<{ _id: unknown; stock: number; reserved: number }[]>();
+    .select("stock reserved variants")
+    .lean<{ _id: unknown; stock: number; reserved: number; variants?: IProductVariant[] }[]>();
 
   for (const product of products) {
     const id = String(product._id);
-    const stock = product.stock ?? 0;
-    const reserved = product.reserved ?? 0;
+    const variantSku = variantSkusByProductId?.get(id);
+    const variant = variantSku
+      ? product.variants?.find((v) => v.sku === variantSku)
+      : undefined;
+
+    const stock = (variant ?? product).stock ?? 0;
+    const reserved = (variant ?? product).reserved ?? 0;
     result.set(id, {
       productId: id,
       stock,
@@ -72,7 +86,14 @@ export async function snapshotLineItemAvailability(
     .map((item) => item.productId)
     .filter((id): id is string => Boolean(id));
 
-  const availability = await getProductAvailability(productIds);
+  const variantSkusByProductId = new Map<string, string>();
+  for (const item of items) {
+    if (item.productId && item.variantSku) {
+      variantSkusByProductId.set(item.productId, item.variantSku);
+    }
+  }
+
+  const availability = await getProductAvailability(productIds, variantSkusByProductId);
 
   return items.map((item) => {
     if (!item.productId) return { ...item };

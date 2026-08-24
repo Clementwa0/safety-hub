@@ -179,13 +179,36 @@ export const productService = {
     URL.revokeObjectURL(url);
   },
 
-  async getAvailability(productIds: string[]): Promise<Map<string, ProductAvailability>> {
-    const ids = Array.from(new Set(productIds.filter(Boolean)));
+  /**
+   * Accepts either plain product ids (existing callers, e.g. the inventory
+   * report - no variant concept there) or `{ productId, variantSku }` pairs
+   * (LineItemsEditor, once a size has been picked) so a single request can
+   * mix simple products and specific variants. A pair with no `variantSku`
+   * behaves exactly like passing the bare id: parent-level stock.
+   */
+  async getAvailability(
+    productIds: Array<string | { productId: string; variantSku?: string | undefined }>,
+  ): Promise<Map<string, ProductAvailability>> {
+    const pairs = productIds
+      .map((entry) => (typeof entry === "string" ? { productId: entry, variantSku: undefined } : entry))
+      .filter((entry) => Boolean(entry.productId));
+
+    const ids = Array.from(new Set(pairs.map((entry) => entry.productId)));
     const result = new Map<string, ProductAvailability>();
     if (ids.length === 0) return result;
 
+    const params = new URLSearchParams();
+    params.set("ids", ids.join(","));
+
+    const variantPairs = pairs
+      .filter((entry): entry is { productId: string; variantSku: string } => Boolean(entry.variantSku))
+      .map((entry) => `${entry.productId}:${entry.variantSku}`);
+    if (variantPairs.length > 0) {
+      params.set("variants", variantPairs.join(","));
+    }
+
     const payload = await apiRequest<{ items: ProductAvailability[] }>(
-      `/api/products/availability?ids=${ids.map(encodeURIComponent).join(",")}`,
+      `/api/products/availability?${params.toString()}`,
     );
     for (const entry of payload.items) {
       result.set(entry.productId, entry);
