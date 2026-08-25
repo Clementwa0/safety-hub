@@ -32,7 +32,6 @@ import StatsCard from "@/components/sentinel/shared/StatsCard";
 import StoreOrderTable from "./components/StoreOrderTable";
 import { PAGE_SIZE, STATS_CONFIG } from "@/lib/constants";
 
-
 export default function AdminStoreOrdersPage() {
   const [orders, setOrders] = useState<StoreOrder[]>([]);
 
@@ -48,9 +47,7 @@ export default function AdminStoreOrdersPage() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 350);
 
-  const [status, setStatus] = useState<
-    StoreOrderStatus | "all"
-  >("all");
+  const [status, setStatus] = useState<StoreOrderStatus | "all">("all");
 
   const [paymentStatus, setPaymentStatus] = useState<
     StorePaymentStatus | "all"
@@ -86,20 +83,12 @@ export default function AdminStoreOrdersPage() {
       setPagination(result.pagination);
     } catch (caught) {
       setError(
-        caught instanceof Error
-          ? caught.message
-          : "Could not load orders"
+        caught instanceof Error ? caught.message : "Could not load orders",
       );
     } finally {
       setLoading(false);
     }
-  }, [
-    page,
-    sort,
-    debouncedSearch,
-    status,
-    paymentStatus,
-  ]);
+  }, [page, sort, debouncedSearch, status, paymentStatus]);
 
   useEffect(() => {
     void load();
@@ -159,9 +148,7 @@ export default function AdminStoreOrdersPage() {
    */
 
   const hasFilters =
-    Boolean(search.trim()) ||
-    status !== "all" ||
-    paymentStatus !== "all";
+    Boolean(search.trim()) || status !== "all" || paymentStatus !== "all";
 
   /*
    * ==========================================================
@@ -169,9 +156,7 @@ export default function AdminStoreOrdersPage() {
    * ==========================================================
    */
 
-  const getStatValue = (
-    key: (typeof STATS_CONFIG)[number]["key"]
-  ): string => {
+  const getStatValue = (key: (typeof STATS_CONFIG)[number]["key"]): string => {
     if (!stats) {
       return "—";
     }
@@ -180,9 +165,7 @@ export default function AdminStoreOrdersPage() {
       return formatKES(stats.totalRevenue);
     }
 
-    return String(
-      stats[key as keyof StoreOrderStats] ?? "—"
-    );
+    return String(stats[key as keyof StoreOrderStats] ?? "—");
   };
 
   /*
@@ -263,9 +246,7 @@ export default function AdminStoreOrdersPage() {
             value={status}
             onValueChange={(value) => {
               if (typeof value === "string") {
-                setStatus(
-                  value as StoreOrderStatus | "all"
-                );
+                setStatus(value as StoreOrderStatus | "all");
               }
             }}
           >
@@ -278,18 +259,11 @@ export default function AdminStoreOrdersPage() {
             </SelectTrigger>
 
             <SelectContent>
-              <SelectItem value="all">
-                All statuses
-              </SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
 
               {STORE_ORDER_STATUSES.map((option) => (
-                <SelectItem
-                  key={option}
-                  value={option}
-                >
-                  <span className="capitalize">
-                    {option}
-                  </span>
+                <SelectItem key={option} value={option}>
+                  <span className="capitalize">{option}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -301,35 +275,24 @@ export default function AdminStoreOrdersPage() {
             value={paymentStatus}
             onValueChange={(value) => {
               if (typeof value === "string") {
-                setPaymentStatus(
-                  value as StorePaymentStatus | "all"
-                );
+                setPaymentStatus(value as StorePaymentStatus | "all");
               }
             }}
           >
             <SelectTrigger className="w-full md:w-40">
               <SelectValue>
                 <span className="capitalize">
-                  {paymentStatus === "all"
-                    ? "Payment"
-                    : paymentStatus}
+                  {paymentStatus === "all" ? "Payment" : paymentStatus}
                 </span>
               </SelectValue>
             </SelectTrigger>
 
             <SelectContent>
-              <SelectItem value="all">
-                All payments
-              </SelectItem>
+              <SelectItem value="all">All payments</SelectItem>
 
               {STORE_PAYMENT_STATUSES.map((option) => (
-                <SelectItem
-                  key={option}
-                  value={option}
-                >
-                  <span className="capitalize">
-                    {option}
-                  </span>
+                <SelectItem key={option} value={option}>
+                  <span className="capitalize">{option}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -354,20 +317,14 @@ export default function AdminStoreOrdersPage() {
               "
             >
               <SelectValue>
-                {sort === "-createdAt"
-                  ? "Newest"
-                  : "Oldest"}
+                {sort === "-createdAt" ? "Newest" : "Oldest"}
               </SelectValue>
             </SelectTrigger>
 
             <SelectContent>
-              <SelectItem value="-createdAt">
-                Newest
-              </SelectItem>
+              <SelectItem value="-createdAt">Newest</SelectItem>
 
-              <SelectItem value="createdAt">
-                Oldest
-              </SelectItem>
+              <SelectItem value="createdAt">Oldest</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -377,104 +334,59 @@ export default function AdminStoreOrdersPage() {
           ORDERS TABLE
       ======================================================= */}
 
-      <Card>
-        <CardContent className="p-0">
-          {/* Loading */}
-
-          {loading ? (
-            <TableSkeleton
-              rows={6}
-              columns={6}
+      <div className="p-1">
+        {loading ? (
+          <TableSkeleton rows={6} columns={6} />
+        ) : error ? (
+          <div className="p-4">
+            <EmptyState
+              title="Something went wrong"
+              description={error}
+              action={
+                <Button variant="outline" onClick={() => void load()}>
+                  Try again
+                </Button>
+              }
             />
-          ) : error ? (
-            /* Error */
-
-            <div className="p-4">
-              <EmptyState
-                title="Something went wrong"
-                description={error}
-                action={
-                  <Button
-                    variant="outline"
-                    onClick={() => void load()}
-                  >
-                    Try again
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              title={hasFilters ? "No matching orders" : "No orders yet"}
+              description={
+                hasFilters
+                  ? "Try a different search term or clear the filters."
+                  : "Orders placed through the storefront will show up here."
+              }
+              action={
+                hasFilters ? (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear filters
                   </Button>
+                ) : undefined
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <StoreOrderTable orders={orders} />
+
+            <div className="flex justify-center px-4 py-3 md:justify-end">
+              <Pagination
+                page={pagination.page}
+                totalPages={pagination.pages}
+                total={pagination.total}
+                onPrev={() => setPage((current) => Math.max(1, current - 1))}
+                onNext={() =>
+                  setPage((current) => Math.min(pagination.pages, current + 1))
                 }
+                hasPrev={pagination.page > 1}
+                hasNext={pagination.page < pagination.pages}
               />
             </div>
-          ) : orders.length === 0 ? (
-            /* Empty */
-
-            <div className="p-4">
-              <EmptyState
-                title={
-                  hasFilters
-                    ? "No matching orders"
-                    : "No orders yet"
-                }
-                description={
-                  hasFilters
-                    ? "Try a different search term or clear the filters."
-                    : "Orders placed through the storefront will show up here."
-                }
-                action={
-                  hasFilters ? (
-                    <Button
-                      variant="outline"
-                      onClick={clearFilters}
-                    >
-                      Clear filters
-                    </Button>
-                  ) : undefined
-                }
-              />
-            </div>
-          ) : (
-            /* Data */
-
-            <>
-              <StoreOrderTable orders={orders} />
-
-              {/* Pagination */}
-
-              <div
-                className="
-                  flex
-                  justify-center
-                  px-4
-                  py-3
-                  md:justify-end
-                "
-              >
-                <Pagination
-                  page={pagination.page}
-                  totalPages={pagination.pages}
-                  total={pagination.total}
-                  onPrev={() =>
-                    setPage((current) =>
-                      Math.max(1, current - 1)
-                    )
-                  }
-                  onNext={() =>
-                    setPage((current) =>
-                      Math.min(
-                        pagination.pages,
-                        current + 1
-                      )
-                    )
-                  }
-                  hasPrev={pagination.page > 1}
-                  hasNext={
-                    pagination.page <
-                    pagination.pages
-                  }
-                />
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 }
