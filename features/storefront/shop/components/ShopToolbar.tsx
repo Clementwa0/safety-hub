@@ -50,7 +50,7 @@ export function ShopToolbar({
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-sm">
+        <div className="relative w-full sm:max-w-xs md:max-w-sm lg:max-w-md">
           <Search
             aria-hidden="true"
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -65,8 +65,8 @@ export function ShopToolbar({
           />
         </div>
 
-        <div className="flex items-center justify-between gap-2 sm:justify-end">
-          <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+        <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-3">
+          <p className="text-sm text-muted-foreground tabular-nums whitespace-nowrap" aria-live="polite">
             {total.toLocaleString()} product{total === 1 ? "" : "s"}
           </p>
 
@@ -74,7 +74,7 @@ export function ShopToolbar({
             value={sort}
             onValueChange={(value) => onSortChange(value as SortKey)}
           >
-            <SelectTrigger className="h-10 w-[170px] rounded-xl" aria-label="Sort products">
+            <SelectTrigger className="h-10 w-[160px] rounded-xl md:w-[170px]" aria-label="Sort products">
               <SelectValue>
                 {(value) =>
                   SORT_OPTIONS.find((option) => option.value === value)?.label ??

@@ -11,7 +11,7 @@ import type {
  * Before this module, the same gross → discount → tax → total formula was
  * copy-pasted in three places (lib/sales.ts#computeTotals,
  * app/api/invoices/[id]/payments/route.ts#invoiceTotal, and
- * lib/server/sales-dashboard.ts#total), each commented "must stay
+ * modules/analytics/sales-dashboard.ts#total), each commented "must stay
  * identical to the others — if one changes, so must the rest". That's
  * exactly the kind of duplication that silently drifts. Every one of
  * those call sites now delegates here instead.

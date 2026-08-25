@@ -41,7 +41,7 @@ export const lineItemSchema = z.object({
   // member knows a "available" line actually needs procurement due to
   // lead time). `availableAtQuote` is deliberately NOT accepted here -
   // it's always computed server-side from live stock in
-  // lib/server/availability.ts and any client-sent value is silently
+  // modules/inventory/availability.ts and any client-sent value is silently
   // stripped (the default Zod object behavior for unrecognized keys),
   // so a client can never fake its own availability snapshot.
   fulfillmentPlan: z.enum(["available", "partial", "procurement"]).optional(),
@@ -67,7 +67,7 @@ export type CustomerObjectDTO = z.infer<typeof customerObjectSchema>;
 /**
  * A sales-document's `customer` field: either an existing customer's id,
  * or inline details for a customer that may or may not exist yet (see
- * lib/server/customers.ts#findOrCreateCustomer for how those are
+ * modules/customers/customers.ts#findOrCreateCustomer for how those are
  * resolved).
  */
 export const customerInputSchema = z.union([

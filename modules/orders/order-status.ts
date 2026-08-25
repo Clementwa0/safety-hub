@@ -7,7 +7,7 @@ const FORWARD_FLOW: OrderStatus[] = ["pending", "confirmed", "processing", "ship
 const TERMINAL_STATUSES: OrderStatus[] = ["delivered", "cancelled"];
 
 /**
- * Same shape as lib/storefront/order-status.ts's validator, kept as its
+ * Same shape as modules/checkout/order-status.ts's validator, kept as its
  * own copy rather than shared: Order and StoreOrder are unrelated models
  * that happen to reuse the same status vocabulary, and diverging rules
  * later (e.g. Order needing an extra internal status) shouldn't be

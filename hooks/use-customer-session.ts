@@ -20,7 +20,7 @@ import { useSession } from "next-auth/react";
  * plain customer.
  *
  * The server-side equivalent is `resolveStorefrontCustomer()` in
- * lib/storefront/identity.ts — keep the two in sync.
+ * lib/auth/identity.ts — keep the two in sync.
  */
 export function useCustomerSession() {
   const session = useSession();

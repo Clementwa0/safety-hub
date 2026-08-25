@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FaArrowRight, FaBox, FaStar } from "react-icons/fa6";
 import type { Metadata } from "next";
 
-import { getProductsByFlag } from "@/lib/server/catalog";
+import { getProductsByFlag } from "@/modules/catalog/catalog";
 import { Breadcrumb, SectionWrapper } from "@/components/shared/ui-bits";
 import { FaHome } from "react-icons/fa";
 import CategoryProductsSection from "../categories/components/CategoryProductsSection";

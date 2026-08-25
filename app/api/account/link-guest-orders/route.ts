@@ -1,7 +1,7 @@
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
-import { linkGuestOrdersToCustomer } from "@/lib/storefront/account-linking";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
+import { linkGuestOrdersToCustomer } from "@/modules/checkout/account-linking";
 
 export async function POST() {
   try {

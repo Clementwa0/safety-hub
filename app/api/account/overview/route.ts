@@ -2,8 +2,8 @@ import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
 import { AddressModel } from "@/lib/models/Address";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
-import { customerOrderFilter } from "@/lib/storefront/ownership";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
+import { customerOrderFilter } from "@/lib/db/ownership";
 import type {
   AccountOverview,
   AccountOverviewOrder,

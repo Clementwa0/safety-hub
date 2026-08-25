@@ -4,7 +4,8 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
  * NOTE ON NAMING
  * ---------------
  * A saved address only makes sense for a signed-in storefront customer
- * (`StorefrontCustomer`, see `lib/models/StorefrontCustomer.ts`) — guests
+ * (the `User` model, see `lib/models/User.ts` — stored in the
+ * `storefront_customers` collection post-unification) — guests
  * never accumulate a reusable address book, they just type a one-off
  * shipping address at checkout (`StoreOrder.shippingAddress`). This model
  * is intentionally separate from that embedded checkout snapshot: it's the
@@ -26,7 +27,7 @@ export interface IAddress extends Document {
 
 const addressSchema = new Schema<IAddress>(
   {
-    customer: { type: Schema.Types.ObjectId, ref: "StorefrontCustomer", required: true },
+    customer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     label: { type: String, trim: true },
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },

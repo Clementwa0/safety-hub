@@ -12,7 +12,7 @@ import type mongoose from "mongoose";
  * separate quotations created three separate Customer documents - the
  * form has no "pick an existing customer" step, so every inline submit
  * used to go straight to `CustomerModel.create`. Storefront checkout
- * (see performCheckout in lib/storefront/checkout.ts) reuses the same
+ * (see performCheckout in modules/checkout/checkout.ts) reuses the same
  * matching so a shopper who orders from the storefront shows up in the
  * Customers CRM list too, matched against the same B2B customer record
  * if they happen to share an email or phone.

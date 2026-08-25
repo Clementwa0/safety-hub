@@ -1,7 +1,7 @@
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
-import { updateProfileSchema } from "@/lib/storefront/validation";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
+import { updateProfileSchema } from "@/modules/customers/validation";
 import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { AddressModel } from "@/lib/models/Address";
 

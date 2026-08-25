@@ -3,7 +3,7 @@ import { cache } from "react";
 import { connectToDatabase } from "@/lib/db";
 import { ProductModel } from "@/lib/models/Product";
 import { CategoryModel } from "@/lib/models/Category";
-import { normalizeProduct } from "@/services/shared/product.service";
+import { normalizeProduct } from "@/modules/catalog/normalize";
 import type { Product } from "@/types/product";
 import type { CategoryWithCount } from "@/types/category";
 

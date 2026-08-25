@@ -10,7 +10,8 @@ export interface ICartItem {
 }
 
 export interface ICart extends Document {
-  /** Refs `StorefrontCustomer` — the single identity collection post-unification. */
+  /** Refs `User` — the single identity collection post-unification (stored
+   *  in the `storefront_customers` collection for compatibility). */
   user?: mongoose.Types.ObjectId;
   sessionId?: string;
   items: ICartItem[];
@@ -60,7 +61,7 @@ const cartSchema = new Schema<ICart>(
   {
     user: {
       type: Schema.Types.ObjectId,
-      ref: "StorefrontCustomer",
+      ref: "User",
       default: undefined,
     },
     sessionId: {

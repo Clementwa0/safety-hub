@@ -6,7 +6,7 @@ import { CategoryModel } from "@/lib/models/Category";
 import { requireStaff } from "@/lib/auth";
 import { productPartialSchema } from "@/lib/validation/product";
 import { slugify } from "@/lib/validation";
-import { recordMovement } from "@/lib/server/movements";
+import { recordMovement } from "@/modules/inventory/movements";
 import { NextRequest } from "next/server";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

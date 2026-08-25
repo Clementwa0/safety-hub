@@ -60,11 +60,12 @@ export interface IStoreOrderItem {
 
 export interface IStoreOrder extends Document {
   orderNumber: string;
-  /** Refs `StorefrontCustomer` — the single identity collection post-unification. */
+  /** Refs `User` — the single identity collection post-unification (stored
+   *  in the `storefront_customers` collection for compatibility). */
   user?: mongoose.Types.ObjectId;
   sessionId?: string;
   /** Refs the CRM `Customer` record matched/created at checkout via
-   *  findOrCreateCustomer (see lib/storefront/checkout.ts) — separate from
+   *  findOrCreateCustomer (see modules/checkout/checkout.ts) — separate from
    *  `user`, which is the storefront login identity, not the CRM contact.
    *  Optional only because orders placed before this linkage existed
    *  won't have it backfilled. */
@@ -124,7 +125,7 @@ const storeOrderSchema = new Schema<IStoreOrder>(
   {
     orderNumber: { type: String, required: true, trim: true },
 
-    user: { type: Schema.Types.ObjectId, ref: "StorefrontCustomer" },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     sessionId: { type: String, trim: true },
     customerId: { type: Schema.Types.ObjectId, ref: "Customer" },
 

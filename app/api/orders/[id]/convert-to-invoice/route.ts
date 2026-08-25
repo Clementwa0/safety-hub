@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { OrderModel } from "@/lib/models/Order";
 import { InvoiceModel } from "@/lib/models/Invoice";
 import { requireStaff } from "@/lib/auth";
-import { createWithDocumentNumber } from "@/lib/server/documentNumber";
+import { createWithDocumentNumber } from "@/lib/db/document-number";
 
 // POST /api/orders/[id]/convert-to-invoice
 //

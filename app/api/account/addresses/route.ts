@@ -1,8 +1,8 @@
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
 import { AddressModel } from "@/lib/models/Address";
-import { createAddressSchema } from "@/lib/storefront/validation";
+import { createAddressSchema } from "@/modules/customers/validation";
 
 export async function GET() {
   try {

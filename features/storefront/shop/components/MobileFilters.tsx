@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import { useState } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetContent,
@@ -12,18 +12,18 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet'
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils'
 
 import {
   ShopSidebar,
   type ShopSidebarProps,
-} from "./ShopSidebar";
+} from './ShopSidebar'
 
 export interface MobileFiltersProps extends ShopSidebarProps {
-  resultCount: number;
-  activeFilterCount: number;
+  resultCount: number
+  activeFilterCount: number
 }
 
 export function MobileFilters({
@@ -32,11 +32,12 @@ export function MobileFilters({
   className,
   ...sidebarProps
 }: MobileFiltersProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger
+      {/* Mobile trigger */}
+       <SheetTrigger
         render={
           <Button
             size="lg"
@@ -61,27 +62,58 @@ export function MobileFilters({
         }
       />
 
+      {/* Mobile filter sheet */}
       <SheetContent
         side="bottom"
-        className="flex h-[92dvh] flex-col rounded-t-3xl p-0 sm:max-w-none"
+        className={cn(
+          'flex h-[90dvh] max-h-[90dvh] flex-col',
+          'rounded-t-2xl p-0',
+          'sm:h-[85dvh] sm:max-h-[85dvh]',
+          'sm:max-w-none'
+        )}
       >
-        <SheetHeader className="border-b border-border/70 px-4 py-4 text-left">
-          <SheetTitle>Filter Products</SheetTitle>
+        {/* Header */}
+        <SheetHeader
+          className={cn(
+            'shrink-0 border-b border-border/70',
+            'px-5 py-4 text-left'
+          )}
+        >
+          <SheetTitle className="text-base font-semibold">
+            Filter Products
+          </SheetTitle>
 
-          <SheetDescription className="text-xs text-muted-foreground">
+          <SheetDescription className="text-xs leading-relaxed text-muted-foreground">
             Refine the catalog to find the right safety equipment.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        {/* Scrollable filters */}
+        <div
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto',
+            'overscroll-contain px-5 py-4',
+            '[&::-webkit-scrollbar]:w-1',
+            '[&::-webkit-scrollbar-thumb]:rounded-full',
+            '[&::-webkit-scrollbar-thumb]:bg-muted-foreground/20'
+          )}
+        >
           <ShopSidebar {...sidebarProps} />
         </div>
 
-        <SheetFooter className="flex-row gap-2 border-t border-border/70 bg-card/80 px-4 py-3 backdrop-blur-sm">
+        {/* Footer */}
+        <SheetFooter
+          className={cn(
+            'shrink-0 flex-row gap-2',
+            'border-t border-border/70',
+            'bg-background px-5 py-3',
+            'pb-[calc(0.75rem+env(safe-area-inset-bottom))]'
+          )}
+        >
           <Button
             type="button"
             variant="outline"
-            className="flex-1"
+            className="h-11 flex-1"
             onClick={sidebarProps.clearFilters}
             disabled={!sidebarProps.hasActiveFilters}
           >
@@ -90,14 +122,14 @@ export function MobileFilters({
 
           <Button
             type="button"
-            className="flex-[2]"
+            className="h-11 flex-[2]"
             onClick={() => setOpen(false)}
           >
-            Show {resultCount.toLocaleString()}{" "}
-            {resultCount === 1 ? "result" : "results"}
+            Show {resultCount.toLocaleString()}{' '}
+            {resultCount === 1 ? 'result' : 'results'}
           </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

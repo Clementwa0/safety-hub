@@ -5,10 +5,10 @@ import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
 import { ProductModel } from "@/lib/models/Product";
 import { requireStaff } from "@/lib/auth";
-import { updateStoreOrderSchema } from "@/lib/storefront/validation";
-import { validateStatusTransition } from "@/lib/storefront/order-status";
-import { validatePaymentStatusTransition } from "@/lib/storefront/payment-status";
-import { recordMovement } from "@/lib/server/movements";
+import { updateStoreOrderSchema } from "@/modules/checkout/validation";
+import { validateStatusTransition } from "@/modules/checkout/order-status";
+import { validatePaymentStatusTransition } from "@/modules/checkout/payment-status";
+import { recordMovement } from "@/modules/inventory/movements";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           order.status = parsed.data.status;
 
           // Stock actually leaves inventory here, at "shipped" — not at
-          // checkout (see performCheckout in lib/storefront/checkout.ts,
+          // checkout (see performCheckout in modules/checkout/checkout.ts,
           // which only places a `reserved` hold) and not at any other
           // status change. Guarded by `stockDecremented` so re-saving or
           // re-sending the same status can't double-decrement.

@@ -54,7 +54,7 @@ export interface IncomeEvent {
  *
  * Money math for orders/invoices delegates to
  * modules/invoicing/calculations.ts, the shared source of truth also used
- * by the full Sales Report (see lib/server/sales-dashboard.ts), so this
+ * by the full Sales Report (see modules/analytics/sales-dashboard.ts), so this
  * stays consistent with the rest of the app instead of re-deriving totals.
  */
 export function buildIncomeEvents(

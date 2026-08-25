@@ -1,11 +1,11 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeStoreOrderForCustomer } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
-import { performCheckout } from "@/lib/storefront/checkout";
-import { checkoutSchema } from "@/lib/storefront/validation";
-import { CartError } from "@/lib/storefront/cart";
+import { resolveCartIdentity, persistCartIdentity } from "@/modules/cart/session";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
+import { performCheckout } from "@/modules/checkout/checkout";
+import { checkoutSchema } from "@/modules/checkout/validation";
+import { CartError } from "@/modules/cart/cart";
 
 export async function POST(request: NextRequest) {
   try {

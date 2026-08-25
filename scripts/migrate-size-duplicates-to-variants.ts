@@ -16,7 +16,7 @@
  *    correctly, but their `product`/`productId` ref will point at a
  *    product _id that this script deletes. That's consistent with how
  *    this codebase already treats a deleted product (see the "product no
- *    longer exists" checks in lib/storefront/checkout.ts) — but it means
+ *    longer exists" checks in modules/checkout/checkout.ts) — but it means
  *    admin screens that try to re-resolve an old order's product link
  *    (rather than reading the snapshot) will see it as gone. Read
  *    carefully before running --apply on production data.

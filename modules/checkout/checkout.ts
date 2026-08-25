@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 import { CartModel } from "@/lib/models/Cart";
 import { ProductModel, type IProductVariant } from "@/lib/models/Product";
 import { StoreOrderModel, type IStoreOrder, type IStoreOrderItem } from "@/lib/models/StoreOrder";
-import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/lib/storefront/pricing";
-import { getNextOrderNumber } from "@/lib/storefront/order-number";
-import type { CartIdentity } from "@/lib/storefront/session";
-import { CartError } from "@/lib/storefront/cart";
-import { findOrCreateCustomer } from "@/lib/server/customers";
+import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/modules/cart/pricing";
+import { getNextOrderNumber } from "@/modules/checkout/order-number";
+import type { CartIdentity } from "@/modules/cart/session";
+import { CartError } from "@/modules/cart/cart";
+import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { getSettings } from "@/lib/settings/get-settings.server";
 
 export interface CheckoutInput {
@@ -82,7 +82,7 @@ export async function performCheckout(
         // only happens once an order actually ships, see
         // app/api/admin/store-orders/[id]/route.ts); it holds a
         // reservation instead, the same mechanism the B2B quotation flow
-        // already uses (see lib/server/availability.ts).
+        // already uses (see modules/inventory/availability.ts).
         const stockSource = variant ?? product;
         const available = Math.max(0, stockSource.stock - stockSource.reserved);
         if (cartItem.quantity > available) {

@@ -3,13 +3,17 @@
 import { useState } from 'react'
 import type { StaticImageData } from 'next/image'
 import Link from 'next/link'
-import { SafeImage } from '@/components/shared/SafeImage'
+import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
 import { AiOutlineEye } from 'react-icons/ai'
-import { FaCartPlus, FaStar, FaCircleCheck } from 'react-icons/fa6'
+import {
+  FaCartPlus,
+  FaCircleCheck,
+  FaTriangleExclamation,
+} from 'react-icons/fa6'
 import { toast } from 'sonner'
 
-import { useRouter } from 'next/navigation'
+import { SafeImage } from '@/components/shared/SafeImage'
 import { cn } from '@/lib/utils'
 import { formatKES } from '@/lib/format'
 import { useCart } from '@/hooks/useCart'
@@ -28,10 +32,6 @@ export interface ProductCardItem {
   isNewArrival?: boolean
   compareAtPrice?: number
   brand?: string
-  rating?: number
-  reviews?: number
-  /** True when sizes/variants must be picked on the product page before
-   *  this product can be added to a cart — the card can't add it directly. */
   hasVariants?: boolean
 }
 
@@ -44,261 +44,419 @@ export interface ProductCardProps {
   className?: string
 }
 
-export default function ProductCard ({
+export default function ProductCard({
   product,
   featured,
   priority = false,
   compact = false,
   showActionText = false,
-  className = ''
+  className,
 }: ProductCardProps) {
   const { addItem } = useCart()
   const router = useRouter()
-  const shouldReduceMotion = useReducedMotion()
+  const reduceMotion = useReducedMotion()
+
   const [adding, setAdding] = useState(false)
 
-  const isFeatured = featured ?? product.featured
-  const isVariantProduct = Boolean(product.hasVariants)
-  const isOutOfStock = product.stock <= 0
-  const isInStock = product.stock > 0
-  const isLowStock = !isOutOfStock && product.stock < 10
+  const {
+    id,
+    name,
+    category,
+    price,
+    image,
+    stock,
+    brand,
+    compareAtPrice,
+    hasVariants,
+    isNewArrival,
+  } = product
+
+  const isVariant = Boolean(hasVariants)
+  const isInStock = stock > 0
+  const isOutOfStock = !isVariant && !isInStock
+  const isLowStock = !isVariant && isInStock && stock < 10
+  const isFeatured = featured ?? product.featured ?? false
 
   const isDiscounted =
-    typeof product.compareAtPrice === 'number' &&
-    product.compareAtPrice > product.price
+    typeof compareAtPrice === 'number' && compareAtPrice > price
+
   const discount = isDiscounted
-    ? getDiscountPercent(product.price, product.compareAtPrice)
+    ? getDiscountPercent(price, compareAtPrice)
     : null
 
-  const productHref = `/products/${product.id}`
+  const productHref = `/products/${id}`
 
-  const handleAddToCart = async () => {
-    // Variant products must have a size chosen on the product page — the
-    // card can't guess which one, so it navigates there instead of adding.
-    if (isVariantProduct) {
+  // Ultra compact spacing
+  const contentSpacing = compact ? 'p-1.5' : 'p-3'
+  const gap = compact ? 'gap-0.5' : 'gap-1'
+  const nameSize = compact ? 'text-[11px] leading-tight' : 'text-sm sm:text-base leading-snug'
+  const badgeSize = compact ? 'px-1 py-0.5 text-[6px]' : 'px-2 py-0.5 text-[8px]'
+  const priceSize = compact ? 'text-sm' : 'text-base sm:text-lg'
+  const comparePriceSize = compact ? 'text-[9px]' : 'text-xs sm:text-sm'
+  const labelSize = compact ? 'text-[7px]' : 'text-[8px]'
+
+  const handleAction = async () => {
+    if (isVariant) {
       router.push(productHref)
       return
     }
 
     if (isOutOfStock) {
-      toast.error('This product is out of stock')
+      toast.error('This product is currently out of stock')
       return
     }
 
+    if (adding) return
+
     setAdding(true)
+
     try {
-      await addItem(product.id, undefined, 1)
-      toast.success(`${product.name} added to cart`)
+      await addItem(id, undefined, 1)
+      toast.success(`${name} added to cart`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not add to cart')
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Could not add this product to cart'
+      )
     } finally {
       setAdding(false)
     }
   }
 
+  const actionDisabled = adding || isOutOfStock
+
   return (
     <motion.article
-      whileHover={shouldReduceMotion ? undefined : { y: -2 }}
-      transition={{ duration: 0.2 }}
+      whileHover={reduceMotion ? undefined : { y: -2 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
       className={cn(
-        'group flex flex-col overflow-hidden rounded-sm border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-md',
+        'group flex h-full flex-col overflow-hidden rounded-lg',
+        'border border-gray-200/80 bg-white shadow-sm',
+        'transition-all duration-200 ease-out',
+        'hover:border-gray-300 hover:shadow-md',
         className
       )}
     >
-      <Link href={productHref} className='flex flex-col'>
-        <div className='relative aspect-square overflow-hidden bg-gray-50'>
+      <Link
+        href={productHref}
+        aria-label={`View ${name}`}
+        className="block flex-1"
+      >
+        {/* Product image */}
+        <div className="relative aspect-square overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100/50">
           <SafeImage
-            src={product.image}
-            alt={product.name}
+            src={image}
+            alt={name}
             fill
-            preset='card'
-            className='object-cover transition-transform duration-300 group-hover:scale-105'
-            sizes='(max-width:480px) 45vw,
-                   (max-width:640px) 40vw,
-                   (max-width:768px) 30vw,
-                   (max-width:1024px) 22vw,
-                   18vw'
-            quality={85}
+            preset="card"
             priority={priority}
             loading={priority ? undefined : 'lazy'}
+            quality={85}
+            sizes="(max-width:480px) 45vw, (max-width:640px) 40vw, (max-width:768px) 30vw, (max-width:1024px) 22vw, 18vw"
+            className={cn(
+              'object-cover transition-transform duration-500',
+              !reduceMotion && 'group-hover:scale-[1.04]'
+            )}
           />
 
-          {/* Badges - On top of image */}
-          <div className='absolute inset-0 pointer-events-none'>
-            {/* Top Left */}
-            <div className='absolute left-2 top-2 flex flex-col items-start gap-1'>
+          {/* Image badges - compact */}
+          <div className="pointer-events-none absolute inset-x-1 top-1 flex items-start justify-between gap-0.5">
+            {/* Left badges */}
+            <div className="flex max-w-[60%] flex-wrap gap-0.5">
               {isFeatured && (
-                <span className='rounded-full bg-secondary px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm'>
+                <Badge variant="secondary" className={badgeSize}>
                   Featured
-                </span>
+                </Badge>
               )}
-              {product.isNewArrival && (
-                <span className='rounded-full bg-sky-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm'>
-                  NEW
-                </span>
-              )}
-              {isInStock && !isFeatured && !product.isNewArrival && (
-                <span className='rounded-full bg-green-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm'>
-                  In Stock
-                </span>
+              {isNewArrival && (
+                <Badge variant="blue" className={badgeSize}>
+                  New
+                </Badge>
               )}
             </div>
 
-            {/* Top Right */}
-            <div className='absolute right-2 top-2 flex flex-col items-end gap-1'>
+            {/* Right badges */}
+            <div className="flex max-w-[40%] flex-wrap justify-end gap-0.5">
               {isOutOfStock && (
-                <span className='rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm'>
-                  Out of Stock
-                </span>
+                <Badge variant="danger" className={badgeSize}>
+                  Out
+                </Badge>
               )}
-              {isLowStock && !isOutOfStock && (
-                <span className='rounded-full bg-orange-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm'>
-                  Only {product.stock} left
-                </span>
-              )}
-              {isInStock && isDiscounted && (
-                <span className='rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm'>
-                  Sale
-                </span>
+              {isDiscounted && discount !== null && (
+                <Badge variant="danger" className={badgeSize}>
+                  -{discount}%
+                </Badge>
               )}
             </div>
+          </div>
 
-            {/* Bottom - View Details overlay */}
-            <div className='absolute inset-x-2 bottom-2 hidden opacity-0 transition-opacity duration-300 sm:block sm:group-hover:opacity-100'>
-              <span className='flex items-center justify-center gap-1 rounded-md bg-white/95 py-1.5 text-xs font-medium text-gray-700 shadow backdrop-blur'>
-                <AiOutlineEye className='text-xs' />
-                View Details
-              </span>
-            </div>
+          {/* Quick view overlay - smaller */}
+          <div className="pointer-events-none absolute inset-x-2 bottom-2 hidden sm:block">
+            <span
+              className={cn(
+                'flex items-center justify-center gap-1',
+                'rounded-md bg-black/60 px-2 py-1',
+                'text-[8px] font-medium text-white',
+                'opacity-0 backdrop-blur-sm',
+                'transition-all duration-200',
+                'group-hover:opacity-100'
+              )}
+            >
+              <AiOutlineEye className="text-[10px]" aria-hidden="true" />
+              Quick View
+            </span>
           </div>
         </div>
 
-        <div className={cn('flex flex-col', compact ? 'p-2' : 'p-2.5')}>
-          {product.brand && (
-            <p
-              className={cn(
-                'truncate font-medium uppercase tracking-wide text-muted-foreground/80',
-                compact ? 'text-[9px]' : 'text-[9px] sm:text-[10px]'
-              )}
-            >
-              {product.brand}
+        {/* Product information - ultra compact */}
+        <div className={cn('flex flex-col', contentSpacing, gap)}>
+          {/* Brand + category row */}
+          <div className="flex min-w-0 items-center justify-between gap-1">
+            {brand ? (
+              <p className={cn('min-w-0 truncate font-semibold uppercase tracking-wider text-muted-foreground/60', labelSize)}>
+                {brand}
+              </p>
+            ) : (
+              <span />
+            )}
+            <p className={cn('shrink-0 truncate font-medium text-muted-foreground/50', labelSize)}>
+              {category}
             </p>
-          )}
+          </div>
 
+          {/* Product name */}
           <h3
             className={cn(
-              'line-clamp-2 min-h-[2rem] font-semibold leading-tight text-primary transition-colors group-hover:text-secondary',
-              compact ? 'text-xs' : 'text-xs sm:text-sm'
+              'line-clamp-2 font-semibold text-gray-900',
+              'transition-colors duration-200',
+              'group-hover:text-secondary',
+              nameSize
             )}
           >
-            {product.name}
+            {name}
           </h3>
 
-          <div className='mt-1 flex items-center justify-between gap-2'>
-            <p
-              className={cn(
-                'truncate text-muted-foreground',
-                compact ? 'text-[10px]' : 'text-[10px] sm:text-xs'
-              )}
-            >
-              {product.category}
-            </p>
-
-            {typeof product.rating === 'number' && product.rating > 0 && (
-              <span
-                className='flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-amber-500'
-                aria-label={
-                  product.reviews
-                    ? `Rated ${product.rating.toFixed(1)} out of 5, ${product.reviews} reviews`
-                    : `Rated ${product.rating.toFixed(1)} out of 5`
-                }
-              >
-                <FaStar className='text-[10px]' aria-hidden='true' />
-                {product.rating.toFixed(1)}
-                {typeof product.reviews === 'number' && product.reviews > 0 && (
-                  <span className='text-muted-foreground'>({product.reviews})</span>
-                )}
-              </span>
-            )}
-          </div>
-
-          {/* Stock status indicator */}
-          <div className='mt-1.5 flex items-center gap-1.5'>
-            {isInStock ? (
-              <span className='flex items-center gap-1 text-[10px] font-medium text-green-600'>
-                <FaCircleCheck className='text-[8px]' />
-                In Stock
-              </span>
-            ) : (
-              <span className='text-[10px] font-medium text-red-500'>Out of Stock</span>
-            )}
-            {isLowStock && isInStock && (
-              <span className='text-[10px] text-orange-500'>
-                · {product.stock} left
-              </span>
-            )}
-          </div>
+          {/* Stock status - compact */}
+          <StockStatus
+            isVariant={isVariant}
+            isInStock={isInStock}
+            isLowStock={isLowStock}
+            stock={stock}
+            compact={compact}
+          />
         </div>
       </Link>
 
+      {/* Footer - ultra compact */}
       <div
         className={cn(
-          'mt-auto flex items-center justify-between gap-2 border-t border-gray-100',
-          compact ? 'px-2 py-2' : 'px-2.5 py-2.5'
+          'mt-auto flex items-center justify-between gap-1.5',
+          'border-t border-gray-100/80',
+          contentSpacing
         )}
       >
-        <div className='flex flex-wrap items-center gap-1.5'>
-          <span
-            className={cn(
-              'font-bold text-secondary',
-              compact ? 'text-xs' : 'text-xs sm:text-sm'
-            )}
-          >
-            {formatKES(product.price)}
-          </span>
-          {isDiscounted && discount !== null && (
-            <>
-              <span
-                className={cn(
-                  'text-muted-foreground line-through',
-                  compact ? 'text-[10px]' : 'text-[10px] sm:text-xs'
-                )}
-              >
-                {formatKES(product.compareAtPrice as number)}
-              </span>
-              <span className='rounded bg-red-100 px-1 py-0.5 text-[9px] font-semibold text-red-600'>
-                -{discount}%
-              </span>
-            </>
-          )}
-        </div>
+        <Price
+          price={price}
+          compareAtPrice={compareAtPrice}
+          compact={compact}
+          priceSize={priceSize}
+          comparePriceSize={comparePriceSize}
+        />
 
         <button
-          type='button'
-          onClick={() => void handleAddToCart()}
-          disabled={(isOutOfStock && !isVariantProduct) || adding}
-          className={cn(
-            'flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition active:scale-95 sm:px-3',
-            (isOutOfStock && !isVariantProduct) || adding
-              ? 'cursor-not-allowed bg-gray-200 text-gray-500 active:scale-100'
-              : 'bg-slate-600 text-white hover:bg-slate-700'
-          )}
+          type="button"
+          onClick={() => void handleAction()}
+          disabled={actionDisabled}
           aria-label={
-            isVariantProduct
-              ? `Select options for ${product.name}`
+            isVariant
+              ? `Select options for ${name}`
               : isOutOfStock
-                ? `${product.name} is out of stock`
-                : `Add ${product.name} to cart`
+                ? `${name} is out of stock`
+                : `Add ${name} to cart`
           }
+          className={cn(
+            'flex shrink-0 items-center justify-center gap-1',
+            'rounded-md px-2 py-1',
+            'text-[9px] font-semibold',
+            'transition-all duration-200',
+            'active:scale-95',
+            'focus-visible:outline-none',
+            'focus-visible:ring-2 focus-visible:ring-secondary/40',
+            'focus-visible:ring-offset-1',
+            actionDisabled
+              ? 'cursor-not-allowed bg-gray-100 text-gray-400'
+              : 'bg-secondary text-white hover:bg-secondary/90 hover:shadow-sm'
+          )}
         >
-          <FaCartPlus className='text-xs sm:text-sm' />
+          <FaCartPlus
+            className={compact ? 'text-[9px]' : 'text-xs'}
+            aria-hidden="true"
+          />
+
           {showActionText && (
-            <span className='hidden sm:inline'>
-              {isVariantProduct ? 'Select Options' : isOutOfStock ? 'Out of Stock' : 'Add'}
+            <span className="hidden whitespace-nowrap sm:inline">
+              {adding
+                ? 'Adding...'
+                : isVariant
+                  ? 'Select Size'
+                  : isOutOfStock
+                    ? 'Out'
+                    : 'Add'}
             </span>
           )}
         </button>
       </div>
     </motion.article>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/* Internal UI primitives                                                     */
+/* -------------------------------------------------------------------------- */
+
+function Badge({
+  children,
+  variant,
+  className,
+}: {
+  children: React.ReactNode
+  variant: 'secondary' | 'blue' | 'danger'
+  className?: string
+}) {
+  const variantStyles = {
+    secondary: 'bg-secondary text-white',
+    blue: 'bg-blue-500 text-white',
+    danger: 'bg-red-500 text-white',
+  }
+
+  return (
+    <span
+      className={cn(
+        'rounded font-semibold uppercase leading-none tracking-wide shadow-sm',
+        variantStyles[variant],
+        className
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
+function StockStatus({
+  isVariant,
+  isInStock,
+  isLowStock,
+  stock,
+  compact,
+}: {
+  isVariant: boolean
+  isInStock: boolean
+  isLowStock: boolean
+  stock: number
+  compact: boolean
+}) {
+  const textSize = compact ? 'text-[7px]' : 'text-[10px]'
+  const iconSize = compact ? 'text-[7px]' : 'text-[9px]'
+
+if (isVariant) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded',
+        'bg-blue-50 px-1.5 py-0.5',
+        'font-semibold text-blue-700',
+        'ring-1 ring-blue-200',
+        textSize
+      )}
+    >
+      <svg
+        className="h-2.5 w-2.5 shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2.5}
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 11-18 0"
+        />
+      </svg>
+
+      <span>Multiple sizes</span>
+    </span>
+  )
+}
+
+  if (!isInStock) {
+    return (
+      <span className={cn('font-medium text-red-500', textSize)}>
+        Out of Stock
+      </span>
+    )
+  }
+
+  if (isLowStock) {
+    return (
+      <span
+        className={cn(
+          'flex items-center gap-0.5 font-medium text-orange-600',
+          textSize
+        )}
+      >
+        <FaTriangleExclamation className={cn('shrink-0', iconSize)} aria-hidden="true" />
+        {compact ? `${stock} left` : `Only ${stock} left`}
+      </span>
+    )
+  }
+
+  return (
+    <span className={cn('flex items-center gap-0.5 font-medium text-green-600', textSize)}>
+      <FaCircleCheck className={cn('shrink-0', iconSize)} aria-hidden="true" />
+      {compact ? 'In Stock' : 'In Stock'}
+    </span>
+  )
+}
+
+function Price({
+  price,
+  compareAtPrice,
+  priceSize,
+  comparePriceSize,
+}: {
+  price: number
+  compareAtPrice?: number
+  compact: boolean
+  priceSize: string
+  comparePriceSize: string
+}) {
+  const isDiscounted =
+    typeof compareAtPrice === 'number' && compareAtPrice > price
+
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5">
+      <span
+        className={cn(
+          'whitespace-nowrap font-bold leading-none tracking-tight text-secondary',
+          priceSize
+        )}
+      >
+        {formatKES(price)}
+      </span>
+
+      {isDiscounted && (
+        <span
+          className={cn(
+            'whitespace-nowrap font-medium leading-none',
+            'text-muted-foreground/50 line-through',
+            comparePriceSize
+          )}
+        >
+          {formatKES(compareAtPrice)}
+        </span>
+      )}
+    </div>
   )
 }

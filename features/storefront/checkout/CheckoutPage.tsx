@@ -29,7 +29,7 @@ import {
   generateWhatsAppReference,
   openWhatsAppCheckout,
   type WhatsAppPreferredPayment,
-} from "@/lib/storefront/whatsapp";
+} from "@/modules/checkout/whatsapp";
 import EmptyCart from "../cart/components/EmptyCart";
 import MpesaPaymentCard from "./components/MpesaPaymentCard";
 

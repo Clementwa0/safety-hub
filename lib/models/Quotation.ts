@@ -15,7 +15,7 @@ export interface IQuotationLineItem {
   unitPrice: number;
   taxRate: number;
   discount: number;
-  // Stock snapshot captured at quote time (see lib/server/availability.ts)
+  // Stock snapshot captured at quote time (see modules/inventory/availability.ts)
   // - not live inventory. A later stock change (a sale, a restock)
   // deliberately does not rewrite these once set, so a quotation always
   // reflects what was actually available when it was quoted. Both are

@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { getProductAvailability } from "@/lib/server/availability";
+import { getProductAvailability } from "@/modules/inventory/availability";
 
 // GET /api/products/availability?ids=<id1>,<id2>,...
 //

@@ -1,5 +1,5 @@
 /**
- * Tests for lib/server/sales-dashboard.ts, focused on the bug this
+ * Tests for modules/analytics/sales-dashboard.ts, focused on the bug this
  * change fixes: cash-flow figures (the "Cash Collected" KPI, its time
  * series, aging, and outstanding balances) must be driven by the actual
  * `Payment.date` an active (non-voided) payment was recorded on — never
@@ -23,7 +23,7 @@ import { PaymentModel } from "@/lib/models/Payment";
 import { QuotationModel } from "@/lib/models/Quotation";
 import { OrderModel } from "@/lib/models/Order";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
-import { buildSalesDashboard } from "@/lib/server/sales-dashboard";
+import { buildSalesDashboard } from "@/modules/analytics/sales-dashboard";
 import type { SeriesPoint } from "@/types/sentinel/sales-dashboard";
 
 let mongod: MongoMemoryServer;

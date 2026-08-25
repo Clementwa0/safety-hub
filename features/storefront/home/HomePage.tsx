@@ -1,4 +1,4 @@
-import { getProductsByFlag } from "@/lib/server/catalog";
+import { getProductsByFlag } from "@/modules/catalog/catalog";
 import { Categories, Hero, FeaturedProducts, NewArrivals, CTA } from "./components";
 
 export default async function HomePage() {

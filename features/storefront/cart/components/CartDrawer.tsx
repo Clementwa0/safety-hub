@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { formatKES } from "@/lib/format";
 import { useCart } from "@/hooks/useCart";
 import { useCartUIStore } from "@/store/cart-ui-store";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/storefront/pricing";
+import { FREE_SHIPPING_THRESHOLD } from "@/modules/cart/pricing";
 import EmptyCart from "./EmptyCart";
 
 export default function CartDrawer() {

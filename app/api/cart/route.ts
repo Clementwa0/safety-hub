@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
-import { getOrCreateCart, serializeCart, clearCart, CartError } from "@/lib/storefront/cart";
+import { resolveCartIdentity, persistCartIdentity } from "@/modules/cart/session";
+import { getOrCreateCart, serializeCart, clearCart, CartError } from "@/modules/cart/cart";
 
 export async function GET(request: NextRequest) {
   try {

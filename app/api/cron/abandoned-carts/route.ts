@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
-import { sendAbandonedCartEmails } from "@/lib/storefront/abandoned-cart";
+import { sendAbandonedCartEmails } from "@/modules/cart/abandoned-cart";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

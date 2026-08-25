@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth";
-import { buildSalesDashboard } from "@/lib/server/sales-dashboard";
+import { buildSalesDashboard } from "@/modules/analytics/sales-dashboard";
 import { DASHBOARD_RANGES, type DashboardRange } from "@/types/sentinel/sales-dashboard";
 
 export async function GET(request: NextRequest) {

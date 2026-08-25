@@ -6,8 +6,8 @@ import { InvoiceModel } from "@/lib/models/Invoice";
 import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
-import { findOrCreateCustomer } from "@/lib/server/customers";
-import { createWithDocumentNumber } from "@/lib/server/documentNumber";
+import { findOrCreateCustomer } from "@/modules/customers/customers";
+import { createWithDocumentNumber } from "@/lib/db/document-number";
 
 // "paid"/"partially_paid" and `amountPaid` are deliberately not
 // accepted here - see the identical note in app/api/invoices/[id]/route.ts.

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { cookies } from "next/headers";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
-import { CART_SESSION_COOKIE } from "@/lib/storefront/constants";
+import { CART_SESSION_COOKIE } from "@/modules/cart/constants";
 
 export interface LinkGuestOrdersResult {
   linkedCount: number;

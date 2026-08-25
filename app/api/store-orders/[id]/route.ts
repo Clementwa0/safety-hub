@@ -3,9 +3,9 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeStoreOrderForCustomer } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
-import { orderBelongsToCustomer } from "@/lib/storefront/ownership";
-import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
+import { orderBelongsToCustomer } from "@/lib/db/ownership";
+import { resolveCartIdentity, persistCartIdentity } from "@/modules/cart/session";
 
 interface RouteContext {
   params: Promise<{ id: string }>;

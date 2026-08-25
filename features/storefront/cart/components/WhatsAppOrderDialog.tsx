@@ -25,7 +25,7 @@ import {
   generateWhatsAppReference,
   openWhatsAppCheckout,
   type WhatsAppPreferredPayment,
-} from "@/lib/storefront/whatsapp";
+} from "@/modules/checkout/whatsapp";
 
 interface GuestInfoForm {
   name: string;

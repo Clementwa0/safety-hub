@@ -13,7 +13,7 @@ import {
   getCategoriesWithCounts,
   getCategoryBySlug,
   getProductsByCategoryId,
-} from "@/lib/server/catalog";
+} from "@/modules/catalog/catalog";
 
 
 import {

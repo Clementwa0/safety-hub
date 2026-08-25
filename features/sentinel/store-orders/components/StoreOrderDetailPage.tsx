@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { formatDate, formatKES } from "@/lib/format";
 import { adminStoreOrderService } from "@/services/sentinel/admin-store-order.service";
-import { validateStatusTransition } from "@/lib/storefront/order-status";
+import { validateStatusTransition } from "@/modules/checkout/order-status";
 import {
   STORE_PAYMENT_STATUSES,
   type StoreOrder,

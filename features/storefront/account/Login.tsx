@@ -9,7 +9,7 @@ import { FaGoogle, FaFacebook, FaTriangleExclamation } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSettings } from "@/components/SettingsProvider";
-import { getSafeCallbackUrl } from "@/lib/storefront/safe-redirect";
+import { getSafeCallbackUrl } from "@/lib/auth/safe-redirect";
 import { useCustomerSession } from "@/hooks/use-customer-session";
 
 const DEFAULT_CALLBACK_URL = "/account";

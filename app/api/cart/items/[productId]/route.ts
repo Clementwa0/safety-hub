@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
-import { updateCartItemQuantity, removeCartItem, serializeCart, CartError } from "@/lib/storefront/cart";
-import { updateCartItemSchema } from "@/lib/storefront/validation";
+import { resolveCartIdentity, persistCartIdentity } from "@/modules/cart/session";
+import { updateCartItemQuantity, removeCartItem, serializeCart, CartError } from "@/modules/cart/cart";
+import { updateCartItemSchema } from "@/modules/cart/validation";
 
 interface RouteContext {
   params: Promise<{ productId: string }>;

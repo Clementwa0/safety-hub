@@ -2,9 +2,9 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeStoreOrderForCustomer } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
-import { customerOrderFilter } from "@/lib/storefront/ownership";
-import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
+import { customerOrderFilter } from "@/lib/db/ownership";
+import { resolveCartIdentity, persistCartIdentity } from "@/modules/cart/session";
 
 export async function GET(request: NextRequest) {
   try {

@@ -6,8 +6,8 @@ import { OrderModel } from "@/lib/models/Order";
 import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
-import { findOrCreateCustomer } from "@/lib/server/customers";
-import { createWithDocumentNumber } from "@/lib/server/documentNumber";
+import { findOrCreateCustomer } from "@/modules/customers/customers";
+import { createWithDocumentNumber } from "@/lib/db/document-number";
 
 const orderSchema = z.object({
   customer: customerInputSchema,

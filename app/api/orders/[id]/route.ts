@@ -8,9 +8,9 @@ import { ProductModel } from "@/lib/models/Product";
 import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
-import { findOrCreateCustomer } from "@/lib/server/customers";
-import { validateOrderStatusTransition } from "@/lib/server/order-status";
-import { recordMovement } from "@/lib/server/movements";
+import { findOrCreateCustomer } from "@/modules/customers/customers";
+import { validateOrderStatusTransition } from "@/modules/orders/order-status";
+import { recordMovement } from "@/modules/inventory/movements";
 
 const orderSchema = z.object({
   customer: customerInputSchema.optional(),

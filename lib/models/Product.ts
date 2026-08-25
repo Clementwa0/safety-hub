@@ -37,7 +37,7 @@ export interface IProduct extends Document {
 
   stock: number;
   // Units held against accepted-but-not-yet-invoiced Sales Orders (see
-  // lib/server/availability.ts). `stock` is never decremented until an
+  // modules/inventory/availability.ts). `stock` is never decremented until an
   // Order is converted to an Invoice - until then, the quantity is only
   // "reserved", so it still counts toward on-hand inventory but not
   // toward what's available to quote/sell again. available = stock - reserved.

@@ -8,9 +8,9 @@ import { OrderModel } from "@/lib/models/Order";
 import { ProductModel } from "@/lib/models/Product";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
-import { findOrCreateCustomer } from "@/lib/server/customers";
-import { createWithDocumentNumber } from "@/lib/server/documentNumber";
-import { snapshotLineItemAvailability } from "@/lib/server/availability";
+import { findOrCreateCustomer } from "@/modules/customers/customers";
+import { createWithDocumentNumber } from "@/lib/db/document-number";
+import { snapshotLineItemAvailability } from "@/modules/inventory/availability";
 
 const quotationSchema = z.object({
   customer: customerInputSchema.optional(),

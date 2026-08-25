@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import { CartModel, type ICart, type ICartItem } from "@/lib/models/Cart";
 import { ProductModel, type IProduct, type IProductVariant } from "@/lib/models/Product";
-import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/lib/storefront/pricing";
+import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/modules/cart/pricing";
 import { getSettings } from "@/lib/settings/get-settings.server";
-import type { CartIdentity } from "@/lib/storefront/session";
+import type { CartIdentity } from "@/modules/cart/session";
 
 export class CartError extends Error {
   status: number;

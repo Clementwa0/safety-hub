@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { FaHome, FaShoppingBag } from "react-icons/fa";
 
-import {
-  Breadcrumb,
-  SectionWrapper,
-} from "@/components/shared/ui-bits";
+import { Breadcrumb, SectionWrapper } from "@/components/shared/ui-bits";
 import { Loading } from "@/components/shared/Loading";
 import ShopContent from "./components/ShopContent";
 
@@ -18,7 +15,8 @@ export const metadata: Metadata = {
 export default function ShopPage() {
   return (
     <main>
-      <SectionWrapper compact>
+      <SectionWrapper>
+        {" "}
         <Breadcrumb
           items={[
             {
@@ -36,12 +34,7 @@ export default function ShopPage() {
 
       <SectionWrapper>
         <Suspense
-          fallback={
-            <Loading
-              label="Loading products..."
-              className="py-24"
-            />
-          }
+          fallback={<Loading label="Loading products..." className="py-24" />}
         >
           <ShopContent />
         </Suspense>

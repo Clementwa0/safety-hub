@@ -14,7 +14,7 @@ import {
   createSentinelSession,
   invalidateSentinelSession,
 } from "@/lib/auth/session";
-import { linkGuestOrdersToCustomer } from "@/lib/storefront/account-linking";
+import { linkGuestOrdersToCustomer } from "@/modules/checkout/account-linking";
 import { UserModel } from "@/lib/models/User";
 
 const providers = [

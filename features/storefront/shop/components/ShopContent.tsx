@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { PackageOpen, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
-
 import { Button } from "@/components/ui/button";
 import { useShopFilters } from "@/hooks/useShopFilters";
 import { productService } from "@/services/shared/product.service";
@@ -13,10 +12,9 @@ import {
   applyFilters,
   buildBrandOptions,
   buildCategoryOptions,
- 
 } from "@/lib/shopFilters";
 import { cn } from "@/lib/utils";
-import type { Product} from "@/types/storefront/shop";
+import type { Product } from "@/types/storefront/shop";
 import { hasVariants } from "@/types/product";
 import type { CategoryWithCount } from "@/types/category";
 import { MobileFilters } from "./MobileFilters";
@@ -46,8 +44,6 @@ function adaptProductForShop(dbProduct: any): Product | null {
       typeof dbProduct.image === "string"
         ? dbProduct.image
         : dbProduct.image?.src || dbProduct.image?.url || DEFAULT_IMAGE,
-    rating: dbProduct.rating,
-    reviews: dbProduct.reviews,
     featured: dbProduct.featured ?? false,
     isNewArrival: dbProduct.isNewArrival ?? false,
     createdAt: dbProduct.createdAt,
@@ -66,8 +62,6 @@ function mapToProductCardItem(product: Product): ProductCardItem {
     featured: product.featured ?? false,
     compareAtPrice: product.compareAtPrice,
     brand: product.brand,
-    rating: product.rating,
-    reviews: product.reviews,
     isNewArrival: product.isNewArrival ?? false,
     hasVariants: hasVariants(product),
   };
@@ -146,13 +140,13 @@ export default function ShopContent() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-2">
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+      <div className="w-full">
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] 2xl:grid-cols-[360px_1fr]">
           <div className="hidden lg:block">
             <div className="h-[600px] animate-pulse rounded-2xl bg-muted" />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted" />
             ))}
           </div>
@@ -163,7 +157,7 @@ export default function ShopContent() {
 
   if (error) {
     return (
-      <div className="mx-auto flex min-h-[400px] max-w-7xl flex-col items-center justify-center px-4 py-8 text-center sm:px-6">
+      <div className="flex min-h-[400px] w-full flex-col items-center justify-center py-8 text-center">
         <div className="mb-4 rounded-full bg-destructive/10 p-4">
           <AlertTriangle className="h-8 w-8 text-destructive" />
         </div>
@@ -177,14 +171,16 @@ export default function ShopContent() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl sm:px-6 lg:pb-16">
-      <div className="flex gap-8">
-        <div className="hidden w-80 shrink-0 lg:block">
+    <div className="w-full">
+      <div className="flex gap-4 lg:gap-6 xl:gap-8">
+        {/* Sidebar - responsive width */}
+        <div className="hidden w-64 shrink-0 lg:block xl:w-72 2xl:w-80">
           <div className="sticky top-8 max-h-[calc(100dvh-4rem)] overflow-y-auto pr-1">
             <ShopSidebar {...sidebarProps} />
           </div>
         </div>
 
+        {/* Main content - takes remaining space */}
         <div className="min-w-0 flex-1 space-y-5">
           <ShopToolbar
             total={validResults.length}
@@ -217,8 +213,9 @@ export default function ShopContent() {
             <>
               <div
                 className={cn(
+                  "gap-3 sm:gap-4",
                   filters.view === "grid"
-                    ? "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4"
+                    ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5"
                     : "flex flex-col gap-3"
                 )}
               >
@@ -255,6 +252,6 @@ export default function ShopContent() {
         resultCount={validResults.length}
         activeFilterCount={activeFilterCount}
       />
-    </main>
+    </div>
   );
 }

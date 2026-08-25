@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveStorefrontCustomer } from "@/lib/storefront/identity";
+import { resolveStorefrontCustomer } from "@/lib/auth/identity";
 import { AddressModel } from "@/lib/models/Address";
-import { updateAddressSchema } from "@/lib/storefront/validation";
+import { updateAddressSchema } from "@/modules/customers/validation";
 
 interface RouteContext {
   params: Promise<{ id: string }>;

@@ -9,7 +9,7 @@ interface StockAvailabilityPanelProps {
 /**
  * Shows the stock snapshot captured when the quotation's items were last
  * saved (availableAtQuote/fulfillmentPlan - see
- * lib/server/availability.ts). Deliberately not a live re-check against
+ * modules/inventory/availability.ts). Deliberately not a live re-check against
  * current stock: the whole point of the snapshot is that a quotation
  * reflects what was available when it was quoted, not what's available
  * right now while someone happens to be viewing it.

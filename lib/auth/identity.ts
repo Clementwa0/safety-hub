@@ -27,8 +27,10 @@ export interface SentinelUserIdentity {
  * checkout's email-pinning, etc.) already treat `null` as "no customer
  * session", so a admin browsing the storefront is handled exactly
  * like a guest for every customer-facing purpose. Order/cart ownership
- * for a signed-in admin is unaffected — that's `resolveCartIdentity`
- * in lib/storefront/session.ts, a separate, intentionally broader check.
+ * for a signed-in admin follows the identical rule — see
+ * `resolveCartIdentityFromSession` in
+ * modules/cart/cart-identity-rules.ts, which applies the same role
+ * check and must be kept in sync with this one.
  *
  * The client-side equivalent is `useCustomerSession()` in
  * hooks/use-customer-session.ts — keep the two in sync.
@@ -57,7 +59,7 @@ export async function resolveStorefrontCustomer(): Promise<StorefrontCustomerIde
  * signed-in plain customer — callers that need Sentinel authorization
  * should generally prefer requireAdmin()/requireStaff() from
  * lib/auth/permissions over this, which exists mainly for read-only "is
- * there a Sentinel session" checks (e.g. lib/storefront/session.ts's
+ * there a Sentinel session" checks (e.g. modules/cart/session.ts's
  * cart identity resolution).
  */
 export async function resolveSentinelUser(): Promise<SentinelUserIdentity | null> {

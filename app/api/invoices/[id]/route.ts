@@ -6,7 +6,7 @@ import { InvoiceModel } from "@/lib/models/Invoice";
 import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
-import { findOrCreateCustomer } from "@/lib/server/customers";
+import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { deleteDraftInvoice, translateInvoiceServiceError } from "@/modules/invoicing/invoice.service";
 
 // "paid" and "partially_paid" are deliberately excluded here - those are

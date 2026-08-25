@@ -9,8 +9,6 @@ import { cn } from "@/lib/utils";
 
 interface ProductGalleryProps {
   product: Product;
-  /** When set (the customer picked a size with its own photo), that image
-   *  becomes the active view instead of the product's default gallery order. */
   selectedVariantImage?: string;
 }
 
@@ -19,23 +17,15 @@ export function ProductGallery({ product, selectedVariantImage }: ProductGallery
     ? product.images
     : [product.image];
 
-  // Bring the selected variant's photo to the front of the gallery (and add
-  // it if it isn't already one of the product's images) so it becomes the
-  // hero shot the moment a size with its own image is picked.
   const images = selectedVariantImage
-    ? [
-        selectedVariantImage,
-        ...baseImages.filter((image) => image !== selectedVariantImage),
-      ]
+    ? [selectedVariantImage, ...baseImages.filter((image) => image !== selectedVariantImage)]
     : baseImages;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   useEffect(() => {
-    // Jump back to the hero shot whenever the selected variant's image
-    // changes, rather than leaving the viewer on whatever index the
-    // customer had scrolled to for the previous size.
     setCurrentIndex(0);
     setIsZoomed(false);
   }, [selectedVariantImage]);
@@ -52,15 +42,36 @@ export function ProductGallery({ product, selectedVariantImage }: ProductGallery
 
   const selectImage = (index: number) => {
     setCurrentIndex(index);
+    setIsZoomed(false);
+  };
+
+  // Touch handlers for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart || !hasMultipleImages) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextImage();
+      else previousImage();
+    }
+    setTouchStart(null);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Main Image Container */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-        {/* Main Image */}
+    <div className="space-y-3 sm:space-y-4">
+      {/* Main Image */}
+      <div 
+        className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 bg-white shadow-sm"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div 
-          className="relative aspect-square cursor-zoom-in"
+          className="relative aspect-square cursor-pointer"
           onClick={() => setIsZoomed(!isZoomed)}
         >
           <SafeImage
@@ -77,89 +88,73 @@ export function ProductGallery({ product, selectedVariantImage }: ProductGallery
           />
         </div>
 
-        {/* Navigation Arrows - Only show if multiple images */}
+        {/* Navigation */}
         {hasMultipleImages && (
           <>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                previousImage();
-              }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onClick={(e) => { e.stopPropagation(); previousImage(); }}
+              className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white"
               aria-label="Previous image"
             >
-              <ChevronLeft className="h-5 w-5 text-slate-700" />
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
             </button>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                nextImage();
-              }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onClick={(e) => { e.stopPropagation(); nextImage(); }}
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white"
               aria-label="Next image"
             >
-              <ChevronRight className="h-5 w-5 text-slate-700" />
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-slate-700" />
             </button>
 
-            {/* Image Counter */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+            <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-medium text-white backdrop-blur-sm">
               {currentIndex + 1} / {images.length}
             </div>
           </>
         )}
 
-        {/* Status Badges */}
-        <div className="absolute left-4 top-4 flex flex-col gap-2">
+        {/* Badges */}
+        <div className="absolute left-3 sm:left-4 top-3 sm:top-4 flex flex-col gap-1.5 sm:gap-2">
           {product.featured && (
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Star className="h-3 w-3" />
+            <Badge variant="secondary" className="flex items-center gap-1 text-[10px] sm:text-xs px-2 py-0.5 sm:px-3 sm:py-1">
+              <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Featured
             </Badge>
           )}
-
           {product.isNewArrival && (
-            <Badge className="bg-emerald-500 text-white hover:bg-emerald-600 flex items-center gap-1">
-              <Package className="h-3 w-3" />
+            <Badge className="bg-emerald-500 text-white hover:bg-emerald-600 flex items-center gap-1 text-[10px] sm:text-xs px-2 py-0.5 sm:px-3 sm:py-1">
+              <Package className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               New
             </Badge>
           )}
-
           {product.stock === 0 && (
-            <Badge variant="destructive" className="flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
+            <Badge variant="destructive" className="flex items-center gap-1 text-[10px] sm:text-xs px-2 py-0.5 sm:px-3 sm:py-1">
+              <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Out of Stock
-            </Badge>
-          )}
-
-          {product.stock > 0 && product.stock < 10 && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
-              Low Stock
             </Badge>
           )}
         </div>
 
-        {/* Stock Count Badge */}
-        {product.stock > 0 && (
-          <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-slate-100">
-            <span className="text-xs font-medium text-slate-600">
-              {product.stock} in stock
+        {/* Stock Count */}
+        {product.stock > 0 && product.stock < 10 && (
+          <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-white/95 backdrop-blur-sm px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-sm border border-slate-100">
+            <span className="text-[9px] sm:text-xs font-medium text-orange-600">
+              Only {product.stock} left
             </span>
           </div>
         )}
       </div>
 
-      {/* Thumbnail Grid - Only show if multiple images */}
+      {/* Thumbnails */}
       {hasMultipleImages && (
-        <div className="grid grid-cols-4 gap-3 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 md:grid-cols-5">
           {images.map((image, index) => (
             <button
               key={index}
               onClick={() => selectImage(index)}
               className={cn(
-                "relative aspect-square overflow-hidden rounded-xl border-2 transition-all hover:border-blue-400",
+                "relative aspect-square overflow-hidden rounded-lg sm:rounded-xl border-2 transition-all",
                 currentIndex === index 
-                  ? "border-blue-500 ring-2 ring-blue-200 ring-offset-1" 
+                  ? "border-secondary ring-2 ring-secondary/20 ring-offset-1" 
                   : "border-slate-200 hover:border-slate-300"
               )}
               aria-label={`View image ${index + 1}`}
@@ -173,7 +168,7 @@ export function ProductGallery({ product, selectedVariantImage }: ProductGallery
                 sizes="(max-width: 768px) 20vw, 10vw"
               />
               {currentIndex === index && (
-                <div className="absolute inset-0 border-2 border-blue-500 rounded-xl" />
+                <div className="absolute inset-0 border-2 border-secondary rounded-lg" />
               )}
             </button>
           ))}

@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { resolveCartIdentity, persistCartIdentity } from "@/lib/storefront/session";
-import { addItemToCart, serializeCart, CartError } from "@/lib/storefront/cart";
-import { addCartItemSchema } from "@/lib/storefront/validation";
+import { resolveCartIdentity, persistCartIdentity } from "@/modules/cart/session";
+import { addItemToCart, serializeCart, CartError } from "@/modules/cart/cart";
+import { addCartItemSchema } from "@/modules/cart/validation";
 
 export async function POST(request: NextRequest) {
   try {

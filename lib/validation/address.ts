@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * Flat address form schema for React Hook Form (`zodResolver`).
  *
- * Mirrors `createAddressSchema` in `lib/storefront/validation.ts`, which
+ * Mirrors `createAddressSchema` in `modules/cart/validation.ts, modules/checkout/validation.ts, and modules/customers/validation.ts`, which
  * remains the real source of truth server-side (both the add and edit API
  * routes validate against it / its partial `updateAddressSchema`).
  */
