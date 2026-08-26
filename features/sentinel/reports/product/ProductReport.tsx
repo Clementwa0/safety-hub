@@ -4,7 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Package, PackageX, FileEdit, Archive } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/EmptyState";
 import StatsCard from "@/components/sentinel/shared/StatsCard";
 import { formatCurrency } from "@/lib/format";
@@ -28,18 +35,21 @@ export default function ProductReport() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
-      // Top sellers come from the same authoritative sales figures as the
-      // Sales report (last 90 days) rather than being re-derived here from
-      // raw order documents.
       const [productList, salesDashboard] = await Promise.all([
         productService.list(),
         salesDashboardService.get({ range: "90d" }),
       ]);
+
       setProducts(productList);
       setTopProducts(salesDashboard.topProducts);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not load the product report");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not load the product report",
+      );
     } finally {
       setLoading(false);
     }
@@ -50,101 +60,249 @@ export default function ProductReport() {
   }, [load]);
 
   const stats = useMemo(() => {
-    const active = products.filter((p) => (p.status ?? "active") === "active").length;
+    const active = products.filter(
+      (p) => (p.status ?? "active") === "active",
+    ).length;
+
     const draft = products.filter((p) => p.status === "draft").length;
-    const outOfStock = products.filter((p) => p.status === "out_of_stock" || p.stock <= 0).length;
-    const archived = products.filter((p) => p.status === "archived").length;
-    return { total: products.length, active, draft, outOfStock, archived };
+
+    const outOfStock = products.filter(
+      (p) => p.status === "out_of_stock" || p.stock <= 0,
+    ).length;
+
+    const archived = products.filter(
+      (p) => p.status === "archived",
+    ).length;
+
+    return {
+      total: products.length,
+      active,
+      draft,
+      outOfStock,
+      archived,
+    };
   }, [products]);
 
   const byCategory = useMemo<CategoryRow[]>(() => {
     const map = new Map<string, CategoryRow>();
+
     for (const product of products) {
       if (product.status === "archived") continue;
+
       const key = String(product.category || "Uncategorized");
-      const row = map.get(key) ?? { category: key, count: 0, catalogValue: 0 };
+
+      const row = map.get(key) ?? {
+        category: key,
+        count: 0,
+        catalogValue: 0,
+      };
+
       row.count += 1;
       row.catalogValue += product.price * product.stock;
+
       map.set(key, row);
     }
-    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+
+    return Array.from(map.values()).sort(
+      (a, b) => b.count - a.count,
+    );
   }, [products]);
 
   if (error) {
-    return <EmptyState title="Couldn't load the product report" description={error} />;
+    return (
+      <EmptyState
+        title="Couldn't load the product report"
+        description={error}
+      />
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatsCard title="Total products" value={String(stats.total)} icon={Package} loading={loading} />
-        <StatsCard title="Active" value={String(stats.active)} loading={loading} />
-        <StatsCard title="Draft" value={String(stats.draft)} icon={FileEdit} loading={loading} />
-        <StatsCard title="Out of stock" value={String(stats.outOfStock)} icon={PackageX} loading={loading} />
-        <StatsCard title="Archived" value={String(stats.archived)} icon={Archive} loading={loading} />
+    <div className="space-y-3 sm:space-y-4">
+      {/* Product statistics */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+        <StatsCard
+          title="Total products"
+          value={String(stats.total)}
+          icon={Package}
+          loading={loading}
+        />
+
+        <StatsCard
+          title="Active"
+          value={String(stats.active)}
+          loading={loading}
+        />
+
+        <StatsCard
+          title="Draft"
+          value={String(stats.draft)}
+          icon={FileEdit}
+          loading={loading}
+        />
+
+        <StatsCard
+          title="Out of stock"
+          value={String(stats.outOfStock)}
+          icon={PackageX}
+          loading={loading}
+        />
+
+        <StatsCard
+          title="Archived"
+          value={String(stats.archived)}
+          icon={Archive}
+          loading={loading}
+        />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader className="pb-1.5">
-            <CardTitle className="text-sm font-semibold">Catalog by category</CardTitle>
+      {/* Reports */}
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+        {/* Catalog by category */}
+        <Card className="overflow-hidden border-border/60 shadow-sm">
+          <CardHeader className="border-b border-border/50 px-3.5 py-3 sm:px-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="text-sm font-semibold tracking-tight">
+                  Catalog by category
+                </CardTitle>
+
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">
+                  Products and catalog value by category
+                </p>
+              </div>
+
+              <span className="shrink-0 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary sm:text-xs">
+                {byCategory.length}
+                <span className="hidden sm:inline"> categories</span>
+              </span>
+            </div>
           </CardHeader>
-          <CardContent className="pt-0">
+
+          <CardContent className="p-0">
             {loading ? (
-              <div className="h-[220px] animate-pulse rounded bg-muted" />
+              <div className="h-[180px] animate-pulse bg-muted/40 sm:h-[220px]" />
             ) : byCategory.length === 0 ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">No products yet</p>
+              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+                No products yet
+              </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Products</TableHead>
-                    <TableHead className="text-right">Catalog value</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {byCategory.map((row) => (
-                    <TableRow key={row.category}>
-                      <TableCell className="font-medium">{row.category}</TableCell>
-                      <TableCell className="text-right tabular-nums">{row.count}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatCurrency(row.catalogValue)}</TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="h-9 px-3 text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Category
+                      </TableHead>
+
+                      <TableHead className="h-9 px-3 text-right text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Products
+                      </TableHead>
+
+                      <TableHead className="h-9 px-3 text-right text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Value
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+
+                  <TableBody>
+                    {byCategory.map((row) => (
+                      <TableRow
+                        key={row.category}
+                        className="border-border/40 hover:bg-muted/40"
+                      >
+                        <TableCell className="max-w-[150px] truncate px-3 py-2.5 text-xs sm:max-w-none sm:px-5 sm:py-3">
+                          <span className="font-medium text-foreground">
+                            {row.category}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="px-3 py-2.5 text-right text-xs tabular-nums text-muted-foreground sm:px-5 sm:py-3">
+                          {row.count}
+                        </TableCell>
+
+                        <TableCell className="px-3 py-2.5 text-right text-xs font-medium tabular-nums text-foreground sm:px-5 sm:py-3">
+                          {formatCurrency(row.catalogValue)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader className="pb-1.5">
-            <CardTitle className="text-sm font-semibold">Top sellers (last 90 days)</CardTitle>
+        {/* Top sellers */}
+        <Card className="overflow-hidden border-border/60 shadow-sm">
+          <CardHeader className="border-b border-border/50 px-3.5 py-3 sm:px-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="text-sm font-semibold tracking-tight">
+                  Top sellers
+                </CardTitle>
+
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">
+                  Best-performing products over the last 90 days
+                </p>
+              </div>
+
+              <span className="shrink-0 rounded-md bg-primary/10 px-2 py-1 text-[10px] font-medium text-primary sm:text-xs">
+                90 days
+              </span>
+            </div>
           </CardHeader>
-          <CardContent className="pt-0">
+
+          <CardContent className="p-0">
             {loading ? (
-              <div className="h-[220px] animate-pulse rounded bg-muted" />
+              <div className="h-[180px] animate-pulse bg-muted/40 sm:h-[220px]" />
             ) : topProducts.length === 0 ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">No product sales in the last 90 days</p>
+              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+                No product sales in the last 90 days
+              </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-right">Revenue</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topProducts.map((product) => (
-                    <TableRow key={product.name}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-right tabular-nums">{product.quantity}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatCurrency(product.revenue)}</TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="h-9 px-3 text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Product
+                      </TableHead>
+
+                      <TableHead className="h-9 px-3 text-right text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Qty
+                      </TableHead>
+
+                      <TableHead className="h-9 px-3 text-right text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Revenue
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+
+                  <TableBody>
+                    {topProducts.map((product) => (
+                      <TableRow
+                        key={product.name}
+                        className="border-border/40 hover:bg-muted/40"
+                      >
+                        <TableCell className="max-w-[170px] truncate px-3 py-2.5 text-xs sm:max-w-none sm:px-5 sm:py-3">
+                          <span className="font-medium text-foreground">
+                            {product.name}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="px-3 py-2.5 text-right text-xs tabular-nums text-muted-foreground sm:px-5 sm:py-3">
+                          {product.quantity}
+                        </TableCell>
+
+                        <TableCell className="px-3 py-2.5 text-right text-xs font-medium tabular-nums text-foreground sm:px-5 sm:py-3">
+                          {formatCurrency(product.revenue)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

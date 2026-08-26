@@ -11,9 +11,6 @@ import type { Quotation } from "@/types/sentinel/quotation";
 
 type Props = { quotations: Quotation[]; onDelete: (q: Quotation) => void; onDuplicate: (q: Quotation) => void };
 
-// Worst-case plan across a quotation's lines: procurement beats partial
-// beats available. A quotation with no stock-tracked lines (all custom
-// items) shows nothing rather than a misleading "available" badge.
 function overallFulfillment(q: Quotation): string | undefined {
   const plans = q.items.map((item) => item.fulfillmentPlan).filter(Boolean);
   if (plans.length === 0) return undefined;

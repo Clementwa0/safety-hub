@@ -120,7 +120,7 @@ export default function ContactMessageTable({
                 <div className="flex items-center justify-end gap-1">
                   <Button
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     aria-label={`View message from ${item.name}`}
                     onClick={() => onView(item)}
                   >
@@ -129,7 +129,7 @@ export default function ContactMessageTable({
                   {onReply && (
                     <Button
                       variant="ghost"
-                      size="icon-sm"
+                      size="icon"
                       aria-label={`Reply to ${item.name}`}
                       onClick={() => onReply(item)}
                     >
@@ -138,7 +138,7 @@ export default function ContactMessageTable({
                   )}
                   <Button
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     aria-label={`Delete message from ${item.name}`}
                     onClick={() => onDelete(item)}
                   >
