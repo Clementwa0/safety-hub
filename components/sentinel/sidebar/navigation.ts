@@ -20,7 +20,6 @@ export interface NavigationItem {
   path: string;
   icon: LucideIcon;
   badgeKey?: "contactMessages" | "storeOrders";
-  /** Hidden from staff — only the admin account can see/use this. */
   adminOnly?: boolean;
 }
 
@@ -63,12 +62,7 @@ export const sentinelNavigationGroups: NavigationGroup[] = [
         path: "/sentinel/inventory",
         icon: Boxes,
       },
-      {
-        name: "Orders",
-        path: "/sentinel/orders",
-        icon: ClipboardList,
-      },
-      {
+       {
         name: "Store Orders",
         path: "/sentinel/store-orders",
         icon: ShoppingBag,
@@ -77,6 +71,11 @@ export const sentinelNavigationGroups: NavigationGroup[] = [
       {
         name: "Quotations",
         path: "/sentinel/quotations",
+        icon: ClipboardList,
+      },
+      {
+        name: "Orders",
+        path: "/sentinel/orders",
         icon: ClipboardList,
       },
       {

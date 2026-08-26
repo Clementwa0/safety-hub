@@ -1,6 +1,10 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +32,13 @@ interface PaginationProps {
   className?: string;
 }
 
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50, 100,1000];
+const DEFAULT_PAGE_SIZE_OPTIONS = [
+  10,
+  25,
+  50,
+  100,
+  1000,
+];
 
 export function Pagination({
   page,
@@ -47,81 +57,117 @@ export function Pagination({
 }: PaginationProps) {
   if (total === 0) return null;
 
-  // Generate page numbers
   const getPageNumbers = () => {
-    const pages: (number | 'ellipsis')[] = [];
+    const pages: (number | "ellipsis")[] = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
-    } else {
-      if (page <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
-      } else if (page >= totalPages - 2) {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push('ellipsis');
-        for (let i = page - 1; i <= page + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis');
-        pages.push(totalPages);
+    } else if (page <= 3) {
+      for (let i = 1; i <= 4; i++) {
+        pages.push(i);
       }
+
+      pages.push("ellipsis");
+      pages.push(totalPages);
+    } else if (page >= totalPages - 2) {
+      pages.push(1);
+      pages.push("ellipsis");
+
+      for (
+        let i = totalPages - 3;
+        i <= totalPages;
+        i++
+      ) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      pages.push("ellipsis");
+
+      for (
+        let i = page - 1;
+        i <= page + 1;
+        i++
+      ) {
+        pages.push(i);
+      }
+
+      pages.push("ellipsis");
+      pages.push(totalPages);
     }
+
     return pages;
   };
 
-  const startItem = (page - 1) * pageSize + 1;
-  const endItem = Math.min(page * pageSize, total);
+  const startItem =
+    (page - 1) * pageSize + 1;
+
+  const endItem = Math.min(
+    page * pageSize,
+    total,
+  );
 
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-between gap-3 border-t border-border/50 px-3 py-3 sm:flex-row sm:px-4",
-      className
-    )}>
-      {/* Left: Info and page size selector */}
+    <div
+      className={cn(
+        "flex w-full flex-col items-center justify-between gap-3 py-3 sm:flex-row",
+        className,
+      )}
+    >
+      {/* Results + page size */}
       <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
         <p className="text-xs text-muted-foreground">
-          Showing <span className="font-medium text-foreground">{startItem}</span> to{' '}
-          <span className="font-medium text-foreground">{endItem}</span> of{' '}
-          <span className="font-medium text-foreground">{total}</span> results
+          Showing{" "}
+          <span className="font-medium text-foreground">
+            {startItem}
+          </span>{" "}
+          to{" "}
+          <span className="font-medium text-foreground">
+            {endItem}
+          </span>{" "}
+          of{" "}
+          <span className="font-medium text-foreground">
+            {total}
+          </span>{" "}
+          results
         </p>
-        
-        {showPageSize && onPageSizeChange && (
-          <Select
-            value={String(pageSize)}
-            onValueChange={(value) => {
-              onPageSizeChange(Number(value));
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {pageSizeOptions.map((size) => (
-                <SelectItem key={size} value={String(size)}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+
+        {showPageSize &&
+          onPageSizeChange && (
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) =>
+                onPageSizeChange(
+                  Number(value),
+                )
+              }
+            >
+              <SelectTrigger className="h-8 w-[70px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+
+              <SelectContent>
+                {pageSizeOptions.map(
+                  (size) => (
+                    <SelectItem
+                      key={size}
+                      value={String(size)}
+                    >
+                      {size}
+                    </SelectItem>
+                  ),
+                )}
+              </SelectContent>
+            </Select>
+          )}
       </div>
 
-      {/* Right: Pagination controls */}
+      {/* Pagination controls */}
       <div className="flex items-center gap-1">
-        {/* Previous button */}
+        {/* Previous */}
         <Button
           variant="outline"
           size="sm"
@@ -131,42 +177,57 @@ export function Pagination({
           className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
         >
           <ChevronLeft className="h-4 w-4 sm:mr-1" />
-          <span className="hidden sm:inline">Previous</span>
+          <span className="hidden sm:inline">
+            Previous
+          </span>
         </Button>
 
         {/* Page numbers */}
-        <div className="hidden sm:flex items-center gap-1">
-          {getPageNumbers().map((item, index) => (
-            <Button
-              key={index}
-              variant={item === page ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                if (typeof item === 'number' && onPageChange) {
-                  onPageChange(item);
+        <div className="hidden items-center gap-1 sm:flex">
+          {getPageNumbers().map(
+            (item, index) => (
+              <Button
+                key={`${item}-${index}`}
+                variant={
+                  item === page
+                    ? "default"
+                    : "outline"
                 }
-              }}
-              disabled={typeof item !== 'number'}
-              className={cn(
-                "h-8 w-8 p-0 text-xs",
-                item === page && "pointer-events-none"
-              )}
-            >
-              {item === 'ellipsis' ? (
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              ) : (
-                item
-              )}
-            </Button>
-          ))}
+                size="sm"
+                onClick={() => {
+                  if (
+                    typeof item ===
+                      "number" &&
+                    onPageChange
+                  ) {
+                    onPageChange(item);
+                  }
+                }}
+                disabled={
+                  typeof item !== "number"
+                }
+                className={cn(
+                  "h-8 w-8 p-0 text-xs",
+                  item === page &&
+                    "pointer-events-none",
+                )}
+              >
+                {item === "ellipsis" ? (
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                ) : (
+                  item
+                )}
+              </Button>
+            ),
+          )}
         </div>
 
-        {/* Mobile page indicator */}
-        <span className="sm:hidden text-xs text-muted-foreground px-2">
+        {/* Mobile indicator */}
+        <span className="px-2 text-xs text-muted-foreground sm:hidden">
           {page} / {totalPages}
         </span>
 
-        {/* Next button */}
+        {/* Next */}
         <Button
           variant="outline"
           size="sm"
@@ -175,7 +236,9 @@ export function Pagination({
           aria-label="Next page"
           className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
         >
-          <span className="hidden sm:inline">Next</span>
+          <span className="hidden sm:inline">
+            Next
+          </span>
           <ChevronRight className="h-4 w-4 sm:ml-1" />
         </Button>
       </div>

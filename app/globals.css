@@ -39,9 +39,13 @@
   --color-whatsapp: var(--whatsapp);
   --color-whatsapp-foreground: var(--whatsapp-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
   --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
 
   /* Shadows */
   --shadow-card: 0 4px 20px -8px oklch(0.2 0.05 250 / 0.18);
@@ -49,11 +53,7 @@
   --shadow-soft: 0 2px 8px rgba(15, 45, 82, 0.05);
   --shadow-lift: 0 18px 40px rgba(15, 45, 82, 0.12);
 
-  /* Gradients */
-  --gradient-hero: linear-gradient(135deg, oklch(0.22 0.08 250) 0%, oklch(0.32 0.1 245) 100%);
-  --gradient-accent: linear-gradient(135deg, oklch(0.72 0.18 55) 0%, oklch(0.78 0.17 75) 100%);
-
-    /* Sidebar */
+  /* Sidebar */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -69,55 +69,62 @@
 ========================================================== */
 
 :root {
-  /* Brand Colors */
-  --primary: #0F2D52;
-  --primary-foreground: #ffffff;
+  --radius: 0.75rem;
 
-  --secondary: #2E7D32;
-  --secondary-foreground: #ffffff;
+  /* Brand */
+  --primary: oklch(0.29 0.079 254.2);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.53 0.132 148.6);
+  --secondary-foreground: oklch(1 0 0);
+  --accent: oklch(0.77 0.161 70.1);
+  --accent-foreground: oklch(0.25 0.03 250);
 
-  --accent: #F59E0B;
-  --accent-foreground: #ffffff;
-
-  /* Background */
-  --background: #F8FAFC;
-  --card: #ffffff;
-  --popover: #ffffff;
+  /* Surfaces */
+  --background: oklch(0.984 0.003 247.9);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.28 0.037 259.6);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.28 0.037 259.6);
 
   /* Text */
-  --foreground: #1E293B;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
+  --foreground: oklch(0.28 0.037 259.6);
+  --muted: oklch(0.968 0.007 247.9);
+  --muted-foreground: oklch(0.55 0.032 257.4);
 
   /* Border & Input */
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #0F2D52;
+  --border: oklch(0.929 0.013 255.5);
+  --input: oklch(0.929 0.013 255.5);
+  --ring: oklch(0.29 0.079 254.2);
 
   /* Status */
-  --success: #16A34A;
-  --warning: #F59E0B;
-  --error: #DC2626;
-  --info: #2563EB;
-  --destructive: #DC2626;
-  --destructive-foreground: #ffffff;
+  --success: oklch(0.6 0.16 148.5);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.77 0.161 70.1);
+  --warning-foreground: oklch(0.25 0.03 250);
+  --error: oklch(0.58 0.222 27.3);
+  --error-foreground: oklch(1 0 0);
+  --info: oklch(0.55 0.216 262.9);
+  --info-foreground: oklch(1 0 0);
+  --destructive: oklch(0.58 0.222 27.3);
+  --destructive-foreground: oklch(1 0 0);
 
   /* WhatsApp */
-  --whatsapp: #25D366;
-  --whatsapp-foreground: #ffffff;
+  --whatsapp: oklch(0.77 0.185 150.3);
+  --whatsapp-foreground: oklch(1 0 0);
 
-    /* Sidebar */
-  --sidebar: #d4cdcd77;
-  --sidebar-foreground: #1e293b;
-  --sidebar-primary: #0f2d52;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #c7e0fa;
-  --sidebar-accent-foreground: #0f2d52;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #3a6faf;
+  /* Sidebar */
+  --sidebar: oklch(0.96 0.004 247.9);
+  --sidebar-foreground: oklch(0.28 0.037 259.6);
+  --sidebar-primary: oklch(0.29 0.079 254.2);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.89 0.045 245);
+  --sidebar-accent-foreground: oklch(0.29 0.079 254.2);
+  --sidebar-border: oklch(0.929 0.013 255.5);
+  --sidebar-ring: oklch(0.52 0.098 254.4);
 
-  /* Radius */
-  --radius: 0.75rem;
+  /* Gradients */
+  --gradient-hero: linear-gradient(135deg, oklch(0.22 0.08 250) 0%, oklch(0.32 0.1 245) 100%);
+  --gradient-accent: linear-gradient(135deg, oklch(0.72 0.18 55) 0%, oklch(0.78 0.17 75) 100%);
 }
 
 /* ==========================================================
@@ -125,55 +132,52 @@
 ========================================================== */
 
 .dark {
-  /* Brand Colors */
-  --primary: #2c5b93;
-  --primary-foreground: #ffffff;
+  --primary: oklch(0.45 0.093 253.3);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.68 0.164 146.4);
+  --secondary-foreground: oklch(0.16 0.03 250);
+  --accent: oklch(0.8 0.157 74.5);
+  --accent-foreground: oklch(0.16 0.03 250);
 
-  --secondary: #4CAF50;
-  --secondary-foreground: #ffffff;
+  --background: oklch(0.17 0.028 254.6);
+  --card: oklch(0.24 0.04 254.6);
+  --card-foreground: oklch(0.98 0.003 247.9);
+  --popover: oklch(0.24 0.04 254.6);
+  --popover-foreground: oklch(0.98 0.003 247.9);
 
-  --accent: #FFB020;
-  --accent-foreground: #ffffff;
+  --foreground: oklch(0.98 0.003 247.9);
+  --muted: oklch(0.26 0.038 254.6);
+  --muted-foreground: oklch(0.84 0.017 255.5);
 
-  /* Background */
-  --background: #071322;
-  --card: #10233d;
-  --popover: #10233d;
+  --border: oklch(0.35 0.045 254.6);
+  --input: oklch(0.35 0.045 254.6);
+  --ring: oklch(0.45 0.093 253.3);
 
-  /* Text */
-  --foreground: #f8fafc;
-  --muted: #132942;
-  --muted-foreground: #cbd5e1;
+  --success: oklch(0.68 0.164 146.4);
+  --success-foreground: oklch(0.16 0.03 250);
+  --warning: oklch(0.8 0.157 74.5);
+  --warning-foreground: oklch(0.16 0.03 250);
+  --error: oklch(0.64 0.208 25.3);
+  --error-foreground: oklch(1 0 0);
+  --info: oklch(0.62 0.19 259.8);
+  --info-foreground: oklch(1 0 0);
+  --destructive: oklch(0.64 0.208 25.3);
+  --destructive-foreground: oklch(1 0 0);
 
-  /* Border & Input */
-  --border: #23405e;
-  --input: #23405e;
-  --ring: #2c5b93;
+  --whatsapp: oklch(0.77 0.185 150.3);
+  --whatsapp-foreground: oklch(1 0 0);
 
-  /* Status */
-  --success: #4CAF50;
-  --warning: #FFB020;
-  --error: #EF4444;
-  --info: #3B82F6;
-  --destructive: #EF4444;
-  --destructive-foreground: #ffffff;
+  --sidebar: oklch(0.2 0.033 254.6);
+  --sidebar-foreground: oklch(0.98 0.003 247.9);
+  --sidebar-primary: oklch(0.45 0.093 253.3);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.38 0.09 253.6);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.35 0.045 254.6);
+  --sidebar-ring: oklch(0.45 0.093 253.3);
 
-  /* WhatsApp */
-  --whatsapp: #25D366;
-  --whatsapp-foreground: #ffffff;
-
-    /* Sidebar */
-  --sidebar: #0b1b2f;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #2c5b93;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1b4a7f;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #23405e;
-  --sidebar-ring: #2c5b93;
-
-  /* Radius */
-  --radius: 0.75rem;
+  --gradient-hero: linear-gradient(135deg, oklch(0.18 0.05 250) 0%, oklch(0.3 0.09 245) 100%);
+  --gradient-accent: linear-gradient(135deg, oklch(0.66 0.16 55) 0%, oklch(0.74 0.16 75) 100%);
 }
 
 /* ==========================================================
@@ -224,11 +228,6 @@
     font-size: 1.5rem;
   }
 
-  p {
-    color: var(--color-muted-foreground);
-    line-height: 1.75;
-  }
-
   a {
     transition: color 0.25s ease;
   }
@@ -250,10 +249,9 @@
 
   ::selection {
     background: var(--color-secondary);
-    color: #ffffff;
+    color: var(--color-secondary-foreground);
   }
 
-  /* Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -270,178 +268,7 @@
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-secondary);
   }
-}
 
-/* ==========================================================
-   COMPONENT STYLES
-========================================================== */
-
-@layer components {
-  .container {
-    width: min(100% - 2rem, 80rem);
-    margin-inline: auto;
-  }
-
-  .section {
-    padding-block: 5rem;
-  }
-
-  .card {
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    background-color: var(--color-card);
-    box-shadow: var(--shadow-card);
-    transition: all 0.3s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-lift);
-  }
-
-  .hero-title {
-    font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    font-size: clamp(2.75rem, 6vw, 4rem);
-    line-height: 1.1;
-  }
-
-  .hero-highlight {
-    color: var(--color-secondary);
-  }
-
-  .section-title {
-    font-family: var(--font-display);
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: var(--color-primary);
-    letter-spacing: -0.02em;
-  }
-
-  .badge-success {
-    background: rgba(22, 163, 74, 0.1);
-    color: var(--color-success);
-  }
-
-  .badge-warning {
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--color-warning);
-  }
-
-  .badge-error {
-    background: rgba(220, 38, 38, 0.1);
-    color: var(--color-error);
-  }
-
-  .input {
-    display: block;
-    height: 2.5rem;
-    width: 100%;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border);
-    background-color: var(--color-background);
-    padding: 0 0.75rem;
-    font-size: 0.875rem;
-    outline: none;
-    transition: all 0.2s ease;
-  }
-
-  .input:focus {
-    border-color: var(--color-ring);
-    box-shadow: 0 0 0 2px var(--color-ring);
-  }
-
-  .input-error {
-    border-color: var(--color-error);
-  }
-
-  .input-error:focus {
-    border-color: var(--color-error);
-    box-shadow: 0 0 0 2px var(--color-error);
-  }
-}
-
-/* ==========================================================
-   UTILITY CLASSES
-========================================================== */
-
-@layer utilities {
-  .text-brand {
-    color: var(--color-primary);
-  }
-
-  .text-secondary {
-    color: var(--color-secondary);
-  }
-
-  .text-accent {
-    color: var(--color-accent);
-  }
-
-  .bg-brand {
-    background-color: var(--color-primary);
-  }
-
-  .bg-secondary {
-    background-color: var(--color-secondary);
-  }
-
-  .bg-accent {
-    background-color: var(--color-accent);
-  }
-
-  .shadow-card {
-    box-shadow: var(--shadow-card);
-  }
-
-  .shadow-lift {
-    box-shadow: var(--shadow-lift);
-  }
-
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
-  }
-
-  .transition-default {
-    transition: all 0.3s ease;
-  }
-
-  .transition-fast {
-    transition: all 0.15s ease;
-  }
-
-  .transition-slow {
-    transition: all 0.5s ease;
-  }
-
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-}
-
-/* ==========================================================
-   RESPONSIVE BREAKPOINTS
-========================================================== */
-
-@layer base {
   @media (max-width: 640px) {
     h1 {
       font-size: clamp(2rem, 5vw, 2.5rem);
@@ -454,21 +281,126 @@
     h3 {
       font-size: 1.25rem;
     }
-
-    .section {
-      padding-block: 2.5rem;
-    }
-
-    .container {
-      width: min(100% - 1.5rem, 80rem);
-    }
   }
+}
+
+/* ==========================================================
+   COMPONENT UTILITIES
+========================================================== */
+
+@utility shell {
+  width: min(100% - 2rem, 80rem);
+  margin-inline: auto;
+
+  @media (max-width: 640px) {
+    width: min(100% - 1.5rem, 80rem);
+  }
+}
+
+@utility section {
+  padding-block: 5rem;
 
   @media (max-width: 768px) {
-    .section {
-      padding-block: 3rem;
-    }
+    padding-block: 3rem;
   }
+
+  @media (max-width: 640px) {
+    padding-block: 2.5rem;
+  }
+}
+
+@utility surface-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@utility hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: clamp(2.75rem, 6vw, 4rem);
+  line-height: 1.1;
+}
+
+@utility hero-highlight {
+  color: var(--color-accent);
+}
+
+@utility section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+}
+
+@utility bg-gradient-hero {
+  background-image: var(--gradient-hero);
+}
+
+@utility bg-gradient-accent {
+  background-image: var(--gradient-accent);
+}
+
+@utility badge-success {
+  background: color-mix(in oklch, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+}
+
+@utility badge-warning {
+  background: color-mix(in oklch, var(--color-warning) 16%, transparent);
+  color: var(--color-warning);
+}
+
+@utility badge-error {
+  background: color-mix(in oklch, var(--color-error) 14%, transparent);
+  color: var(--color-error);
+}
+
+@utility badge-info {
+  background: color-mix(in oklch, var(--color-info) 14%, transparent);
+  color: var(--color-info);
+}
+
+@utility field {
+  display: block;
+  height: 2.5rem;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-ring) 25%, transparent);
+  }
+}
+
+@utility field-error {
+  border-color: var(--color-error);
+
+  &:focus {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-error) 25%, transparent);
+  }
+}
+
+@utility transition-default {
+  transition: all 0.3s ease;
 }
 
 /* ==========================================================
@@ -477,36 +409,28 @@
 
 @media print {
   body {
-    background: white;
-    color: black;
-  }
-
-  .card {
-    box-shadow: none;
-    border: 1px solid #ddd;
-    transform: none !important;
-  }
-
-  .card:hover {
-    transform: none !important;
-    box-shadow: none !important;
+    background: #fff;
+    color: #000;
   }
 
   .no-print {
     display: none !important;
   }
 
-  .container {
-    max-width: 100%;
-    padding: 0;
+  body * {
+    visibility: hidden !important;
   }
-}
-@media print {
-  body * { visibility: hidden !important; }
-  #document-print-area, #document-print-area * { visibility: visible !important; }
+
+  #document-print-area,
+  #document-print-area * {
+    visibility: visible !important;
+  }
+
   #document-print-area {
     position: absolute !important;
-    left: 0; top: 0; width: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
     box-shadow: none !important;
     border: 0 !important;
   }
