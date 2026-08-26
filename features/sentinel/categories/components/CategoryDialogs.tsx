@@ -43,12 +43,14 @@ export default function CategoryDialogs({
   onDeleteOpenChange,
   onConfirmDelete,
 }: CategoryDialogsProps) {
-  const hasProducts = pendingDelete && pendingDelete.productCount > 0;
-  const productCount = pendingDelete?.productCount || 0;
+  const hasProducts =
+    pendingDelete && pendingDelete.productCount > 0;
+
+  const productCount = pendingDelete?.productCount ?? 0;
 
   return (
     <>
-      {/* Category Form Dialog */}
+      {/* Category Form */}
       <CategoryForm
         open={formOpen}
         onOpenChange={onFormOpenChange}
@@ -56,82 +58,142 @@ export default function CategoryDialogs({
         onSaved={onSaved}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={Boolean(pendingDelete)} 
-        onOpenChange={(open) => !deleting && onDeleteOpenChange(open)}
+      {/* Delete Confirmation */}
+      <Dialog
+        open={Boolean(pendingDelete)}
+        onOpenChange={(open) => {
+          if (!deleting) {
+            onDeleteOpenChange(open);
+          }
+        }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Delete Category?
+        <DialogContent
+          className="
+            w-[calc(100%-2rem)]
+            max-w-md
+            gap-0
+            overflow-hidden
+            rounded-xl
+            p-0
+          "
+        >
+          {/* Header */}
+          <DialogHeader className="border-b px-4 py-4 sm:px-6 sm:py-5">
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold sm:text-lg">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-destructive/10 sm:h-8 sm:w-8">
+                <AlertTriangle className="h-3.5 w-3.5 text-destructive sm:h-4 sm:w-4" />
+              </span>
+
+              Delete category?
             </DialogTitle>
-            <DialogDescription>
+
+            <DialogDescription className="pl-9 text-xs sm:pl-10 sm:text-sm">
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
           {pendingDelete && (
-            <div className="space-y-4 py-2">
-              <div className="rounded-lg bg-muted/30 p-3">
-                <p className="text-sm font-medium text-foreground">
+            <div className="space-y-3 px-4 py-4 sm:space-y-4 sm:px-6 sm:py-5">
+              {/* Category */}
+              <div className="rounded-lg border bg-muted/30 px-3 py-2.5 sm:p-3">
+                <p className="truncate text-sm font-medium text-foreground">
                   {pendingDelete.name}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+
+                <p className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">
                   /{pendingDelete.slug}
                 </p>
               </div>
 
+              {/* Products Warning */}
               {hasProducts ? (
-                <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-3 space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-destructive" />
-                    <span className="text-sm font-medium text-destructive">
-                      {productCount} product{productCount !== 1 ? "s" : ""} assigned
-                    </span>
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+                  <div className="flex items-start gap-2">
+                    <Package className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive sm:h-4 sm:w-4" />
+
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-destructive sm:text-sm">
+                        {productCount} product
+                        {productCount !== 1 ? "s" : ""} assigned
+                      </p>
+
+                      <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground sm:text-xs">
+                        Products will remain in your store but
+                        lose this category association.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Products will remain in your store but lose this category association.
-                  </p>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Badge variant="outline" className="text-emerald-600 border-emerald-200">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="
+                      h-5
+                      border-emerald-200
+                      px-1.5
+                      text-[10px]
+                      font-medium
+                      text-emerald-600
+                      sm:h-6
+                      sm:px-2
+                      sm:text-xs
+                    "
+                  >
                     No products
                   </Badge>
-                  <span className="text-xs">Safe to delete</span>
+
+                  <span className="text-[10px] text-muted-foreground sm:text-xs">
+                    Safe to delete
+                  </span>
                 </div>
               )}
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          {/* Footer */}
+          <DialogFooter
+            className="
+              flex-row
+              gap-2
+              border-t
+              bg-muted/20
+              px-4
+              py-3
+              sm:px-6
+              sm:py-4
+            "
+          >
             <Button
               type="button"
               variant="outline"
               disabled={deleting}
               onClick={() => onDeleteOpenChange(false)}
-              className="flex-1 sm:flex-none"
+              className="h-9 flex-1 text-xs sm:h-10 sm:flex-none sm:px-4 sm:text-sm"
             >
               Cancel
             </Button>
+
             <Button
               type="button"
               variant="destructive"
               disabled={deleting}
               onClick={onConfirmDelete}
-              className="flex-1 sm:flex-none"
+              className="h-9 flex-1 text-xs sm:h-10 sm:flex-none sm:px-4 sm:text-sm"
             >
               {deleting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
                   Deleting...
                 </>
               ) : (
                 <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Category
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Delete
+                  <span className="hidden sm:inline">
+                    {" "}
+                    Category
+                  </span>
                 </>
               )}
             </Button>

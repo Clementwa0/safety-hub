@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
-import { Info, Plus, Trash2 } from "lucide-react";
+import { Info, Plus, Trash2, Package, Layers3 } from "lucide-react";
 
 import {
   Card,
@@ -15,7 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/ui/radio-group";
 import {
   Table,
   TableBody,
@@ -24,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import type { ProductFormInput } from "@/lib/validation/product";
 import { FieldError } from "./FieldError";
 
@@ -46,182 +49,312 @@ export function VariantsSection() {
     formState: { errors },
   } = useFormContext<ProductFormInput>();
 
-  const { fields, append, remove } = useFieldArray({ control, name: "variants" });
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "variants",
+  });
 
-  const variants = useWatch({ control, name: "variants" }) ?? [];
-  const productType: ProductType = fields.length > 0 ? "variant" : "simple";
+  const variants = useWatch({
+    control,
+    name: "variants",
+  }) ?? [];
+
+  const productType: ProductType =
+    fields.length > 0 ? "variant" : "simple";
 
   const rootError =
-    (errors.variants as unknown as { message?: string; root?: { message?: string } } | undefined)
-      ?.message ??
-    (errors.variants as unknown as { root?: { message?: string } } | undefined)?.root?.message;
+    (
+      errors.variants as unknown as {
+        message?: string;
+        root?: { message?: string };
+      } | undefined
+    )?.message ??
+    (
+      errors.variants as unknown as {
+        root?: { message?: string };
+      } | undefined
+    )?.root?.message;
 
   const setProductType = (next: ProductType) => {
     if (next === productType) return;
+
     if (next === "simple") {
-      // Dropping back to a simple product clears every variant row — the
-      // top-level price/stock fields take back over as the source of truth.
-      for (let i = fields.length - 1; i >= 0; i -= 1) remove(i);
+      for (let i = fields.length - 1; i >= 0; i -= 1) {
+        remove(i);
+      }
     } else {
       append({ ...EMPTY_VARIANT });
     }
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Product type</CardTitle>
-          <CardDescription>
-            Switch to variants when this product is sold in different sizes, each with its own
-            SKU, price, and stock.
+    <div className="space-y-4">
+      {/* Product type */}
+      <Card className="overflow-hidden">
+        <CardHeader className="space-y-1 border-b px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted">
+              <Package className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+
+            <CardTitle className="text-sm font-semibold">
+              Product type
+            </CardTitle>
+          </div>
+
+          <CardDescription className="text-xs">
+            Choose whether the product has one stock/price or multiple
+            size-based variants.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="px-4 py-4 sm:px-5">
           <RadioGroup
             value={productType}
             onValueChange={(value) => {
-              if (typeof value === "string") setProductType(value as ProductType);
+              if (typeof value === "string") {
+                setProductType(value as ProductType);
+              }
             }}
-            className="grid gap-3 sm:grid-cols-2"
+            className="grid grid-cols-1 gap-2 sm:grid-cols-2"
           >
+            {/* Simple */}
             <Label
               htmlFor="product-type-simple"
-              className="flex cursor-pointer items-start gap-3 rounded-lg border border-input p-3 has-[[data-checked]]:border-secondary has-[[data-checked]]:bg-secondary/5"
+              className="flex cursor-pointer items-center gap-3 rounded-md border p-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
             >
-              <RadioGroupItem value="simple" id="product-type-simple" className="mt-1" />
-              <span className="flex-1">
-                <span className="block text-sm font-medium text-foreground">Simple product</span>
-                <span className="block text-xs text-muted-foreground">
-                  One price and one stock count for the whole product.
-                </span>
-              </span>
+              <RadioGroupItem
+                id="product-type-simple"
+                value="simple"
+              />
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium">
+                  Simple product
+                </p>
+
+                <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
+                  One price and stock count.
+                </p>
+              </div>
             </Label>
 
+            {/* Variants */}
             <Label
               htmlFor="product-type-variant"
-              className="flex cursor-pointer items-start gap-3 rounded-lg border border-input p-3 has-[[data-checked]]:border-secondary has-[[data-checked]]:bg-secondary/5"
+              className="flex cursor-pointer items-center gap-3 rounded-md border p-3 transition-colors hover:bg-muted/40 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
             >
-              <RadioGroupItem value="variant" id="product-type-variant" className="mt-1" />
-              <span className="flex-1">
-                <span className="block text-sm font-medium text-foreground">
-                  Has variants (sizes)
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  Each size gets its own SKU, price, compare-at price, and stock.
-                </span>
-              </span>
+              <RadioGroupItem
+                id="product-type-variant"
+                value="variant"
+              />
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium">
+                  Has variants
+                </p>
+
+                <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
+                  Separate SKU, price and stock per size.
+                </p>
+              </div>
             </Label>
           </RadioGroup>
         </CardContent>
       </Card>
 
+      {/* Variants */}
       {productType === "variant" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Variants</CardTitle>
-            <CardDescription>
-              Add a row for every size this product comes in. Prices, stock and images are set
-              per size.
+        <Card className="overflow-hidden">
+          <CardHeader className="space-y-1 border-b px-4 py-3 sm:px-5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted">
+                <Layers3 className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+
+              <CardTitle className="text-sm font-semibold">
+                Variants
+              </CardTitle>
+            </div>
+
+            <CardDescription className="text-xs">
+              Add each size with its own SKU, price, stock and optional image.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-dashed border-sky-300 bg-sky-50 px-3 py-2 text-xs text-sky-800 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-300">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>
-                Once this product has variants, the Pricing and Inventory tabs become read-only
-                totals — they&apos;re calculated from the rows below.
-              </span>
+          <CardContent className="space-y-3 px-4 py-4 sm:px-5">
+            {/* Info */}
+            <div className="flex items-start gap-2 rounded-md border border-dashed bg-muted/30 px-3 py-2.5">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+
+              <p className="text-[11px] leading-4 text-muted-foreground">
+                Pricing and inventory totals are calculated automatically
+                from the variants below.
+              </p>
             </div>
 
             <FieldError message={rootError} />
 
             {/* Desktop table */}
-            <div className="hidden overflow-x-auto rounded-lg border sm:block">
+            <div className="hidden overflow-x-auto rounded-md border md:block">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[110px]">Size</TableHead>
-                    <TableHead className="min-w-[130px]">SKU</TableHead>
-                    <TableHead className="min-w-[110px]">Price (KES)</TableHead>
-                    <TableHead className="min-w-[130px]">Compare-at</TableHead>
-                    <TableHead className="min-w-[90px]">Stock</TableHead>
-                    <TableHead className="min-w-[220px]">Image URL</TableHead>
-                    <TableHead className="w-10" />
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="h-9 min-w-[100px] text-xs">
+                      Size
+                    </TableHead>
+
+                    <TableHead className="h-9 min-w-[130px] text-xs">
+                      SKU
+                    </TableHead>
+
+                    <TableHead className="h-9 min-w-[110px] text-xs">
+                      Price
+                    </TableHead>
+
+                    <TableHead className="h-9 min-w-[120px] text-xs">
+                      Compare-at
+                    </TableHead>
+
+                    <TableHead className="h-9 min-w-[90px] text-xs">
+                      Stock
+                    </TableHead>
+
+                    <TableHead className="h-9 min-w-[220px] text-xs">
+                      Image URL
+                    </TableHead>
+
+                    <TableHead className="h-9 w-10" />
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
                   {fields.map((field, index) => {
                     const rowErrors = errors.variants?.[index];
+
                     return (
                       <TableRow key={field.id}>
-                        <TableCell className="align-top">
+                        {/* Size */}
+                        <TableCell className="align-top p-2">
                           <Input
                             placeholder="M"
+                            className="h-8 text-xs"
                             aria-invalid={Boolean(rowErrors?.size)}
-                            {...register(`variants.${index}.size` as const)}
+                            {...register(
+                              `variants.${index}.size` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.size?.message} />
+
+                          <FieldError
+                            message={rowErrors?.size?.message}
+                          />
                         </TableCell>
-                        <TableCell className="align-top">
+
+                        {/* SKU */}
+                        <TableCell className="align-top p-2">
                           <Input
                             placeholder="HLM-BLK-M"
+                            className="h-8 text-xs"
                             aria-invalid={Boolean(rowErrors?.sku)}
-                            {...register(`variants.${index}.sku` as const)}
+                            {...register(
+                              `variants.${index}.sku` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.sku?.message} />
+
+                          <FieldError
+                            message={rowErrors?.sku?.message}
+                          />
                         </TableCell>
-                        <TableCell className="align-top">
+
+                        {/* Price */}
+                        <TableCell className="align-top p-2">
                           <Input
                             type="number"
                             min={0}
                             step="0.01"
                             inputMode="decimal"
+                            className="h-8 text-xs"
                             aria-invalid={Boolean(rowErrors?.price)}
-                            {...register(`variants.${index}.price` as const)}
+                            {...register(
+                              `variants.${index}.price` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.price?.message} />
+
+                          <FieldError
+                            message={rowErrors?.price?.message}
+                          />
                         </TableCell>
-                        <TableCell className="align-top">
+
+                        {/* Compare */}
+                        <TableCell className="align-top p-2">
                           <Input
                             type="number"
                             min={0}
                             step="0.01"
                             inputMode="decimal"
                             placeholder="Optional"
-                            aria-invalid={Boolean(rowErrors?.compareAtPrice)}
-                            {...register(`variants.${index}.compareAtPrice` as const)}
+                            className="h-8 text-xs"
+                            aria-invalid={Boolean(
+                              rowErrors?.compareAtPrice,
+                            )}
+                            {...register(
+                              `variants.${index}.compareAtPrice` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.compareAtPrice?.message} />
+
+                          <FieldError
+                            message={
+                              rowErrors?.compareAtPrice?.message
+                            }
+                          />
                         </TableCell>
-                        <TableCell className="align-top">
+
+                        {/* Stock */}
+                        <TableCell className="align-top p-2">
                           <Input
                             type="number"
                             min={0}
                             step="1"
                             inputMode="numeric"
+                            className="h-8 text-xs"
                             aria-invalid={Boolean(rowErrors?.stock)}
-                            {...register(`variants.${index}.stock` as const)}
+                            {...register(
+                              `variants.${index}.stock` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.stock?.message} />
+
+                          <FieldError
+                            message={rowErrors?.stock?.message}
+                          />
                         </TableCell>
-                        <TableCell className="align-top">
+
+                        {/* Image */}
+                        <TableCell className="align-top p-2">
                           <Input
-                            placeholder="Optional — falls back to main image"
+                            placeholder="Optional image URL"
+                            className="h-8 text-xs"
                             aria-invalid={Boolean(rowErrors?.image)}
-                            {...register(`variants.${index}.image` as const)}
+                            {...register(
+                              `variants.${index}.image` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.image?.message} />
+
+                          <FieldError
+                            message={rowErrors?.image?.message}
+                          />
                         </TableCell>
-                        <TableCell className="align-top">
+
+                        {/* Delete */}
+                        <TableCell className="align-top p-2">
                           <button
                             type="button"
                             onClick={() => remove(index)}
-                            className="mt-1 text-muted-foreground transition hover:text-destructive"
-                            aria-label={`Remove variant ${variants[index]?.size ?? index + 1}`}
+                            className="mt-1 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                            aria-label={`Remove variant ${
+                              variants[index]?.size ?? index + 1
+                            }`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </TableCell>
                       </TableRow>
@@ -231,85 +364,165 @@ export function VariantsSection() {
               </Table>
             </div>
 
-            {/* Mobile cards */}
-            <div className="space-y-3 sm:hidden">
+            {/* Mobile variants */}
+            <div className="space-y-2 md:hidden">
               <AnimatePresence initial={false}>
                 {fields.map((field, index) => {
                   const rowErrors = errors.variants?.[index];
+
                   return (
                     <motion.div
                       key={field.id}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-3 rounded-lg border p-3"
+                      initial={{
+                        opacity: 0,
+                        height: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        height: "auto",
+                      }}
+                      exit={{
+                        opacity: 0,
+                        height: 0,
+                      }}
+                      className="overflow-hidden rounded-md border"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground">
+                      {/* Variant header */}
+                      <div className="flex items-center justify-between border-b bg-muted/30 px-3 py-2">
+                        <span className="text-xs font-medium">
                           Variant {index + 1}
                         </span>
+
                         <button
                           type="button"
                           onClick={() => remove(index)}
-                          className="text-muted-foreground transition hover:text-destructive"
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-red-500 transition-colors hover:bg-destructive/10 hover:text-destructive"
                           aria-label={`Remove variant ${index + 1}`}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      {/* Fields */}
+                      <div className="grid grid-cols-2 gap-2 p-3">
                         <div className="space-y-1">
-                          <Label>Size</Label>
-                          <Input placeholder="M" {...register(`variants.${index}.size` as const)} />
-                          <FieldError message={rowErrors?.size?.message} />
+                          <Label className="text-[11px]">
+                            Size
+                          </Label>
+
+                          <Input
+                            placeholder="M"
+                            className="h-8 text-xs"
+                            {...register(
+                              `variants.${index}.size` as const,
+                            )}
+                          />
+
+                          <FieldError
+                            message={rowErrors?.size?.message}
+                          />
                         </div>
+
                         <div className="space-y-1">
-                          <Label>SKU</Label>
+                          <Label className="text-[11px]">
+                            SKU
+                          </Label>
+
                           <Input
                             placeholder="HLM-BLK-M"
-                            {...register(`variants.${index}.sku` as const)}
+                            className="h-8 text-xs"
+                            {...register(
+                              `variants.${index}.sku` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.sku?.message} />
+
+                          <FieldError
+                            message={rowErrors?.sku?.message}
+                          />
                         </div>
+
                         <div className="space-y-1">
-                          <Label>Price (KES)</Label>
+                          <Label className="text-[11px]">
+                            Price
+                          </Label>
+
                           <Input
                             type="number"
                             min={0}
                             step="0.01"
-                            {...register(`variants.${index}.price` as const)}
+                            inputMode="decimal"
+                            className="h-8 text-xs"
+                            {...register(
+                              `variants.${index}.price` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.price?.message} />
+
+                          <FieldError
+                            message={rowErrors?.price?.message}
+                          />
                         </div>
+
                         <div className="space-y-1">
-                          <Label>Compare-at</Label>
+                          <Label className="text-[11px]">
+                            Compare-at
+                          </Label>
+
                           <Input
                             type="number"
                             min={0}
                             step="0.01"
+                            inputMode="decimal"
                             placeholder="Optional"
-                            {...register(`variants.${index}.compareAtPrice` as const)}
+                            className="h-8 text-xs"
+                            {...register(
+                              `variants.${index}.compareAtPrice` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.compareAtPrice?.message} />
+
+                          <FieldError
+                            message={
+                              rowErrors?.compareAtPrice?.message
+                            }
+                          />
                         </div>
+
                         <div className="space-y-1">
-                          <Label>Stock</Label>
+                          <Label className="text-[11px]">
+                            Stock
+                          </Label>
+
                           <Input
                             type="number"
                             min={0}
                             step="1"
-                            {...register(`variants.${index}.stock` as const)}
+                            inputMode="numeric"
+                            className="h-8 text-xs"
+                            {...register(
+                              `variants.${index}.stock` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.stock?.message} />
+
+                          <FieldError
+                            message={rowErrors?.stock?.message}
+                          />
                         </div>
-                        <div className="col-span-2 space-y-1">
-                          <Label>Image URL</Label>
+
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">
+                            Image URL
+                          </Label>
+
                           <Input
-                            placeholder="Optional — falls back to main image"
-                            {...register(`variants.${index}.image` as const)}
+                            placeholder="Optional"
+                            className="h-8 text-xs"
+                            {...register(
+                              `variants.${index}.image` as const,
+                            )}
                           />
-                          <FieldError message={rowErrors?.image?.message} />
+
+                          <FieldError
+                            message={rowErrors?.image?.message}
+                          />
                         </div>
                       </div>
                     </motion.div>
@@ -318,13 +531,15 @@ export function VariantsSection() {
               </AnimatePresence>
             </div>
 
+            {/* Add */}
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => append({ ...EMPTY_VARIANT })}
+              className="h-8 w-full gap-1.5 text-xs sm:w-auto"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               Add variant
             </Button>
           </CardContent>

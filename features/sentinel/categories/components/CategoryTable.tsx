@@ -132,88 +132,90 @@ export default function CategoryTable({
         <>
           {/* Desktop Table View */}
           <div className="hidden md:block">
-            <div className="rounded-md border border-border/70">
+            <div className="overflow-hidden rounded-xl border bg-background">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30 hover:bg-muted/30">
-                    <TableHead className="min-w-[180px] font-semibold">
+                  <TableRow className="bg-muted/40 hover:bg-muted/40">
+                    <TableHead className="w-[24%] font-semibold">
                       Category
                     </TableHead>
+
                     <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="text-center font-semibold">
+
+                    <TableHead className="w-[100px] text-center font-semibold lg:w-[90px] xl:w-[120px]">
                       Products
                     </TableHead>
-                    <TableHead className="text-right font-semibold">
+
+                    <TableHead className="w-[110px] text-right font-semibold lg:w-[100px] xl:w-[120px]">
                       Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
-                  {filteredCategories.map((category, index) => {
-                    const rowKey = [
-                      category.id,
-                      category.slug,
-                      category.name,
-                      String(index),
-                    ]
-                      .filter(Boolean)
-                      .join("-");
-
-                    return (
-                      <TableRow
-                        key={rowKey}
-                        className="hover:bg-muted/20 transition-colors"
-                      >
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {category.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              /{category.slug}
-                            </p>
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {category.description || "No description"}
+                  {filteredCategories.map((category) => (
+                    <TableRow
+                      key={category.id}
+                      className="transition-colors hover:bg-muted/20"
+                    >
+                      {/* Category */}
+                      <TableCell className="py-3 lg:py-2.5 xl:py-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium lg:text-[13px] xl:text-sm">
+                            {category.name}
                           </p>
-                        </TableCell>
 
-                        <TableCell className="text-center">
-                          <Badge variant="secondary" className="font-medium">
-                            {category.productCount}
-                          </Badge>
-                        </TableCell>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground lg:text-[11px] xl:text-xs">
+                            /{category.slug}
+                          </p>
+                        </div>
+                      </TableCell>
 
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-0.5">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary"
-                              aria-label={`Edit ${category.name}`}
-                              onClick={() => onEdit(category)}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
+                      {/* Description */}
+                      <TableCell className="py-3 lg:py-2.5 xl:py-3">
+                        <p className="max-w-xl truncate text-sm text-muted-foreground lg:text-xs xl:text-sm">
+                          {category.description || "No description"}
+                        </p>
+                      </TableCell>
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                              aria-label={`Delete ${category.name}`}
-                              onClick={() => onDelete(category)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                      {/* Products */}
+                      <TableCell className="py-3 text-center lg:py-2.5 xl:py-3">
+                        <Badge
+                          variant="secondary"
+                          className="gap-1 font-medium lg:px-1.5 lg:text-[11px] xl:px-2 xl:text-xs"
+                        >
+                          {category.productCount}
+                        </Badge>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="py-3 lg:py-2.5 xl:py-3">
+                        <div className="flex justify-end gap-0.5 lg:gap-0">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 lg:h-7 lg:w-7 xl:h-8 xl:w-8 hover:bg-primary/10 hover:text-primary"
+                            aria-label={`Edit ${category.name}`}
+                            onClick={() => onEdit(category)}
+                          >
+                            <Pencil className="h-4 w-4 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4" />
+                          </Button>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 lg:h-7 lg:w-7 xl:h-8 xl:w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            aria-label={`Delete ${category.name}`}
+                            onClick={() => onDelete(category)}
+                          >
+                            <Trash2 className="h-4 w-4 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>

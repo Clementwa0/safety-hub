@@ -21,7 +21,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { PRODUCT_STATUSES, PRODUCT_STATUS_LABELS } from "@/types/product";
+import {
+  PRODUCT_STATUSES,
+  PRODUCT_STATUS_LABELS,
+} from "@/types/product";
 
 export interface ProductFiltersValue {
   search: string;
@@ -52,7 +55,9 @@ export const EMPTY_PRODUCT_FILTERS: ProductFiltersValue = {
   maxPrice: "",
 };
 
-export function hasActiveFilters(value: ProductFiltersValue): boolean {
+export function hasActiveFilters(
+  value: ProductFiltersValue,
+): boolean {
   return (
     Boolean(value.search) ||
     value.category !== "all" ||
@@ -77,7 +82,10 @@ export function ProductFilters({
     key: K,
     next: ProductFiltersValue[K],
   ) => {
-    onChange({ ...value, [key]: next });
+    onChange({
+      ...value,
+      [key]: next,
+    });
   };
 
   const clearFilters = () => {
@@ -98,29 +106,42 @@ export function ProductFilters({
 
   const FilterContent = () => (
     <div className="space-y-4">
+      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
         <Input
           value={value.search}
-          onChange={(event) => set("search", event.target.value)}
+          onChange={(event) =>
+            set("search", event.target.value)
+          }
           placeholder="Search by name or SKU..."
-          className="pl-9 h-10"
+          className="h-10 pl-9"
         />
       </div>
 
+      {/* Category */}
       <Select
         value={value.category}
         onValueChange={(v) => {
-          if (v !== null) set("category", v);
+          if (v !== null) {
+            set("category", v);
+          }
         }}
       >
         <SelectTrigger className="h-10">
           <SelectValue placeholder="All categories">
-            {value.category === "all" ? "All categories" : value.category}
+            {value.category === "all"
+              ? "All categories"
+              : value.category}
           </SelectValue>
         </SelectTrigger>
+
         <SelectContent>
-          <SelectItem value="all">All categories</SelectItem>
+          <SelectItem value="all">
+            All categories
+          </SelectItem>
+
           {categories.map((item) => (
             <SelectItem key={item} value={item}>
               {item}
@@ -129,19 +150,28 @@ export function ProductFilters({
         </SelectContent>
       </Select>
 
+      {/* Brand */}
       <Select
         value={value.brand}
         onValueChange={(v) => {
-          if (v !== null) set("brand", v);
+          if (v !== null) {
+            set("brand", v);
+          }
         }}
       >
         <SelectTrigger className="h-10">
           <SelectValue placeholder="All brands">
-            {value.brand === "all" ? "All brands" : value.brand}
+            {value.brand === "all"
+              ? "All brands"
+              : value.brand}
           </SelectValue>
         </SelectTrigger>
+
         <SelectContent>
-          <SelectItem value="all">All brands</SelectItem>
+          <SelectItem value="all">
+            All brands
+          </SelectItem>
+
           {brands.map((item) => (
             <SelectItem key={item} value={item}>
               {item}
@@ -150,10 +180,13 @@ export function ProductFilters({
         </SelectContent>
       </Select>
 
+      {/* Status */}
       <Select
         value={value.status}
         onValueChange={(v) => {
-          if (v !== null) set("status", v);
+          if (v !== null) {
+            set("status", v);
+          }
         }}
       >
         <SelectTrigger className="h-10">
@@ -165,8 +198,12 @@ export function ProductFilters({
                 ]}
           </SelectValue>
         </SelectTrigger>
+
         <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="all">
+            All statuses
+          </SelectItem>
+
           {PRODUCT_STATUSES.map((status) => (
             <SelectItem key={status} value={status}>
               {PRODUCT_STATUS_LABELS[status]}
@@ -175,40 +212,73 @@ export function ProductFilters({
         </SelectContent>
       </Select>
 
+      {/* Price */}
       <div className="flex items-center gap-2">
-        <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-        <Label className="text-xs text-muted-foreground">Price</Label>
+        <SlidersHorizontal className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+
+        <Label className="text-xs text-muted-foreground">
+          Price
+        </Label>
+
         <Input
           type="number"
           min={0}
           value={value.minPrice}
-          onChange={(e) => set("minPrice", e.target.value)}
+          onChange={(e) =>
+            set("minPrice", e.target.value)
+          }
           placeholder="Min"
           className="h-8 w-20"
         />
-        <span className="text-xs text-muted-foreground">to</span>
+
+        <span className="text-xs text-muted-foreground">
+          to
+        </span>
+
         <Input
           type="number"
           min={0}
           value={value.maxPrice}
-          onChange={(e) => set("maxPrice", e.target.value)}
+          onChange={(e) =>
+            set("maxPrice", e.target.value)
+          }
           placeholder="Max"
           className="h-8 w-20"
         />
       </div>
 
+      {/* Boolean filters */}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => set("featuredOnly", !value.featuredOnly)}>
+        <button
+          type="button"
+          onClick={() =>
+            set("featuredOnly", !value.featuredOnly)
+          }
+        >
           <Badge
-            variant={value.featuredOnly ? "default" : "outline"}
+            variant={
+              value.featuredOnly
+                ? "default"
+                : "outline"
+            }
             className="cursor-pointer"
           >
             Featured only
           </Badge>
         </button>
-        <button onClick={() => set("newOnly", !value.newOnly)}>
+
+        <button
+          type="button"
+          onClick={() =>
+            set("newOnly", !value.newOnly)
+          }
+        >
           <Badge
-            variant={value.newOnly ? "default" : "outline"}
+            variant={
+              value.newOnly
+                ? "default"
+                : "outline"
+            }
             className="cursor-pointer"
           >
             New arrivals only
@@ -216,12 +286,14 @@ export function ProductFilters({
         </button>
       </div>
 
+      {/* Clear */}
       {hasActiveFilters(value) && (
         <Button
+          type="button"
           variant="destructive"
           size="sm"
           onClick={clearFilters}
-          className="w-full  gap-1 text-xs"
+          className="w-full gap-1 text-xs"
         >
           <X className="h-3 w-3" />
           Clear all filters
@@ -232,66 +304,101 @@ export function ProductFilters({
 
   return (
     <>
-      {/* Desktop - Full Filters */}
+      {/* ================================================== */}
+      {/* DESKTOP */}
+      {/* ================================================== */}
+
       <Card className="hidden md:block">
         <CardContent className="space-y-3 p-4">
+          {/* Top filters */}
           <div className="flex flex-col gap-3 md:flex-row">
+            {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
               <Input
                 value={value.search}
-                onChange={(e) => set("search", e.target.value)}
+                onChange={(e) =>
+                  set("search", e.target.value)
+                }
                 placeholder="Search by name or SKU..."
                 className="pl-9"
               />
             </div>
 
+            {/* Category */}
             <Select
               value={value.category}
               onValueChange={(v) => {
-                if (v !== null) set("category", v);
+                if (v !== null) {
+                  set("category", v);
+                }
               }}
             >
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="All categories">
-                  {value.category === "all" ? "All categories" : value.category}
+                  {value.category === "all"
+                    ? "All categories"
+                    : value.category}
                 </SelectValue>
               </SelectTrigger>
+
               <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
+                <SelectItem value="all">
+                  All categories
+                </SelectItem>
+
                 {categories.map((item) => (
-                  <SelectItem key={item} value={item}>
+                  <SelectItem
+                    key={item}
+                    value={item}
+                  >
                     {item}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
+            {/* Brand */}
             <Select
               value={value.brand}
               onValueChange={(v) => {
-                if (v !== null) set("brand", v);
+                if (v !== null) {
+                  set("brand", v);
+                }
               }}
             >
               <SelectTrigger className="w-full md:w-40">
                 <SelectValue placeholder="All brands">
-                  {value.brand === "all" ? "All brands" : value.brand}
+                  {value.brand === "all"
+                    ? "All brands"
+                    : value.brand}
                 </SelectValue>
               </SelectTrigger>
+
               <SelectContent>
-                <SelectItem value="all">All brands</SelectItem>
+                <SelectItem value="all">
+                  All brands
+                </SelectItem>
+
                 {brands.map((item) => (
-                  <SelectItem key={item} value={item}>
+                  <SelectItem
+                    key={item}
+                    value={item}
+                  >
                     {item}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
+            {/* Status */}
             <Select
               value={value.status}
               onValueChange={(v) => {
-                if (v !== null) set("status", v);
+                if (v !== null) {
+                  set("status", v);
+                }
               }}
             >
               <SelectTrigger className="w-full md:w-40">
@@ -303,10 +410,17 @@ export function ProductFilters({
                       ]}
                 </SelectValue>
               </SelectTrigger>
+
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="all">
+                  All statuses
+                </SelectItem>
+
                 {PRODUCT_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
+                  <SelectItem
+                    key={status}
+                    value={status}
+                  >
                     {PRODUCT_STATUS_LABELS[status]}
                   </SelectItem>
                 ))}
@@ -314,52 +428,93 @@ export function ProductFilters({
             </Select>
           </div>
 
+          {/* Bottom filters */}
           <div className="flex flex-wrap items-center gap-4">
+            {/* Price */}
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-              <Label className="text-xs text-muted-foreground">Price</Label>
+
+              <Label className="text-xs text-muted-foreground">
+                Price
+              </Label>
+
               <Input
                 type="number"
                 min={0}
                 value={value.minPrice}
-                onChange={(e) => set("minPrice", e.target.value)}
+                onChange={(e) =>
+                  set("minPrice", e.target.value)
+                }
                 placeholder="Min"
                 className="h-8 w-24"
               />
-              <span className="text-xs text-muted-foreground">to</span>
+
+              <span className="text-xs text-muted-foreground">
+                to
+              </span>
+
               <Input
                 type="number"
                 min={0}
                 value={value.maxPrice}
-                onChange={(e) => set("maxPrice", e.target.value)}
+                onChange={(e) =>
+                  set("maxPrice", e.target.value)
+                }
                 placeholder="Max"
                 className="h-8 w-24"
               />
             </div>
 
-            <button onClick={() => set("featuredOnly", !value.featuredOnly)}>
+            {/* Featured */}
+            <button
+              type="button"
+              onClick={() =>
+                set(
+                  "featuredOnly",
+                  !value.featuredOnly,
+                )
+              }
+            >
               <Badge
-                variant={value.featuredOnly ? "default" : "outline"}
+                variant={
+                  value.featuredOnly
+                    ? "default"
+                    : "outline"
+                }
                 className="cursor-pointer"
               >
                 Featured only
               </Badge>
             </button>
 
-            <button onClick={() => set("newOnly", !value.newOnly)}>
+            {/* New */}
+            <button
+              type="button"
+              onClick={() =>
+                set("newOnly", !value.newOnly)
+              }
+            >
               <Badge
-                variant={value.newOnly ? "default" : "outline"}
+                variant={
+                  value.newOnly
+                    ? "default"
+                    : "outline"
+                }
                 className="cursor-pointer"
               >
                 New arrivals only
               </Badge>
             </button>
 
+            {/* Clear */}
             {hasActiveFilters(value) && (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => onChange(EMPTY_PRODUCT_FILTERS)}
+                onClick={() =>
+                  onChange(EMPTY_PRODUCT_FILTERS)
+                }
                 className="ml-auto gap-1 text-xs"
               >
                 <X className="h-3 w-3" />
@@ -370,14 +525,20 @@ export function ProductFilters({
         </CardContent>
       </Card>
 
-      {/* Mobile */}
+      {/* ================================================== */}
+      {/* MOBILE */}
+      {/* ================================================== */}
+
       <div className="md:hidden">
-        {/* Search Bar */}
+        {/* Search */}
         <div className="relative mb-2">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
           <Input
             value={value.search}
-            onChange={(e) => set("search", e.target.value)}
+            onChange={(e) =>
+              set("search", e.target.value)
+            }
             placeholder="Search products..."
             className="h-10 pl-9 pr-14"
           />
@@ -385,24 +546,39 @@ export function ProductFilters({
 
         {/* Active filter chips */}
         {hasActiveFilters(value) && (
-          <div className="flex flex-wrap items-center gap-1.5 mb-2">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
             {value.search && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
                 "{value.search}"
               </Badge>
             )}
+
             {value.category !== "all" && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
                 {value.category}
               </Badge>
             )}
+
             {value.brand !== "all" && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
                 {value.brand}
               </Badge>
             )}
+
             {value.status !== "all" && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
                 {
                   PRODUCT_STATUS_LABELS[
                     value.status as keyof typeof PRODUCT_STATUS_LABELS
@@ -410,25 +586,40 @@ export function ProductFilters({
                 }
               </Badge>
             )}
+
             {value.featuredOnly && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
                 Featured
               </Badge>
             )}
+
             {value.newOnly && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
                 New
               </Badge>
             )}
+
             {(value.minPrice || value.maxPrice) && (
-              <Badge variant="secondary" className="text-xs">
-                ${value.minPrice || "0"} - ${value.maxPrice || "∞"}
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
+                KES {value.minPrice || "0"} -{" "}
+                {value.maxPrice || "∞"}
               </Badge>
             )}
+
             <Button
+              type="button"
               size="sm"
               onClick={clearFilters}
-              className="h-5 px-1.5 text-[10px] bg-red-500  hover:text-foreground"
+              className="h-5 gap-1 bg-red-500 px-1.5 text-[10px] hover:bg-red-600 hover:text-white"
             >
               <X className="h-3 w-3" />
               Clear
@@ -436,31 +627,79 @@ export function ProductFilters({
           </div>
         )}
 
-        {/* Floating Filter Button */}
-        <Button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full shadow-lg px-4 py-2 h-auto gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          <span className="text-sm font-medium">Filters</span>
-          {activeCount > 0 && (
-            <Badge className="h-5 px-1.5 bg-white/20 text-primary-foreground border-none text-xs">
-              {activeCount}
-            </Badge>
-          )}
-        </Button>
+        {/* ================================================= */}
+        {/* FLOATING FILTER BUTTON */}
+        {/* ================================================= */}
 
-        {/* Filter Sheet */}
-        <Sheet open={open} onOpenChange={setOpen}>
+        <div
+          className="
+            fixed
+            bottom-16
+            right-4
+            z-40
+          "
+        >
+          <Button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="
+              h-10
+              gap-2
+              rounded-full
+              px-4
+              shadow-lg
+            "
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+
+            <span className="text-sm font-medium">
+              Filters
+            </span>
+
+            {activeCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="
+                  h-5
+                  min-w-5
+                  border-0
+                  bg-background
+                  px-1.5
+                  text-xs
+                  text-foreground
+                "
+              >
+                {activeCount}
+              </Badge>
+            )}
+          </Button>
+        </div>
+
+        {/* ================================================= */}
+        {/* FILTER SHEET */}
+        {/* ================================================= */}
+
+        <Sheet
+          open={open}
+          onOpenChange={setOpen}
+        >
           <SheetContent
-            side="bottom"
-            className="max-h-[85vh] rounded-t-2xl px-4 pb-6"
+            side="left"
+            className="
+              h-full
+              w-[85%]
+              max-w-sm
+              px-4
+              pb-6
+            "
           >
             <SheetHeader className="mb-5 text-left">
-              <SheetTitle>Filters</SheetTitle>
+              <SheetTitle>
+                Filters
+              </SheetTitle>
             </SheetHeader>
-            <div className="overflow-y-auto">
+
+            <div className="h-[calc(100vh-100px)] overflow-y-auto pr-1">
               <FilterContent />
             </div>
           </SheetContent>

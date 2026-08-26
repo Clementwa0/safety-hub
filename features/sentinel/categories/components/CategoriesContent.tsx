@@ -12,7 +12,6 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 import type {
   AdminCategory,

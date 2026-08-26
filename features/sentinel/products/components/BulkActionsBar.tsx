@@ -119,7 +119,7 @@ export function BulkActionsBar({
               Delete
             </Button>
 
-            <Button variant="ghost" size="icon-sm" onClick={onClear} aria-label="Clear selection">
+            <Button variant="ghost" size="icon" onClick={onClear} aria-label="Clear selection">
               <X className="h-4 w-4" />
             </Button>
           </div>

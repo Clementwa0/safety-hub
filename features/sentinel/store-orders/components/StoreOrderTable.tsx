@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, ChevronRight, Eye, Package, User } from "lucide-react";
+import { ChevronRight, Eye, Package } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,9 +25,12 @@ interface StoreOrderTableProps {
   orders: StoreOrder[];
 }
 
-const orderHref = (orderId: string) => `/sentinel/store-orders/${orderId}`;
+const orderHref = (orderId: string) =>
+  `/sentinel/store-orders/${orderId}`;
 
-export default function StoreOrderTable({ orders }: StoreOrderTableProps) {
+export default function StoreOrderTable({
+  orders,
+}: StoreOrderTableProps) {
   if (orders.length === 0) {
     return (
       <Card className="border-dashed bg-muted/20">
@@ -53,7 +56,7 @@ export default function StoreOrderTable({ orders }: StoreOrderTableProps) {
   return (
     <div className="w-full">
       {/* Desktop */}
-      <Card className="hidden overflow-hidden md:block border-none shadow-none ">
+      <Card className="hidden overflow-hidden border-none shadow-none md:block">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -119,7 +122,9 @@ export default function StoreOrderTable({ orders }: StoreOrderTableProps) {
                   </TableCell>
 
                   <TableCell className="py-2.5">
-                    <StorePaymentStatusBadge status={order.paymentStatus} />
+                    <StorePaymentStatusBadge
+                      status={order.paymentStatus}
+                    />
                   </TableCell>
 
                   <TableCell className="py-2.5">
@@ -145,83 +150,50 @@ export default function StoreOrderTable({ orders }: StoreOrderTableProps) {
         </div>
       </Card>
 
-      {/* Mobile — individual cards, no wrapper background/border */}
-      <div className="flex flex-col gap-2 md:hidden">
-        {orders.map((order) => {
-          const itemCount = order.items?.length ?? 0;
-
-          return (
-            <Card
-              key={order.id}
-              className="overflow-hidden shadow-sm transition-shadow active:shadow-none"
+      {/* Mobile */}
+      <ul className="space-y-3 md:hidden">
+        {orders.map((order) => (
+          <li key={order.id}>
+            <Link
+              href={orderHref(order.id)}
+              className="block"
             >
-              <CardContent className="p-3">
-                <Link href={orderHref(order.id)} className="block">
-                  {/* Order + Total */}
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      <span className="truncate font-mono text-[13px] font-semibold text-primary">
+              <Card className="group p-4 transition-colors hover:bg-accent/50">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold">
                         {order.orderNumber}
                       </span>
 
-                      <StoreOrderStatusBadge status={order.status} />
+                      <StoreOrderStatusBadge
+                        status={order.status}
+                      />
+
+                      <StorePaymentStatusBadge
+                        status={order.paymentStatus}
+                      />
                     </div>
 
-                    <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {order.customer.name} ·{" "}
+                      {formatDate(new Date(order.createdAt))}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-sm font-semibold sm:text-base">
                       {formatKES(order.total)}
                     </span>
+
+                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                   </div>
-
-                  {/* Customer */}
-                  <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
-                    <User className="size-3 shrink-0 text-muted-foreground" />
-
-                    <span className="truncate text-xs font-medium text-foreground">
-                      {order.customer.name}
-                    </span>
-
-                    <span className="shrink-0 text-[10px] text-muted-foreground/50">
-                      •
-                    </span>
-
-                    <span className="truncate text-[11px] text-muted-foreground">
-                      {order.customer.email}
-                    </span>
-                  </div>
-
-                  {/* Date + Items + Payment + View */}
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-1.5 text-[10px] text-muted-foreground">
-                      <Calendar className="size-3 shrink-0" />
-
-                      <span className="truncate">
-                        {formatDate(new Date(order.createdAt))}
-                      </span>
-
-                      <span className="shrink-0 text-muted-foreground/50">
-                        •
-                      </span>
-
-                      <span className="shrink-0">
-                        {itemCount} {itemCount === 1 ? "item" : "items"}
-                      </span>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <StorePaymentStatusBadge status={order.paymentStatus} />
-
-                      <span className="flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-1 text-[11px] font-semibold text-primary transition-colors group-hover:bg-primary/10">
-                        View
-                        <ChevronRight className="size-3.5" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </div>
+              </Card>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { productService } from "@/services/shared/product.service";
 import type { Product } from "@/types/product";
+
 import ProductForm from "./components/ProductForm";
 
 export default function EditProduct() {
@@ -19,12 +20,46 @@ export default function EditProduct() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!id) return;
+  const loadProduct = useCallback(async () => {
+    if (!id) {
+      setError("Product ID is missing.");
+      setLoading(false);
+      return;
+    }
 
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await productService.getById(id);
+
+      setProduct(result);
+    } catch (caught) {
+      setProduct(null);
+
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not load the product",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
     let active = true;
 
-    void (async () => {
+    const load = async () => {
+      if (!id) {
+        if (active) {
+          setError("Product ID is missing.");
+          setLoading(false);
+        }
+
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -36,6 +71,8 @@ export default function EditProduct() {
         }
       } catch (caught) {
         if (active) {
+          setProduct(null);
+
           setError(
             caught instanceof Error
               ? caught.message
@@ -47,7 +84,9 @@ export default function EditProduct() {
           setLoading(false);
         }
       }
-    })();
+    };
+
+    void load();
 
     return () => {
       active = false;
@@ -58,24 +97,32 @@ export default function EditProduct() {
     <div className="space-y-6">
       <PageHeader
         title="Edit product"
-        description={product?.name ?? "Update catalogue details."}
+        description={
+          product?.name ?? "Update product information and catalogue details."
+        }
       />
 
       {loading ? (
-        <Loading label="Loading product..." />
+        <div className="py-8">
+          <Loading label="Loading product..." />
+        </div>
       ) : error || !product ? (
-        <EmptyState
-          title="Product not found"
-          description={error ?? "This product may have been deleted."}
-          action={
-            <Button
-              variant="outline"
-              onClick={() => window.location.reload()}
-            >
-              Try again
-            </Button>
-          }
-        />
+        <div className="py-8">
+          <EmptyState
+            title="Product not found"
+            description={
+              error ?? "This product may have been deleted or no longer exists."
+            }
+            action={
+              <Button
+                variant="outline"
+                onClick={() => void loadProduct()}
+              >
+                Try again
+              </Button>
+            }
+          />
+        </div>
       ) : (
         <ProductForm product={product} />
       )}

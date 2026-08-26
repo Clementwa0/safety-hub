@@ -14,7 +14,6 @@ import {
   ChevronUp,
 } from "lucide-react";
 
-import { SafeImage } from "@/components/shared/SafeImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -259,7 +258,7 @@ export default function ProductTable({
       <Card
         key={rowKey}
         className={cn(
-          "border-border/60 p-1.5 shadow-sm transition-all duration-200",
+          "shadow-sm transition-all duration-200",
           isExpanded && "border-primary/30 shadow-md"
         )}
       >

@@ -10,32 +10,42 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { TableSkeleton } from "@/components/shared/Loading";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { categoryService } from "@/services/shared/category.service";
-import { productService, type BulkProductAction } from "@/services/shared/product.service";
+import {
+  productService,
+  type BulkProductAction,
+} from "@/services/shared/product.service";
 import type { Product, ProductStatus } from "@/types/product";
 import type { CategoryWithCount } from "@/types/category";
-import ProductFilters, { EMPTY_PRODUCT_FILTERS, hasActiveFilters, ProductFiltersValue } from "./components/ProductFilters";
+
+import ProductFilters, {
+  EMPTY_PRODUCT_FILTERS,
+  hasActiveFilters,
+  type ProductFiltersValue,
+} from "./components/ProductFilters";
 import BulkActionsBar from "./components/BulkActionsBar";
 import ProductTable from "./components/ProductTable";
 import Pagination from "@/components/shared/Pagination";
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100,1000];
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 1000];
 const DEFAULT_PAGE_SIZE = 25;
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CategoryWithCount[]>([]);
-  const [filters, setFilters] = useState<ProductFiltersValue>(EMPTY_PRODUCT_FILTERS);
+  const [filters, setFilters] =
+    useState<ProductFiltersValue>(EMPTY_PRODUCT_FILTERS);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [pendingDelete, setPendingDelete] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
@@ -61,20 +71,29 @@ export default function AdminProductsPage() {
   }, []);
 
   useEffect(() => {
-    void (async () => {
-      await load();
-    })();
+    void load();
   }, [load]);
 
   const brands = useMemo(() => {
-    const set = new Set(products.map((product) => product.brand).filter(Boolean) as string[]);
-    return Array.from(set).sort();
+    const brandSet = new Set(
+      products
+        .map((product) => product.brand)
+        .filter(Boolean) as string[],
+    );
+
+    return Array.from(brandSet).sort();
   }, [products]);
 
   const filtered = useMemo(() => {
     const term = filters.search.trim().toLowerCase();
-    const min = filters.minPrice ? Number(filters.minPrice) : undefined;
-    const max = filters.maxPrice ? Number(filters.maxPrice) : undefined;
+
+    const min = filters.minPrice
+      ? Number(filters.minPrice)
+      : undefined;
+
+    const max = filters.maxPrice
+      ? Number(filters.maxPrice)
+      : undefined;
 
     return products.filter((product) => {
       const matchesSearch =
@@ -83,18 +102,28 @@ export default function AdminProductsPage() {
         (product.sku ?? "").toLowerCase().includes(term);
 
       const matchesCategory =
-        filters.category === "all" || String(product.category) === filters.category;
+        filters.category === "all" ||
+        String(product.category) === filters.category;
 
-      const matchesBrand = filters.brand === "all" || (product.brand ?? "") === filters.brand;
+      const matchesBrand =
+        filters.brand === "all" ||
+        (product.brand ?? "") === filters.brand;
 
       const matchesStatus =
-        filters.status === "all" || (product.status ?? "active") === filters.status;
+        filters.status === "all" ||
+        (product.status ?? "active") === filters.status;
 
-      const matchesFeatured = !filters.featuredOnly || Boolean(product.featured);
-      const matchesNew = !filters.newOnly || Boolean(product.isNewArrival);
+      const matchesFeatured =
+        !filters.featuredOnly || Boolean(product.featured);
 
-      const matchesMin = min === undefined || product.price >= min;
-      const matchesMax = max === undefined || product.price <= max;
+      const matchesNew =
+        !filters.newOnly || Boolean(product.isNewArrival);
+
+      const matchesMin =
+        min === undefined || product.price >= min;
+
+      const matchesMax =
+        max === undefined || product.price <= max;
 
       return (
         matchesSearch &&
@@ -109,25 +138,27 @@ export default function AdminProductsPage() {
     });
   }, [products, filters]);
 
-  // Paginate filtered products
   const paginatedProducts = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     const end = start + pageSize;
+
     return filtered.slice(start, end);
   }, [filtered, currentPage, pageSize]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
 
-  // Reset to first page when filters or page size change
   useEffect(() => {
     setCurrentPage(1);
   }, [filters, pageSize]);
 
-  // Selection is scoped to what's currently visible so bulk actions never
-  // silently touch a filtered-out product.
   useEffect(() => {
-    const visibleIds = new Set(paginatedProducts.map((product) => product.id));
-    setSelectedIds((prev) => prev.filter((id) => visibleIds.has(id)));
+    const visibleIds = new Set(
+      paginatedProducts.map((product) => product.id),
+    );
+
+    setSelectedIds((previous) =>
+      previous.filter((id) => visibleIds.has(id)),
+    );
   }, [paginatedProducts]);
 
   const handleDelete = async () => {
@@ -137,8 +168,11 @@ export default function AdminProductsPage() {
 
     try {
       await productService.remove(pendingDelete.id);
+
       toast.success(`${pendingDelete.name} deleted`);
+
       setPendingDelete(null);
+
       await load();
     } catch (caught) {
       toast.error(
@@ -154,32 +188,61 @@ export default function AdminProductsPage() {
   const handleDuplicate = async (product: Product) => {
     try {
       await productService.duplicate(product.id);
+
       toast.success(`${product.name} duplicated`);
+
       await load();
     } catch (caught) {
-      toast.error(caught instanceof Error ? caught.message : "Could not duplicate the product");
+      toast.error(
+        caught instanceof Error
+          ? caught.message
+          : "Could not duplicate the product",
+      );
     }
   };
 
   const toggleSelect = (id: string, selected: boolean) => {
-    setSelectedIds((prev) => (selected ? [...prev, id] : prev.filter((item) => item !== id)));
+    setSelectedIds((previous) =>
+      selected
+        ? [...previous, id]
+        : previous.filter((item) => item !== id),
+    );
   };
 
   const toggleSelectAll = (selected: boolean) => {
-    setSelectedIds(selected ? paginatedProducts.map((product) => product.id) : []);
+    setSelectedIds(
+      selected
+        ? paginatedProducts.map((product) => product.id)
+        : [],
+    );
   };
 
-  const runBulkAction = async (action: BulkProductAction, status?: ProductStatus) => {
+  const runBulkAction = async (
+    action: BulkProductAction,
+    status?: ProductStatus,
+  ) => {
     if (selectedIds.length === 0) return;
 
     setBulkBusy(true);
+
     try {
-      await productService.bulkAction(selectedIds, action, status);
+      await productService.bulkAction(
+        selectedIds,
+        action,
+        status,
+      );
+
       toast.success("Bulk action applied");
+
       setSelectedIds([]);
+
       await load();
     } catch (caught) {
-      toast.error(caught instanceof Error ? caught.message : "Bulk action failed");
+      toast.error(
+        caught instanceof Error
+          ? caught.message
+          : "Bulk action failed",
+      );
     } finally {
       setBulkBusy(false);
     }
@@ -187,33 +250,54 @@ export default function AdminProductsPage() {
 
   const handleBulkDelete = async () => {
     setBulkBusy(true);
+
     try {
-      await productService.bulkAction(selectedIds, "delete");
-      toast.success(`${selectedIds.length} product(s) deleted`);
+      await productService.bulkAction(
+        selectedIds,
+        "delete",
+      );
+
+      toast.success(
+        `${selectedIds.length} product(s) deleted`,
+      );
+
       setSelectedIds([]);
       setBulkDeleteOpen(false);
+
       await load();
     } catch (caught) {
-      toast.error(caught instanceof Error ? caught.message : "Bulk delete failed");
+      toast.error(
+        caught instanceof Error
+          ? caught.message
+          : "Bulk delete failed",
+      );
     } finally {
       setBulkBusy(false);
     }
   };
 
   const handleExport = () => {
-    const selected = filtered.filter((product) => selectedIds.includes(product.id));
+    const selected = filtered.filter((product) =>
+      selectedIds.includes(product.id),
+    );
+
     if (selected.length === 0) return;
+
     productService.exportCsv(selected);
   };
 
   const activeFilters = hasActiveFilters(filters);
 
   const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
+    if (currentPage > 1) {
+      setCurrentPage((page) => page - 1);
+    }
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+    if (currentPage < totalPages) {
+      setCurrentPage((page) => page + 1);
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -226,7 +310,8 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Page header */}
       <PageHeader
         title="Products"
         description="Create, update and remove catalogue items."
@@ -236,105 +321,128 @@ export default function AdminProductsPage() {
             render={<Link href="/sentinel/products/new" />}
           >
             <PackagePlus className="h-4 w-4" />
-            Add product
+            <span>Add product</span>
           </Button>
         }
       />
 
+      {/* Filters */}
       <ProductFilters
         value={filters}
         onChange={setFilters}
         categories={categories.map((item) => item.name)}
         brands={brands}
-      />
+      />                                   
 
+      {/* Bulk actions */}
       <BulkActionsBar
         count={selectedIds.length}
         busy={bulkBusy}
         onClear={() => setSelectedIds([])}
         onDelete={() => setBulkDeleteOpen(true)}
-        onSetStatus={(status) => void runBulkAction("set-status", status)}
-        onAction={(action) => void runBulkAction(action)}
+        onSetStatus={(status) =>
+          void runBulkAction("set-status", status)
+        }
+        onAction={(action) =>
+          void runBulkAction(action)
+        }
         onExport={handleExport}
       />
 
-      <Card>
-        <CardContent className="px-0">
-          {loading ? (
-            <TableSkeleton rows={6} columns={5} />
-          ) : error ? (
-            <div className="p-4">
-              <EmptyState
-                title="Something went wrong"
-                description={error}
-                action={
-                  <Button variant="outline" onClick={() => void load()}>
-                    Try again
+      {/* Product table — no Card */}
+      <div className="w-full">
+        {loading ? (
+          <TableSkeleton rows={6} columns={5} />
+        ) : error ? (
+          <div className="py-8">
+            <EmptyState
+              title="Something went wrong"
+              description={error}
+              action={
+                <Button
+                  variant="outline"
+                  onClick={() => void load()}
+                >
+                  Try again
+                </Button>
+              }
+            />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-5">
+            <EmptyState
+              title={
+                activeFilters
+                  ? "No matching products"
+                  : "No products yet"
+              }
+              description={
+                activeFilters
+                  ? "Try a different search term or clear the filters."
+                  : "Add your first product to start building the catalogue."
+              }
+              action={
+                activeFilters ? (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setFilters(EMPTY_PRODUCT_FILTERS)
+                    }
+                  >
+                    Clear filters
                   </Button>
-                }
-              />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="p-4">
-              <EmptyState
-                title={activeFilters ? "No matching products" : "No products yet"}
-                description={
-                  activeFilters
-                    ? "Try a different search term or clear the filters."
-                    : "Add your first product to start building the catalogue."
-                }
-                action={
-                  activeFilters ? (
-                    <Button variant="outline" onClick={() => setFilters(EMPTY_PRODUCT_FILTERS)}>
-                      Clear filters
-                    </Button>
-                  ) : (
-                    <Button
-                      nativeButton={false}
-                      render={<Link href="/sentinel/products/new" />}
-                    >
-                      Add product
-                    </Button>
-                  )
-                }
-              />
-            </div>
-          ) : (
-            <>
-              <ProductTable
-                products={paginatedProducts}
-                onDelete={setPendingDelete}
-                onDuplicate={(product) => void handleDuplicate(product)}
-                selectable
-                selectedIds={selectedIds}
-                onToggleSelect={toggleSelect}
-                onToggleSelectAll={toggleSelectAll}
-              />
+                ) : (
+                  <Button
+                    nativeButton={false}
+                    render={
+                      <Link href="/sentinel/products/new" />
+                    }
+                  >
+                    Add product
+                  </Button>
+                )
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <ProductTable
+              products={paginatedProducts}
+              onDelete={setPendingDelete}
+              onDuplicate={(product) =>
+                void handleDuplicate(product)
+              }
+              selectable
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onToggleSelectAll={toggleSelectAll}
+            />
 
-              {/* Pagination */}
-              <Pagination
-                page={currentPage}
-                totalPages={totalPages}
-                total={filtered.length}
-                onPrev={handlePrevPage}
-                onNext={handleNextPage}
-                hasPrev={currentPage > 1}
-                hasNext={currentPage < totalPages}
-                onPageChange={handlePageChange}
-                pageSize={pageSize}
-                onPageSizeChange={handlePageSizeChange}
-                pageSizeOptions={PAGE_SIZE_OPTIONS}
-                showPageSize
-              />
-            </>
-          )}
-        </CardContent>
-      </Card>
+            <Pagination
+              page={currentPage}
+              totalPages={totalPages}
+              total={filtered.length}
+              onPrev={handlePrevPage}
+              onNext={handleNextPage}
+              hasPrev={currentPage > 1}
+              hasNext={currentPage < totalPages}
+              onPageChange={handlePageChange}
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              showPageSize
+            />
+          </>
+        )}
+      </div>
 
+      {/* Single product delete */}
       <ConfirmDialog
         open={Boolean(pendingDelete)}
         onOpenChange={(open) => {
-          if (!open) setPendingDelete(null);
+          if (!open) {
+            setPendingDelete(null);
+          }
         }}
         title="Delete product?"
         description={
@@ -347,6 +455,7 @@ export default function AdminProductsPage() {
         onConfirm={() => void handleDelete()}
       />
 
+      {/* Bulk delete */}
       <ConfirmDialog
         open={bulkDeleteOpen}
         onOpenChange={setBulkDeleteOpen}

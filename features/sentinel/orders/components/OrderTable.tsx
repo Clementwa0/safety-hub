@@ -129,7 +129,7 @@ export default function OrderTable({ orders, onDelete, compact }: OrderTableProp
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
-                          size="icon-sm"
+                          size="icon"
                           aria-label={`View order ${order.number}`}
                           nativeButton={false}
                           render={<Link href={`/sentinel/orders/${order.id}`} />}
@@ -138,7 +138,7 @@ export default function OrderTable({ orders, onDelete, compact }: OrderTableProp
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon-sm"
+                          size="icon"
                           aria-label={`Edit order ${order.number}`}
                           nativeButton={false}
                           render={<Link href={`/sentinel/orders/${order.id}/edit`} />}
@@ -147,7 +147,7 @@ export default function OrderTable({ orders, onDelete, compact }: OrderTableProp
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon-sm"
+                          size="icon"
                           aria-label={`Delete order ${order.number}`}
                           onClick={() => onDelete?.(order)}
                         >
