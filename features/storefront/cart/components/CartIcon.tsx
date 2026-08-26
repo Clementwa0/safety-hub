@@ -86,7 +86,6 @@ export default function CartIcon({
     );
   }
 
-  // Icon variant for header/navigation
   const ariaLabel = isMounted ? `Open cart with ${itemCount} items` : "Open cart";
 
   const handleClick = () => {

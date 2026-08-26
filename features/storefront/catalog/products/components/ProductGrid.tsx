@@ -18,21 +18,8 @@ export default function ProductGrid({
   if (loading) {
     return (
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5">
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="animate-pulse overflow-hidden rounded-lg sm:rounded-xl border bg-white shadow-sm"
-          >
-            <div className="aspect-square bg-gradient-to-b from-gray-200 to-gray-100" />
-            <div className="space-y-1.5 p-2 sm:space-y-2 sm:p-2.5">
-              <div className="h-2.5 w-2/3 rounded bg-gray-200" />
-              <div className="h-2 w-1/2 rounded bg-gray-200" />
-              <div className="flex items-center justify-between">
-                <div className="h-3 w-16 rounded bg-gray-200" />
-                <div className="h-6 w-6 rounded bg-gray-200" />
-              </div>
-            </div>
-          </div>
+        {Array.from({ length: 15 }).map((_, index) => (
+          <ProductSkeleton key={index} />
         ))}
       </div>
     );
@@ -41,17 +28,19 @@ export default function ProductGrid({
   if (!products.length) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white p-6 text-center"
+        className="flex min-h-[260px] flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 px-4 py-8 text-center"
       >
-        <div className="mb-3 rounded-full bg-secondary/10 p-3 sm:p-4">
-          <FaBoxOpen className="h-6 w-6 sm:h-8 sm:w-8 text-secondary" />
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-secondary/10">
+          <FaBoxOpen className="h-6 w-6 text-secondary" />
         </div>
-        <h3 className="text-base sm:text-lg font-semibold text-primary">
-          No Products Found
+
+        <h3 className="text-sm font-semibold sm:text-base">
+          No products found
         </h3>
-        <p className="mt-1 max-w-md text-xs sm:text-sm text-muted-foreground">
+
+        <p className="mt-1 max-w-sm text-xs text-muted-foreground sm:text-sm">
           Try changing your search or selected filters.
         </p>
       </motion.div>
@@ -67,20 +56,44 @@ export default function ProductGrid({
       {products.map((product, index) => (
         <motion.div
           key={product.id}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{
-            delay: Math.min(index * 0.02, 0.5),
-            duration: 0.25,
+            delay: Math.min(index * 0.02, 0.4),
+            duration: 0.2,
             ease: "easeOut",
           }}
         >
-          <ProductCard 
-            product={{ ...product, hasVariants: hasVariants(product) }}
+          <ProductCard
+            product={{
+              ...product,
+              hasVariants: hasVariants(product),
+            }}
             compact
           />
         </motion.div>
       ))}
     </motion.div>
+  );
+}
+
+function ProductSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-lg border bg-card">
+      {/* Image */}
+      <div className="aspect-square animate-pulse bg-muted" />
+
+      {/* Content */}
+      <div className="space-y-2 p-2.5">
+        <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+
+        <div className="h-2.5 w-1/2 animate-pulse rounded bg-muted" />
+
+        <div className="flex items-center justify-between pt-0.5">
+          <div className="h-3.5 w-16 animate-pulse rounded bg-muted" />
+          <div className="h-7 w-7 animate-pulse rounded-md bg-muted" />
+        </div>
+      </div>
+    </div>
   );
 }

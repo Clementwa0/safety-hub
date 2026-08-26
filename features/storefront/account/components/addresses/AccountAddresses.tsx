@@ -230,7 +230,7 @@ export default function AccountAddresses() {
                 <div className="flex shrink-0 gap-1">
                   <Button
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     aria-label="Edit address"
                     onClick={() => openEditDialog(address)}
                   >
@@ -238,7 +238,7 @@ export default function AccountAddresses() {
                   </Button>
                   <Button
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     aria-label="Delete address"
                     className="text-destructive hover:bg-destructive/5 hover:text-destructive"
                     onClick={() => setDeleteTarget(address)}
