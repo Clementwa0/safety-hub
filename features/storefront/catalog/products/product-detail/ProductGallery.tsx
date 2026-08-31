@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import type { Product } from "@/types/product";
+import { getAvailableQuantity, type Product } from "@/types/product";
 import { SafeImage } from "@/components/shared/SafeImage";
 import { Star, Package, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ interface ProductGalleryProps {
 }
 
 export function ProductGallery({ product, selectedVariantImage }: ProductGalleryProps) {
+  const availableStock = getAvailableQuantity(product);
   const baseImages = product.images && product.images.length > 0
     ? product.images
     : [product.image];
@@ -126,7 +127,7 @@ export function ProductGallery({ product, selectedVariantImage }: ProductGallery
               New
             </Badge>
           )}
-          {product.stock === 0 && (
+          {availableStock === 0 && (
             <Badge variant="destructive" className="flex items-center gap-1 text-[10px] sm:text-xs px-2 py-0.5 sm:px-3 sm:py-1">
               <AlertTriangle className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Out of Stock
@@ -135,10 +136,10 @@ export function ProductGallery({ product, selectedVariantImage }: ProductGallery
         </div>
 
         {/* Stock Count */}
-        {product.stock > 0 && product.stock < 10 && (
+        {availableStock > 0 && availableStock < 10 && (
           <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-white/95 backdrop-blur-sm px-2 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-sm border border-slate-100">
             <span className="text-[9px] sm:text-xs font-medium text-orange-600">
-              Only {product.stock} left
+              Only {availableStock} left
             </span>
           </div>
         )}

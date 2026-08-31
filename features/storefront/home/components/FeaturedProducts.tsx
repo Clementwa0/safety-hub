@@ -16,6 +16,7 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
     price: product.price,
     image: product.image,
     stock: product.stock,
+    reserved: product.reserved,
     featured: true,
     isNewArrival: false,
     compareAtPrice: product.compareAtPrice,

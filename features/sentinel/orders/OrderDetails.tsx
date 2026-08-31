@@ -136,6 +136,11 @@ export default function OrderViewPage() {
             <div className="mt-2">
               <OrderStatusBadge status={order.status} />
             </div>
+            {order.fulfillmentStatus && order.fulfillmentStatus !== "AVAILABLE" ? (
+              <p className="mt-2 text-sm font-medium text-amber-600">
+                Inventory: {order.fulfillmentStatus.replaceAll("_", " ")}
+              </p>
+            ) : null}
           </div>
           <div className="w-full space-y-2 sm:max-w-xs">
             <Label>Change status</Label>

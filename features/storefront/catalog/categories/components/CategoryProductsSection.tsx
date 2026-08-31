@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaBox } from "react-icons/fa6";
 
-import type { Product } from "@/types/product";
+import { getAvailableQuantity, type Product } from "@/types/product";
 import type { SortKey } from "@/types/storefront/shop";
 import { cn } from "@/lib/utils";
 import ProductCard from "../../products/components/ProductCard";
@@ -66,9 +66,9 @@ export default function CategoryProductsSection({
     }
 
     if (availability === "in-stock") {
-      result = result.filter((p) => p.stock > 0);
+      result = result.filter((p) => getAvailableQuantity(p) > 0);
     } else if (availability === "out-of-stock") {
-      result = result.filter((p) => p.stock <= 0);
+      result = result.filter((p) => getAvailableQuantity(p) <= 0);
     }
 
     switch (sort) {

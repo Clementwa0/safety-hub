@@ -9,7 +9,12 @@ import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { validateOrderStatusTransition } from "@/modules/orders/order-status";
-import { releaseReservation, shipReservedStock, shipStock } from "@/modules/inventory/inventory.service";
+import {
+  InventoryError,
+  releaseReservation,
+  shipReservedStock,
+  shipStock,
+} from "@/modules/inventory/inventory.service";
 
 const orderSchema = z.object({
   customer: customerInputSchema.optional(),
@@ -91,6 +96,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           }
 
           const previousStatus = order.status;
+          if (parsed.data.status === "shipped" && order.fulfillmentStatus && order.fulfillmentStatus !== "AVAILABLE") {
+            throw new Error(`__FULFILLMENT__Cannot fulfill this order while inventory status is ${order.fulfillmentStatus}`);
+          }
           order.status = parsed.data.status;
 
           // Stock actually leaves inventory here, at "shipped" — not when
@@ -101,12 +109,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           if (parsed.data.status === "shipped" && !order.stockDecremented) {
             for (const item of order.items) {
               if (!item.productId) continue;
+              const reservedQuantity = item.reservedQuantity ?? item.quantity;
+              if (reservedQuantity <= 0) continue;
 
               if (order.reservedStock) {
                 await shipReservedStock({
                   productId: item.productId,
                   variantSku: item.variantSku,
-                  quantity: item.quantity,
+                  quantity: reservedQuantity,
                   movementType: "order_shipped",
                   reference: order.number,
                   session,
@@ -115,7 +125,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 await shipStock({
                   productId: item.productId,
                   variantSku: item.variantSku,
-                  quantity: item.quantity,
+                  quantity: item.reservedQuantity ?? item.quantity,
                   movementType: "order_shipped",
                   reference: order.number,
                   session,
@@ -133,12 +143,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           if (parsed.data.status === "cancelled" && previousStatus !== "shipped" && order.reservedStock) {
             for (const item of order.items) {
               if (!item.productId) continue;
-              await releaseReservation({
-                productId: item.productId,
-                variantSku: item.variantSku,
-                quantity: item.quantity,
-                session,
-              });
+              const reservedQuantity = item.reservedQuantity ?? item.quantity;
+              if (reservedQuantity <= 0) continue;
+              try {
+                await releaseReservation({
+                  productId: item.productId,
+                  variantSku: item.variantSku,
+                  quantity: reservedQuantity,
+                  session,
+                });
+              } catch (error) {
+                // Cancellation is idempotent with respect to inventory: a
+                // hold may already have been released by an earlier retry or
+                // a legacy cleanup path. There is then nothing left to undo.
+                // Keep strict errors (invalid quantity, missing product, and
+                // so on) visible instead of masking real data problems.
+                if (!(error instanceof InventoryError) || error.code !== "MISSING_RESERVATION") {
+                  throw error;
+                }
+              }
             }
           }
         }
@@ -176,6 +199,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
       if (message.startsWith("__TRANSITION__")) {
         return apiError(message.replace("__TRANSITION__", ""), [], 400);
+      }
+      if (message.startsWith("__FULFILLMENT__")) {
+        return apiError(message.replace("__FULFILLMENT__", ""), [], 400);
       }
 
       return apiError(message, [], 500);

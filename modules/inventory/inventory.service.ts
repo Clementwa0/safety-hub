@@ -5,6 +5,7 @@ import { recordMovement } from "@/modules/inventory/movements";
 export interface InventoryItem {
   productId: mongoose.Types.ObjectId | string;
   variantSku?: string;
+  session?: mongoose.ClientSession;
 }
 
 interface InventoryMutation extends InventoryItem {
@@ -337,7 +338,7 @@ export async function syncVariantInventory(input: {
 }
 
 export async function getAvailableStock(input: InventoryItem): Promise<number> {
-  const product = await ProductModel.findById(input.productId).select("stock reserved variants").lean<IProduct | null>();
+  const product = await ProductModel.findById(input.productId).session(input.session ?? null).select("stock reserved variants").lean<IProduct | null>();
   if (!product) {
     throw new InventoryError("Product not found", "NOT_FOUND");
   }
@@ -351,4 +352,17 @@ export async function getAvailableStock(input: InventoryItem): Promise<number> {
 
   const source: Pick<IProduct, "stock" | "reserved"> = variant ?? product;
   return Math.max(0, source.stock - source.reserved);
+}
+
+/**
+ * Reserves as much of a requested line as is currently available. The
+ * caller remains responsible for recording the unreserved remainder as a
+ * backorder; each individual reservation is still atomic.
+ */
+export async function reserveAvailableStock(input: InventoryMutation): Promise<number> {
+  const available = await getAvailableStock(input);
+  if (available <= 0) return 0;
+  const quantity = Math.min(input.quantity, available);
+  await reserveStock({ ...input, quantity });
+  return quantity;
 }

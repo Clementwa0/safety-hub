@@ -20,7 +20,7 @@ import { SafeImage } from "@/components/shared/SafeImage";
 import { cn } from "@/lib/utils";
 import { formatKES } from "@/lib/format";
 import { useCart } from "@/hooks/useCart";
-import { getDiscountPercent } from "@/types/product";
+import { getAvailableQuantity, getDiscountPercent } from "@/types/product";
 
 export interface ProductCardItem {
   id: string;
@@ -29,6 +29,7 @@ export interface ProductCardItem {
   price: number;
   image: string | StaticImageData;
   stock: number;
+  reserved?: number;
   featured?: boolean;
   description?: string;
   subcategory?: string;
@@ -68,6 +69,7 @@ export default function ProductCard({
     price,
     image,
     stock,
+    reserved,
     brand,
     compareAtPrice,
     hasVariants,
@@ -75,9 +77,10 @@ export default function ProductCard({
   } = product;
 
   const isVariant = Boolean(hasVariants);
-  const isInStock = stock > 0;
+  const availableStock = getAvailableQuantity({ stock, reserved });
+  const isInStock = availableStock > 0;
   const isOutOfStock = !isVariant && !isInStock;
-  const isLowStock = !isVariant && isInStock && stock < 10;
+  const isLowStock = !isVariant && isInStock && availableStock < 10;
   const isFeatured = featured ?? product.featured ?? false;
 
   const isDiscounted =
@@ -293,7 +296,7 @@ export default function ProductCard({
             isVariant={isVariant}
             isInStock={isInStock}
             isLowStock={isLowStock}
-            stock={stock}
+            stock={availableStock}
             compact={compact}
           />
         </div>

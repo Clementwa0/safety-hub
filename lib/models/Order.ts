@@ -13,6 +13,8 @@ export interface IOrderLineItem {
   unitPrice: number;
   taxRate: number;
   discount: number;
+  /** Quantity currently held in inventory for this line. */
+  reservedQuantity?: number;
 }
 
 export interface IOrder extends Document {
@@ -30,6 +32,7 @@ export interface IOrder extends Document {
    *  never reserve, so their "shipped" transition must decrement stock without also
    *  touching `reserved` — this flag is how that transition tells the two cases apart. */
   reservedStock: boolean;
+  fulfillmentStatus: "AVAILABLE" | "PARTIALLY_AVAILABLE" | "BACKORDERED";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,6 +51,7 @@ const orderSchema = new Schema<IOrder>(
       unitPrice: { type: Number, required: true, min: 0 },
       taxRate: { type: Number, default: 0 },
       discount: { type: Number, default: 0 },
+      reservedQuantity: { type: Number, min: 0 },
     }],
     status: {
       type: String,
@@ -59,6 +63,11 @@ const orderSchema = new Schema<IOrder>(
     invoiceId: { type: Schema.Types.ObjectId, ref: "Invoice" },
     stockDecremented: { type: Boolean, default: false },
     reservedStock: { type: Boolean, default: false },
+    fulfillmentStatus: {
+      type: String,
+      enum: ["AVAILABLE", "PARTIALLY_AVAILABLE", "BACKORDERED"],
+      default: "AVAILABLE",
+    },
   },
   {
     timestamps: true,

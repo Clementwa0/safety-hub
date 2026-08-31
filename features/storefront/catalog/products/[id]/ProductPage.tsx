@@ -9,7 +9,7 @@ import { useProduct } from "@/hooks/useProduct";
 import { useCart } from "@/hooks/useCart";
 import { useCartUIStore } from "@/store/cart-ui-store";
 import { useSettings } from "@/components/SettingsProvider";
-import type { Product } from "@/types/product";
+import { getAvailableQuantity, type Product } from "@/types/product";
 import { ProductGallery, ProductHeader, ProductNotFound, ProductPricing, ProductRelated, ProductSkeleton, ProductTabs } from "..";
 
 function ProductPurchasePanel({
@@ -31,7 +31,7 @@ function ProductPurchasePanel({
     <ProductPricing
       price={product.price}
       compareAtPrice={product.compareAtPrice}
-      stock={product.stock}
+      stock={getAvailableQuantity(product)}
       quantity={qty}
       onQuantityChange={setQty}
       onAddToCart={() => onAddToCart(qty, selectedVariantSku)}

@@ -1,4 +1,4 @@
-import type { Model } from "mongoose";
+import type { ClientSession, Model } from "mongoose";
 
 import { nextDocumentNumber } from "@/lib/sales";
 
@@ -36,12 +36,13 @@ export async function createWithDocumentNumber<T>(
   Model: Model<T>,
   prefix: string,
   buildDoc: (number: string) => Record<string, unknown>,
+  session?: ClientSession,
 ): Promise<T> {
   const year = new Date().getFullYear();
   let lastError: unknown;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const existing = await Model.find({ number: { $regex: `^${prefix}-${year}-` } })
+    const existing = await Model.find({ number: { $regex: `^${prefix}-${year}-` } }).session(session ?? null)
       .select("number")
       .lean();
     const number = nextDocumentNumber(
@@ -50,7 +51,8 @@ export async function createWithDocumentNumber<T>(
     );
 
     try {
-      return await Model.create(buildDoc(number) as never);
+      const [created] = await Model.create([buildDoc(number) as never], session ? { session } : undefined);
+      return created;
     } catch (error) {
       if (!isDuplicateNumberError(error)) throw error;
       lastError = error;

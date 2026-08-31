@@ -33,6 +33,7 @@ export function normalizeProduct(product: Product & { _id?: string; [key: string
         ? product.compareAtPrice
         : undefined,
     stock: typeof product.stock === "number" ? product.stock : Number(product.stock ?? 0),
+    reserved: typeof product.reserved === "number" ? product.reserved : Number(product.reserved ?? 0),
     image,
     images: Array.isArray(product.images) ? (product.images as Product["images"]) : [],
     status: (product.status as Product["status"]) ?? "active",

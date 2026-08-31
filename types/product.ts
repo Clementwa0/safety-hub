@@ -59,6 +59,8 @@ export interface Product {
   price: number;
   image: ProductImage;
   stock: number;
+  /** Units committed to active, unshipped orders. Not available for sale. */
+  reserved?: number;
   description: string;
   status?: ProductStatus;
   featured?: boolean;
@@ -112,6 +114,11 @@ export interface ProductInput {
  *  the "has real variants" check with a slightly different condition. */
 export function hasVariants(product: Pick<Product, "variants">): boolean {
   return Array.isArray(product.variants) && product.variants.length > 0;
+}
+
+/** Customer-facing sellable inventory: on-hand stock less active holds. */
+export function getAvailableQuantity(inventory: Pick<Product, "stock" | "reserved">): number {
+  return Math.max(0, inventory.stock - (inventory.reserved ?? 0));
 }
 
 /** Returns the discount percentage (rounded, positive) when `compareAtPrice`

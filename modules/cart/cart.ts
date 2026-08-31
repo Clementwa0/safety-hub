@@ -4,6 +4,7 @@ import { ProductModel, type IProduct, type IProductVariant } from "@/lib/models/
 import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/modules/cart/pricing";
 import { getSettings } from "@/lib/settings/get-settings.server";
 import type { CartIdentity } from "@/modules/cart/session";
+import { getAvailableQuantity } from "@/types/product";
 
 export class CartError extends Error {
   status: number;
@@ -159,7 +160,7 @@ export async function serializeCart(cart: ICart): Promise<SerializedCart> {
 
     const unavailable = product.status === "archived";
     const price = variant ? variant.price : product.price;
-    const stock = variant ? Math.max(variant.stock - variant.reserved, 0) : product.stock;
+    const stock = getAvailableQuantity(variant ?? product);
     const subtotal = unavailable ? 0 : price * item.quantity;
 
     const rawCategory = product.category as unknown;
@@ -253,10 +254,11 @@ function assertAddable(
     throw new CartError("This product does not have size options", 400);
   }
 
-  if (requestedQuantity > product.stock) {
+  const available = getAvailableQuantity(product);
+  if (requestedQuantity > available) {
     throw new CartError(
-      product.stock > 0
-        ? `Only ${product.stock} unit(s) of "${product.name}" available`
+      available > 0
+        ? `Only ${available} unit(s) of "${product.name}" available`
         : `"${product.name}" is out of stock`,
       400,
     );

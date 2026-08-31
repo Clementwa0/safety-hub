@@ -4,13 +4,14 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { QuotationModel, type IQuotation } from "@/lib/models/Quotation";
 import { CustomerModel } from "@/lib/models/Customer";
-import { OrderModel } from "@/lib/models/Order";
+import { OrderModel, type IOrder } from "@/lib/models/Order";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { createWithDocumentNumber } from "@/lib/db/document-number";
 import { snapshotLineItemAvailability } from "@/modules/inventory/availability";
-import { reserveStock } from "@/modules/inventory/inventory.service";
+import { reserveAvailableStock } from "@/modules/inventory/inventory.service";
+import mongoose from "mongoose";
 
 const quotationSchema = z.object({
   customer: customerInputSchema.optional(),
@@ -21,6 +22,12 @@ const quotationSchema = z.object({
   notes: z.string().trim().optional(),
   terms: z.string().trim().optional(),
 });
+
+class QuotationConversionError extends Error {
+  constructor(message: string, readonly status = 400) {
+    super(message);
+  }
+}
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -185,39 +192,70 @@ async function duplicateQuotation(quotation: IQuotation) {
  * an Order already exists for this quotation, it's returned as-is rather
  * than reserving stock a second time.
  */
-async function convertQuotationToOrder(quotation: IQuotation) {
-  if (quotation.status !== "accepted") {
-    return apiError("Only accepted quotations can be converted to a sales order", [], 400);
-  }
+async function convertQuotationToOrder(quotationId: string) {
+  const session = await mongoose.startSession();
+  let createdOrder: IOrder | null = null;
+  let alreadyExisted = false;
+  try {
+    await session.withTransaction(async () => {
+      const quotation = await QuotationModel.findById(quotationId).session(session);
+      if (!quotation) throw new QuotationConversionError("Quotation not found", 404);
+      if (quotation.status !== "accepted") {
+        throw new QuotationConversionError("Only accepted quotations can be converted to a sales order");
+      }
 
-  const existingOrder = await OrderModel.findOne({ quotationId: quotation._id });
-  if (existingOrder) {
-    return apiSuccess(serializeDoc(existingOrder.toObject()), "Sales order already exists");
-  }
+      const existingOrder = await OrderModel.findOne({ quotationId: quotation._id }).session(session);
+      if (existingOrder) {
+        createdOrder = existingOrder;
+        alreadyExisted = true;
+        return;
+      }
 
-  const order = await createWithDocumentNumber(OrderModel, "ORD", (number) => ({
-    number,
-    customer: quotation.customer,
-    items: quotation.items,
-    status: "confirmed",
-    notes: quotation.notes,
-    quotationId: quotation._id,
-    reservedStock: true,
-  }));
+      const order = await createWithDocumentNumber(OrderModel, "ORD", (number) => ({
+        number,
+        customer: quotation.customer,
+        items: quotation.items,
+        status: "confirmed",
+        notes: quotation.notes,
+        quotationId: quotation._id,
+        reservedStock: true,
+      }), session);
 
-  for (const item of quotation.items) {
-    if (!item.productId) continue;
-    await reserveStock({
-      productId: item.productId,
-      variantSku: item.variantSku,
-      quantity: item.quantity,
+      let fullyAvailable = true;
+      let partiallyAvailable = false;
+      for (const item of quotation.items) {
+        if (!item.productId) {
+          // Custom/one-off lines have no catalog inventory to reserve and do
+          // not make the order a stock backorder.
+          continue;
+        }
+        const reservedQuantity = await reserveAvailableStock({
+          productId: item.productId,
+          variantSku: item.variantSku,
+          quantity: item.quantity,
+          session,
+        });
+        const orderItem = order.items.find((entry) => entry.productId === item.productId && entry.variantSku === item.variantSku);
+        if (orderItem) orderItem.reservedQuantity = reservedQuantity;
+        if (reservedQuantity < item.quantity) {
+          fullyAvailable = false;
+          if (reservedQuantity > 0) partiallyAvailable = true;
+        }
+      }
+      order.fulfillmentStatus = fullyAvailable ? "AVAILABLE" : partiallyAvailable ? "PARTIALLY_AVAILABLE" : "BACKORDERED";
+      await order.save({ session });
+
+      quotation.orderId = order._id;
+      await quotation.save({ session });
+      createdOrder = order;
     });
+    return apiSuccess(
+      serializeDoc(createdOrder),
+      alreadyExisted ? "Sales order already exists" : "Sales order created from quotation",
+    );
+  } finally {
+    await session.endSession();
   }
-
-  quotation.orderId = order._id;
-  await quotation.save();
-
-  return apiSuccess(serializeDoc(order.toObject()), "Sales order created from quotation");
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -255,8 +293,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return parsed.data.duplicate
       ? await duplicateQuotation(quotation)
-      : await convertQuotationToOrder(quotation);
+      : await convertQuotationToOrder(String(quotation._id));
   } catch (error) {
-    return apiError(error instanceof Error ? error.message : "Failed to process quotation", [], 500);
+    return apiError(
+      error instanceof Error ? error.message : "Failed to process quotation",
+      [],
+      error instanceof QuotationConversionError ? error.status : 500,
+    );
   }
 }

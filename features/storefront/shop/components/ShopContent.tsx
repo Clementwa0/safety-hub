@@ -40,6 +40,7 @@ function adaptProductForShop(dbProduct: any): Product | null {
     price: dbProduct.price ?? 0,
     compareAtPrice: dbProduct.compareAtPrice,
     stock: dbProduct.stock ?? 0,
+    reserved: dbProduct.reserved ?? 0,
     image:
       typeof dbProduct.image === "string"
         ? dbProduct.image
@@ -59,6 +60,7 @@ function mapToProductCardItem(product: Product): ProductCardItem {
     price: product.price,
     image: product.image || DEFAULT_IMAGE,
     stock: product.stock,
+    reserved: product.reserved,
     featured: product.featured ?? false,
     compareAtPrice: product.compareAtPrice,
     brand: product.brand,

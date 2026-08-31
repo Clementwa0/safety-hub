@@ -25,6 +25,7 @@ export interface Product {
   price: number;
   compareAtPrice?: number;
   stock: number;
+  reserved?: number;
   image?: string;
   rating?: number;
   reviews?: number;

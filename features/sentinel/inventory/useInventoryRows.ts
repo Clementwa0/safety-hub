@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 
 import { productService } from "@/services/shared/product.service";
+import { getAvailableQuantity } from "@/types/product";
 import type { InventoryRow } from "./types";
 
 const AVAILABILITY_CHUNK_SIZE = 50;
@@ -51,7 +52,7 @@ export function useInventoryRows(): UseInventoryRowsResult {
           return {
             ...product,
             reserved: entry?.reserved ?? 0,
-            available: entry?.available ?? product.stock,
+            available: entry?.available ?? getAvailableQuantity(product),
           };
         }),
       );

@@ -10,6 +10,7 @@ import type {
   SortOption,
   ViewMode,
 } from "@/types/storefront/shop";
+import { getAvailableQuantity } from "@/types/product";
 
 export const PRICE_BOUNDS: PriceRange = { min: 0, max: 100_000 };
 
@@ -191,7 +192,7 @@ export function filterProducts(
       return false;
 
     if (filters.availability.length) {
-      const inStock = product.stock > 0;
+      const inStock = getAvailableQuantity(product) > 0;
       const wantsInStock = filters.availability.includes("in-stock");
       const wantsOutOfStock = filters.availability.includes("out-of-stock");
       if (!((wantsInStock && inStock) || (wantsOutOfStock && !inStock)))

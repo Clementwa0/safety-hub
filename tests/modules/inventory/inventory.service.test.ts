@@ -13,7 +13,9 @@ import {
   reserveStock,
   shipReservedStock,
   syncVariantInventory,
+  reserveAvailableStock,
 } from "@/modules/inventory/inventory.service";
+import { getProductAvailability } from "@/modules/inventory/availability";
 
 let server: MongoMemoryServer;
 let productNumber = 0;
@@ -63,6 +65,26 @@ describe("inventory service", () => {
     const reloaded = await ProductModel.findById(product._id);
     assert.equal(reloaded?.stock, 5);
     assert.equal(reloaded?.reserved, 3);
+  });
+
+  it("projects simple-product availability as stock minus reservations for quotations", async () => {
+    const product = await createProduct({ stock: 5 });
+    await reserveStock({ productId: product._id, quantity: 3 });
+
+    const availability = await getProductAvailability([String(product._id)]);
+    assert.deepEqual(availability.get(String(product._id)), {
+      productId: String(product._id),
+      stock: 5,
+      reserved: 3,
+      available: 2,
+    });
+  });
+
+  it("reserves only the available portion of an oversized line", async () => {
+    const product = await createProduct({ stock: 5 });
+    const reserved = await reserveAvailableStock({ productId: product._id, quantity: 8 });
+    assert.equal(reserved, 5);
+    assert.equal(await getAvailableStock({ productId: product._id }), 0);
   });
 
   it("keeps variant and parent reservation rollups in sync", async () => {
