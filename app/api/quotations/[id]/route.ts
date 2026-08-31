@@ -5,12 +5,12 @@ import { connectToDatabase } from "@/lib/db";
 import { QuotationModel, type IQuotation } from "@/lib/models/Quotation";
 import { CustomerModel } from "@/lib/models/Customer";
 import { OrderModel } from "@/lib/models/Order";
-import { ProductModel } from "@/lib/models/Product";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { createWithDocumentNumber } from "@/lib/db/document-number";
 import { snapshotLineItemAvailability } from "@/modules/inventory/availability";
+import { reserveStock } from "@/modules/inventory/inventory.service";
 
 const quotationSchema = z.object({
   customer: customerInputSchema.optional(),
@@ -205,24 +205,14 @@ async function convertQuotationToOrder(quotation: IQuotation) {
     reservedStock: true,
   }));
 
-  const reservations = quotation.items
-    .filter((item) => item.productId)
-    .map((item) =>
-      item.variantSku
-        ? ProductModel.updateOne(
-            { _id: item.productId },
-            // Keep the parent-level rollup in sync too — $inc bypasses the
-            // pre-validate hook in lib/models/Product.ts that normally sums
-            // variant reserved up to the parent, so it has to be done here.
-            { $inc: { "variants.$[v].reserved": item.quantity, reserved: item.quantity } },
-            { arrayFilters: [{ "v.sku": item.variantSku }] },
-          )
-        : ProductModel.updateOne(
-            { _id: item.productId },
-            { $inc: { reserved: item.quantity } },
-          ),
-    );
-  await Promise.all(reservations);
+  for (const item of quotation.items) {
+    if (!item.productId) continue;
+    await reserveStock({
+      productId: item.productId,
+      variantSku: item.variantSku,
+      quantity: item.quantity,
+    });
+  }
 
   quotation.orderId = order._id;
   await quotation.save();

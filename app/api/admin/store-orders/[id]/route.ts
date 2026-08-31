@@ -3,12 +3,11 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel } from "@/lib/models/StoreOrder";
-import { ProductModel } from "@/lib/models/Product";
 import { requireStaff } from "@/lib/auth";
 import { updateStoreOrderSchema } from "@/modules/checkout/validation";
 import { validateStatusTransition } from "@/modules/checkout/order-status";
 import { validatePaymentStatusTransition } from "@/modules/checkout/payment-status";
-import { recordMovement } from "@/modules/inventory/movements";
+import { releaseReservation, shipReservedStock } from "@/modules/inventory/inventory.service";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -87,35 +86,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
             for (const item of order.items) {
               if (!item.product) continue;
 
-              const updatedProduct = await ProductModel.findOneAndUpdate(
-                { _id: item.product },
-                item.variantSku
-                  ? {
-                      $inc: {
-                        "variants.$[v].stock": -item.quantity,
-                        "variants.$[v].reserved": -item.quantity,
-                        stock: -item.quantity,
-                        reserved: -item.quantity,
-                      },
-                    }
-                  : { $inc: { stock: -item.quantity, reserved: -item.quantity } },
-                {
-                  session,
-                  returnDocument: "after",
-                  arrayFilters: item.variantSku ? [{ "v.sku": item.variantSku }] : undefined,
-                },
-              );
-
-              if (updatedProduct) {
-                await recordMovement({
-                  productId: item.product,
-                  type: "store_order_shipped",
-                  delta: -item.quantity,
-                  resultingStock: updatedProduct.stock,
-                  reference: order.orderNumber,
-                  session,
-                });
-              }
+              await shipReservedStock({
+                productId: item.product,
+                variantSku: item.variantSku,
+                quantity: item.quantity,
+                movementType: "store_order_shipped",
+                reference: order.orderNumber,
+                session,
+              });
             }
             order.stockDecremented = true;
           }
@@ -127,16 +105,12 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           if (parsed.data.status === "cancelled" && previousStatus !== "shipped") {
             for (const item of order.items) {
               if (!item.product) continue;
-              await ProductModel.updateOne(
-                { _id: item.product },
-                item.variantSku
-                  ? { $inc: { "variants.$[v].reserved": -item.quantity, reserved: -item.quantity } }
-                  : { $inc: { reserved: -item.quantity } },
-                {
-                  session,
-                  arrayFilters: item.variantSku ? [{ "v.sku": item.variantSku }] : undefined,
-                },
-              );
+              await releaseReservation({
+                productId: item.product,
+                variantSku: item.variantSku,
+                quantity: item.quantity,
+                session,
+              });
             }
           }
         }

@@ -6,7 +6,7 @@ import { CategoryModel } from "@/lib/models/Category";
 import { requireStaff } from "@/lib/auth";
 import { productPartialSchema } from "@/lib/validation/product";
 import { slugify } from "@/lib/validation";
-import { recordMovement } from "@/modules/inventory/movements";
+import { adjustStock, syncVariantInventory } from "@/modules/inventory/inventory.service";
 import { NextRequest } from "next/server";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -72,12 +72,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiError("Validation failed", ["Original price must be greater than the selling price."], 400);
     }
 
-    // Captured before Object.assign overwrites it, so a manual stock edit
-    // (Inventory page's quick-edit, or the product form) can be logged as
-    // a Movement with an accurate before/after delta.
-    const previousStock = product.stock;
-
-    Object.assign(product, parsed.data);
+    // Stock adjustments are deliberately excluded from the generic product
+    // save: the inventory service is the sole authority for stock/reserved
+    // mutations and records the corresponding Movement ledger entry.
+    const { stock: requestedStock, variants: requestedVariants, ...productChanges } = parsed.data;
+    Object.assign(product, productChanges);
     // Product.category is an ObjectId ref — never assign the raw category
     // name string that `parsed.data.category` carries.
     if (resolvedCategoryId) {
@@ -88,13 +87,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     await product.save();
 
-    if (parsed.data.stock !== undefined && parsed.data.stock !== previousStock) {
-      await recordMovement({
-        productId: product._id as mongoose.Types.ObjectId,
-        type: "manual_adjustment",
-        delta: parsed.data.stock - previousStock,
-        resultingStock: product.stock,
-      });
+    if (requestedVariants !== undefined) {
+      await syncVariantInventory({ productId: product._id, variants: requestedVariants });
+    } else if (requestedStock !== undefined && requestedStock !== product.stock) {
+      await adjustStock({ productId: product._id, stock: requestedStock });
     }
 
     const updated = await product.populate("category", "name slug");

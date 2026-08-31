@@ -127,6 +127,10 @@ export async function POST(request: NextRequest) {
     const slug = slugify(parsed.data.name);
     const product = await ProductModel.create({
       ...parsed.data,
+      // A newly created catalog item has no commercial reservations. Never
+      // accept a client-supplied reserved quantity as an inventory hold.
+      reserved: 0,
+      variants: parsed.data.variants?.map((variant) => ({ ...variant, reserved: 0 })),
       // Product.category is an ObjectId ref, never a raw name string.
       category: category._id,
       slug,

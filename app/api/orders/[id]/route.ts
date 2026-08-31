@@ -4,13 +4,12 @@ import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { OrderModel } from "@/lib/models/Order";
-import { ProductModel } from "@/lib/models/Product";
 import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { validateOrderStatusTransition } from "@/modules/orders/order-status";
-import { recordMovement } from "@/modules/inventory/movements";
+import { releaseReservation, shipReservedStock, shipStock } from "@/modules/inventory/inventory.service";
 
 const orderSchema = z.object({
   customer: customerInputSchema.optional(),
@@ -103,47 +102,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             for (const item of order.items) {
               if (!item.productId) continue;
 
-              // Only orders created from an accepted Quotation placed a
-              // `reserved` hold (see convertQuotationToOrder) — a
-              // directly-created order (POST /api/orders) never
-              // reserved, so releasing `reserved` for it would push the
-              // field negative. Two static $inc shapes rather than a
-              // dynamically-built one, to stay within Mongoose's typed
-              // update signature.
-              // As above, $inc bypasses the pre-validate rollup hook, so a
-              // variant line must increment both its own
-              // variants.$[v].stock/reserved and the parent-level
-              // stock/reserved in the same op to keep the rollup correct.
-              const arrayFilters = item.variantSku ? [{ "v.sku": item.variantSku }] : undefined;
-              const updatedProduct = order.reservedStock
-                ? await ProductModel.findOneAndUpdate(
-                    { _id: item.productId },
-                    item.variantSku
-                      ? {
-                          $inc: {
-                            "variants.$[v].stock": -item.quantity,
-                            "variants.$[v].reserved": -item.quantity,
-                            stock: -item.quantity,
-                            reserved: -item.quantity,
-                          },
-                        }
-                      : { $inc: { stock: -item.quantity, reserved: -item.quantity } },
-                    { session, returnDocument: "after", arrayFilters },
-                  )
-                : await ProductModel.findOneAndUpdate(
-                    { _id: item.productId },
-                    item.variantSku
-                      ? { $inc: { "variants.$[v].stock": -item.quantity, stock: -item.quantity } }
-                      : { $inc: { stock: -item.quantity } },
-                    { session, returnDocument: "after", arrayFilters },
-                  );
-
-              if (updatedProduct) {
-                await recordMovement({
-                  productId: updatedProduct._id as mongoose.Types.ObjectId,
-                  type: "order_shipped",
-                  delta: -item.quantity,
-                  resultingStock: updatedProduct.stock,
+              if (order.reservedStock) {
+                await shipReservedStock({
+                  productId: item.productId,
+                  variantSku: item.variantSku,
+                  quantity: item.quantity,
+                  movementType: "order_shipped",
+                  reference: order.number,
+                  session,
+                });
+              } else {
+                await shipStock({
+                  productId: item.productId,
+                  variantSku: item.variantSku,
+                  quantity: item.quantity,
+                  movementType: "order_shipped",
                   reference: order.number,
                   session,
                 });
@@ -160,16 +133,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           if (parsed.data.status === "cancelled" && previousStatus !== "shipped" && order.reservedStock) {
             for (const item of order.items) {
               if (!item.productId) continue;
-              await ProductModel.updateOne(
-                { _id: item.productId },
-                item.variantSku
-                  ? { $inc: { "variants.$[v].reserved": -item.quantity, reserved: -item.quantity } }
-                  : { $inc: { reserved: -item.quantity } },
-                {
-                  session,
-                  arrayFilters: item.variantSku ? [{ "v.sku": item.variantSku }] : undefined,
-                },
-              );
+              await releaseReservation({
+                productId: item.productId,
+                variantSku: item.variantSku,
+                quantity: item.quantity,
+                session,
+              });
             }
           }
         }

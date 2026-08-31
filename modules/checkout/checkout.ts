@@ -8,6 +8,7 @@ import type { CartIdentity } from "@/modules/cart/session";
 import { CartError } from "@/modules/cart/cart";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { getSettings } from "@/lib/settings/get-settings.server";
+import { InventoryError, reserveStock } from "@/modules/inventory/inventory.service";
 
 export interface CheckoutInput {
   customer: { name: string; email: string; phone: string };
@@ -98,8 +99,10 @@ export async function performCheckout(
         const price = variant ? variant.price : product.price;
         const subtotal = Math.round(price * cartItem.quantity * 100) / 100;
 
+        const productId = product._id as mongoose.Types.ObjectId;
+
         orderItems.push({
-          product: product._id as mongoose.Types.ObjectId,
+          product: productId,
           name: product.name,
           slug: product.slug,
           sku: product.sku,
@@ -163,56 +166,26 @@ export async function performCheckout(
         { session },
       );
 
-      // Hold a reservation atomically per product, guarding against an
-      // availability change between the check above and this write (e.g.
-      // a concurrent order or an accepted quotation landing in between).
-      // `stock` itself is untouched here — it only moves when the order
-      // ships (see the "shipped" transition in
-      // app/api/admin/store-orders/[id]/route.ts).
+      // The inventory service makes the availability check and reservation
+      // one atomic operation. The earlier reads provide useful validation
+      // messages; this remains the authoritative concurrency guard.
       for (const item of orderItems) {
-        // $expr can only appear at the TOP level of a query document — it
-        // cannot be nested inside $elemMatch (MongoDB rejects that with
-        // "$expr can only be applied to the top-level document"). For the
-        // variant case, the "does this specific variant have enough
-        // available stock" check is instead expressed as a top-level $expr
-        // that scans the variants array with $filter/$anyElementTrue.
-        const result = item.variantSku
-          ? await ProductModel.updateOne(
-              {
-                _id: item.product,
-                $expr: {
-                  $anyElementTrue: {
-                    $map: {
-                      input: "$variants",
-                      as: "v",
-                      in: {
-                        $and: [
-                          { $eq: ["$$v.sku", item.variantSku] },
-                          { $gte: [{ $subtract: ["$$v.stock", "$$v.reserved"] }, item.quantity] },
-                        ],
-                      },
-                    },
-                  },
-                },
-              },
-              // $inc bypasses the schema's pre-validate rollup hook (that
-              // hook only runs on .save()), so the parent-level `reserved`
-              // — which is supposed to be the sum across variants — has to
-              // be incremented in the same atomic op or it drifts out of
-              // sync with the variant it's tracking.
-              { $inc: { "variants.$[v].reserved": item.quantity, reserved: item.quantity } },
-              { session, arrayFilters: [{ "v.sku": item.variantSku }] },
-            )
-          : await ProductModel.updateOne(
-              {
-                _id: item.product,
-                $expr: { $gte: [{ $subtract: ["$stock", "$reserved"] }, item.quantity] },
-              },
-              { $inc: { reserved: item.quantity } },
-              { session },
-            );
+        const productId = item.product;
+        if (!productId) {
+          throw new CartError(`"${item.name}" is missing the product reference required to reserve inventory`, 400);
+        }
 
-        if (result.matchedCount === 0) {
+        try {
+          await reserveStock({
+            productId,
+            variantSku: item.variantSku,
+            quantity: item.quantity,
+            session,
+          });
+        } catch (error) {
+          if (!(error instanceof InventoryError) || error.code !== "INSUFFICIENT_STOCK") {
+            throw error;
+          }
           throw new CartError(
             `"${item.name}"${item.size ? ` (${item.size})` : ""} went out of stock while placing your order`,
             409,
