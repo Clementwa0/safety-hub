@@ -13,7 +13,7 @@ export type QuotationStatus = (typeof QUOTATION_STATUSES)[number];
 export interface Quotation {
   id: string;
   number: string;
-  customer: Customer;
+  customer: Customer | null;
   items: LineItem[];
   status: QuotationStatus;
   issueDate: number;

@@ -14,7 +14,7 @@ interface DocumentPreviewProps {
   dueDate?: number;
   validUntil?: number;
   status?: string;
-  customer: Customer;
+  customer: Customer | null;
   items: LineItem[];
   notes?: string;
   terms?: string;
@@ -36,6 +36,11 @@ export function DocumentPreview({
 }: DocumentPreviewProps) {
   const totals = computeTotals(items);
   const { settings } = useSettings();
+  const customerName = customer?.name ?? "Deleted customer";
+  const customerCompany = customer?.company;
+  const customerEmail = customer?.email;
+  const customerPhone = customer?.phone;
+  const customerAddress = customer?.address;
 
   const formattedStatus = status
     ? status.replace(/_/g, " ")
@@ -146,30 +151,30 @@ export function DocumentPreview({
           </p>
 
           <p className="mt-2 text-sm font-semibold text-foreground">
-            {customer.name || "—"}
+            {customerName || "—"}
           </p>
 
-          {customer.company ? (
+          {customerCompany ? (
             <p className="text-sm text-muted-foreground">
-              {customer.company}
+              {customerCompany}
             </p>
           ) : null}
 
-          {customer.email ? (
+          {customerEmail ? (
             <p className="text-sm text-muted-foreground">
-              {customer.email}
+              {customerEmail}
             </p>
           ) : null}
 
-          {customer.phone ? (
+          {customerPhone ? (
             <p className="text-sm text-muted-foreground">
-              {customer.phone}
+              {customerPhone}
             </p>
           ) : null}
 
-          {customer.address ? (
+          {customerAddress ? (
             <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-              {customer.address}
+              {customerAddress}
             </p>
           ) : null}
         </div>

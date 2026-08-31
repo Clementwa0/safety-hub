@@ -61,8 +61,8 @@ export default function AdminOrdersPage() {
       const matchesSearch =
         !term ||
         order.number.toLowerCase().includes(term) ||
-        order.customer.name.toLowerCase().includes(term) ||
-        (order.customer.company?.toLowerCase().includes(term) ?? false);
+        (order.customer?.name.toLowerCase().includes(term) ?? false) ||
+        (order.customer?.company?.toLowerCase().includes(term) ?? false);
       const matchesStatus = status === "all" || order.status === status;
       return matchesSearch && matchesStatus;
     });

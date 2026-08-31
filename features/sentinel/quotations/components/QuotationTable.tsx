@@ -37,12 +37,14 @@ export default function QuotationTable({ quotations, onDelete, onDuplicate }: Pr
         {quotations.map((q) => {
           const totals = computeDocumentTotals(q.items);
           const fulfillment = overallFulfillment(q);
+          const customerName = q.customer?.name ?? "Deleted customer";
+          const customerCompany = q.customer?.company;
           return (
             <TableRow key={q.id}>
               <TableCell className="font-medium">{q.number}</TableCell>
               <TableCell>
-                <div>{q.customer.name}</div>
-                {q.customer.company ? <div className="text-xs text-muted-foreground">{q.customer.company}</div> : null}
+                <div>{customerName}</div>
+                {customerCompany ? <div className="text-xs text-muted-foreground">{customerCompany}</div> : null}
               </TableCell>
               <TableCell>{formatDate(q.issueDate)}</TableCell>
               <TableCell><QuotationStatusBadge status={q.status} /></TableCell>

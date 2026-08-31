@@ -81,12 +81,14 @@ export default function QuotationViewPage() {
   }
 
   const canConvert = quotation.status === "accepted";
+  const customerName = quotation.customer?.name ?? "Deleted customer";
+  const customerCompany = quotation.customer?.company;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={`Quotation ${quotation.number}`}
-        description={`For ${quotation.customer.name}${quotation.customer.company ? ` · ${quotation.customer.company}` : ""}`}
+        description={`For ${customerName}${customerCompany ? ` · ${customerCompany}` : ""}`}
         breadcrumbs={[
           { label: "Admin", href: "/sentinel/dashboard" },
           { label: "Quotations", href: "/sentinel/quotations" },

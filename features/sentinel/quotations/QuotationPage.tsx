@@ -49,10 +49,12 @@ export default function AdminQuotationsPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return quotations.filter((q) => {
+      const customerName = q.customer?.name ?? "";
+      const customerCompany = q.customer?.company ?? "";
       const matchesSearch = !term ||
         q.number.toLowerCase().includes(term) ||
-        q.customer.name.toLowerCase().includes(term) ||
-        (q.customer.company?.toLowerCase().includes(term) ?? false);
+        customerName.toLowerCase().includes(term) ||
+        customerCompany.toLowerCase().includes(term);
       const matchesStatus = status === "all" || q.status === status;
       const matchesAvailability =
         availability === "all" || q.items.some((item) => item.fulfillmentPlan === availability);

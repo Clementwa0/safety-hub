@@ -96,12 +96,15 @@ export default function OrderViewPage() {
   }
 
   const canConvert = !order.invoiceId && order.status !== "cancelled";
+  // Historical records can outlive a deleted customer document. Keep the
+  // order readable instead of assuming Mongoose population always resolves.
+  const customer = order.customer ?? { name: "Deleted customer" };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={`Order ${order.number}`}
-        description={`For ${order.customer.name}${order.customer.company ? ` · ${order.customer.company}` : ""}`}
+        description={`For ${customer.name}${customer.company ? ` · ${customer.company}` : ""}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={() => window.print()}>
@@ -172,7 +175,7 @@ export default function OrderViewPage() {
         documentNumber={order.number}
         issueDate={order.createdAt}
         status={order.status}
-        customer={order.customer}
+        customer={customer}
         items={order.items}
         notes={order.notes}
       />

@@ -31,6 +31,8 @@ export default function OrderTable({ orders, onDelete, compact }: OrderTableProp
       <ul className="divide-y divide-border md:hidden">
         {orders.map((order) => {
           const totals = computeTotals(order.items);
+          const customerName = order.customer?.name ?? "Deleted customer";
+          const customerCompany = order.customer?.company;
           return (
             <li key={order.id} className="relative">
               <Link
@@ -45,8 +47,8 @@ export default function OrderTable({ orders, onDelete, compact }: OrderTableProp
                     </span>
                   </div>
                   <p className="truncate text-sm text-muted-foreground">
-                    {order.customer.name}
-                    {order.customer.company ? ` · ${order.customer.company}` : ""}
+                    {customerName}
+                    {customerCompany ? ` · ${customerCompany}` : ""}
                   </p>
                   <div className="flex items-center justify-between gap-2 pt-0.5">
                     <OrderStatusBadge status={order.status} />
@@ -104,14 +106,16 @@ export default function OrderTable({ orders, onDelete, compact }: OrderTableProp
           <TableBody>
             {orders.map((order) => {
               const totals = computeTotals(order.items);
+              const customerName = order.customer?.name ?? "Deleted customer";
+              const customerCompany = order.customer?.company;
               return (
                 <TableRow key={order.id}>
                   <TableCell className="text-sm font-medium">{order.number}</TableCell>
                   <TableCell>
-                    <p className="text-sm font-medium">{order.customer.name}</p>
-                    {order.customer.company ? (
+                    <p className="text-sm font-medium">{customerName}</p>
+                    {customerCompany ? (
                       <p className="text-xs text-muted-foreground">
-                        {order.customer.company}
+                        {customerCompany}
                       </p>
                     ) : null}
                   </TableCell>
