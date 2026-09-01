@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { z } from "zod";
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, getPaginationParams, serializeDoc } from "@/lib/api";
@@ -8,6 +9,7 @@ import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { createWithDocumentNumber } from "@/lib/db/document-number";
+import { reserveAvailableStock } from "@/modules/inventory/inventory.service";
 
 const orderSchema = z.object({
   customer: customerInputSchema,
@@ -80,17 +82,63 @@ export async function POST(request: NextRequest) {
       customer = await findOrCreateCustomer(parsed.data.customer);
     }
 
-    const order = await createWithDocumentNumber(OrderModel, "ORD", (number) => ({
-      number,
-      customer: customer._id,
-      items: parsed.data.items,
-      status: parsed.data.status ?? "pending",
-      notes: parsed.data.notes,
-      quotationId: parsed.data.quotationId,
-      invoiceId: parsed.data.invoiceId,
-    }));
+    const session = await mongoose.startSession();
+    try {
+      let createdOrder: unknown = null;
+      await session.withTransaction(async () => {
+        const order = await createWithDocumentNumber(OrderModel, "ORD", (number) => ({
+          number,
+          customer: customer._id,
+          items: parsed.data.items,
+          status: parsed.data.status ?? "pending",
+          notes: parsed.data.notes,
+          quotationId: parsed.data.quotationId,
+          invoiceId: parsed.data.invoiceId,
+          reservedStock: true,
+          fulfillmentStatus: "AVAILABLE",
+        }), session);
 
-    return apiSuccess(serializeDoc(order.toObject()), "Order created");
+        let fullyAvailable = true;
+        let partiallyAvailable = false;
+        for (const item of parsed.data.items) {
+          if (!item.productId) continue;
+
+          const reservedQuantity = await reserveAvailableStock({
+            productId: item.productId,
+            variantSku: item.variantSku,
+            quantity: item.quantity,
+            session,
+          });
+
+          const orderItem = order.items.find(
+            (entry) => entry.productId === item.productId && entry.variantSku === item.variantSku,
+          );
+          if (orderItem) orderItem.reservedQuantity = reservedQuantity;
+
+          if (reservedQuantity < item.quantity) {
+            fullyAvailable = false;
+            if (reservedQuantity > 0) partiallyAvailable = true;
+          }
+        }
+
+        order.fulfillmentStatus = fullyAvailable ? "AVAILABLE" : partiallyAvailable ? "PARTIALLY_AVAILABLE" : "BACKORDERED";
+        await order.save({ session });
+        createdOrder = order;
+      });
+
+      if (!createdOrder) {
+        throw new Error("Order creation failed");
+      }
+
+      const payload =
+        typeof createdOrder === "object" && createdOrder !== null && "toObject" in createdOrder
+          ? (createdOrder as { toObject: () => Record<string, unknown> }).toObject()
+          : createdOrder;
+
+      return apiSuccess(serializeDoc(payload), "Order created");
+    } finally {
+      await session.endSession();
+    }
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to create order", [], 500);
   }

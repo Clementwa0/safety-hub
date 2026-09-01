@@ -360,9 +360,25 @@ export async function getAvailableStock(input: InventoryItem): Promise<number> {
  * backorder; each individual reservation is still atomic.
  */
 export async function reserveAvailableStock(input: InventoryMutation): Promise<number> {
-  const available = await getAvailableStock(input);
-  if (available <= 0) return 0;
-  const quantity = Math.min(input.quantity, available);
-  await reserveStock({ ...input, quantity });
-  return quantity;
+  assertQuantity(input.quantity);
+
+  let attempts = 0;
+  while (attempts < 5) {
+    const available = await getAvailableStock(input);
+    if (available <= 0) return 0;
+
+    const quantity = Math.min(input.quantity, available);
+
+    try {
+      await reserveStock({ ...input, quantity, session: input.session });
+      return quantity;
+    } catch (error) {
+      if (!(error instanceof InventoryError) || error.code !== "INSUFFICIENT_STOCK") {
+        throw error;
+      }
+      attempts += 1;
+    }
+  }
+
+  return Math.min(input.quantity, await getAvailableStock(input));
 }

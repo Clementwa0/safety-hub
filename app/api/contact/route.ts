@@ -4,6 +4,7 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { ContactMessageModel } from "@/lib/models/ContactMessage";
 import { apiError, apiSuccess } from "@/lib/api";
+import { createNotification } from "@/modules/notifications/notifications.service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +60,21 @@ export async function POST(request: Request) {
       subject,
       message,
       status: "new",
+    });
+
+    // Fire-and-forget in-app notification for the Sentinel bell — never
+    // awaited, so a notification write failure can never delay this
+    // response or affect whether the message was saved (same rule as the
+    // email step below).
+    createNotification({
+      type: "new_contact_message",
+      title: "New contact message",
+      message: `${name} — ${subject}`,
+      link: "/sentinel/contact-messages",
+      entity: "ContactMessage",
+      entityId: String(saved._id),
+    }).catch((error) => {
+      console.error("[contact] Failed to create in-app notification:", error);
     });
 
     // Step 2: best-effort email notification. Failures here are logged but

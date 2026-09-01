@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import type { IOrder } from "@/lib/models/Order";
 
 type OrderStatus = IOrder["status"];
@@ -55,4 +56,24 @@ export function validateOrderStatusTransition(current: OrderStatus, next: OrderS
   }
 
   return null;
+}
+
+/**
+ * Only genuinely active sales orders are safe to physically remove. Once an
+ * order has crossed into shipment/delivery or been cancelled, it becomes part of
+ * the historical commercial record and must remain traceable.
+ */
+export function canDeleteOrderStatus(status: OrderStatus): boolean {
+  return status === "pending" || status === "confirmed" || status === "processing";
+}
+
+export function canDeleteConvertedQuotation(quotation: { orderId?: string | null | mongoose.Types.ObjectId | undefined }): boolean {
+  return !quotation.orderId;
+}
+
+export function canMutateCommercialReference(
+  current: string | undefined,
+  next: string | undefined,
+): boolean {
+  return !current || !next || current === next;
 }

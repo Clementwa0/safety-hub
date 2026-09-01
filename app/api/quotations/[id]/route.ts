@@ -11,6 +11,7 @@ import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { createWithDocumentNumber } from "@/lib/db/document-number";
 import { snapshotLineItemAvailability } from "@/modules/inventory/availability";
 import { reserveAvailableStock } from "@/modules/inventory/inventory.service";
+import { canDeleteConvertedQuotation } from "@/modules/orders/order-status";
 import mongoose from "mongoose";
 
 const quotationSchema = z.object({
@@ -129,12 +130,17 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 
     const { id } = await params;
     await connectToDatabase();
-    const quotation = await QuotationModel.findByIdAndDelete(id);
+    const quotation = await QuotationModel.findById(id);
 
     if (!quotation) {
       return apiError("Quotation not found", [], 404);
     }
 
+    if (!canDeleteConvertedQuotation(quotation)) {
+      return apiError("Converted quotations cannot be deleted because they are part of the commercial history", [], 400);
+    }
+
+    await QuotationModel.deleteOne({ _id: quotation._id });
     return apiSuccess(null, "Quotation deleted");
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to delete quotation", [], 500);

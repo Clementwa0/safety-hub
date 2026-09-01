@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import { InvoiceModel, type IInvoice } from "@/lib/models/Invoice";
 import { PaymentModel, type IPayment } from "@/lib/models/Payment";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 import {
   calculateInvoiceBalance,
   calculateInvoiceTotals,
@@ -26,6 +27,16 @@ import {
  * about `NextResponse` at all. `translateInvoiceServiceError` below does
  * that mapping in one place.
  */
+
+export type PaymentMutationRole = "admin" | "staff";
+
+export function assertPaymentMutationAuthorized(role: string | undefined, action: "record" | "void") {
+  const isAuthorized = role === "admin" || role === "staff";
+
+  if (!isAuthorized) {
+    throw new Error(`Unauthorized payment ${action} attempt`);
+  }
+}
 
 export interface RecordPaymentInput {
   amount: number;
@@ -60,7 +71,10 @@ export async function recordPayment(
   invoiceId: string,
   input: RecordPaymentInput,
   recordedBy: string | undefined,
+  actorRole: PaymentMutationRole | "customer" = "admin",
 ): Promise<RecordPaymentResult> {
+  assertPaymentMutationAuthorized(actorRole, "record");
+
   const session = await mongoose.startSession();
   try {
     let result: RecordPaymentResult | null = null;
@@ -114,6 +128,19 @@ export async function recordPayment(
       await invoice.save({ session });
 
       result = { payment, invoice };
+
+      await recordAuditEvent({
+        actor: recordedBy ?? "system",
+        action: "payment_recorded",
+        entity: "Invoice",
+        entityId: String(invoice._id),
+        metadata: {
+          invoiceId: String(invoice._id),
+          paymentId: String(payment._id),
+          amount: payment.amount,
+          method: payment.method,
+        },
+      });
     });
 
     if (!result) {
@@ -144,7 +171,10 @@ export async function voidPayment(
   paymentId: string,
   voidedBy: string | undefined,
   reason: string | undefined,
+  actorRole: PaymentMutationRole | "customer" = "admin",
 ): Promise<VoidPaymentResult> {
+  assertPaymentMutationAuthorized(actorRole, "void");
+
   const session = await mongoose.startSession();
   try {
     let result: VoidPaymentResult | null = null;
@@ -182,6 +212,19 @@ export async function voidPayment(
       await invoice.save({ session });
 
       result = { payment, invoice };
+
+      await recordAuditEvent({
+        actor: voidedBy ?? "system",
+        action: "payment_voided",
+        entity: "Invoice",
+        entityId: String(invoice._id),
+        metadata: {
+          invoiceId: String(invoice._id),
+          paymentId: String(payment._id),
+          reason: reason ?? null,
+          amount: payment.amount,
+        },
+      });
     });
 
     if (!result) {

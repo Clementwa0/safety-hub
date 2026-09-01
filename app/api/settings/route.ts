@@ -8,6 +8,7 @@ import {
 } from "@/lib/models/Settings";
 import { requireAdmin } from "@/lib/auth";
 import { COMPANY } from "@/lib/constants";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 const settingsSocialSchema = z.object({
   facebook: z.string().trim().optional().default(""),
@@ -176,6 +177,18 @@ export async function PATCH(request: NextRequest) {
         runValidators: true,
       },
     ).lean();
+
+    await recordAuditEvent({
+      actor: user.name || user.email || "system",
+      action: "settings_updated",
+      entity: "Settings",
+      entityId: SETTINGS_SINGLETON_ID,
+      metadata: {
+        changedFields: Object.keys(parsed.data),
+        currency: settings?.currency,
+        taxRate: settings?.taxRate,
+      },
+    });
 
     return apiSuccess(
       {

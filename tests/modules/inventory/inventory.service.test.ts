@@ -87,6 +87,41 @@ describe("inventory service", () => {
     assert.equal(await getAvailableStock({ productId: product._id }), 0);
   });
 
+  it("does not over-reserve when concurrent requests compete for the same stock", async () => {
+    const product = await createProduct({ stock: 5 });
+
+    const [first, second] = await Promise.all([
+      reserveAvailableStock({ productId: product._id, quantity: 5 }),
+      reserveAvailableStock({ productId: product._id, quantity: 5 }),
+    ]);
+
+    assert.equal(first + second, 5, "the requested stock must not exceed the product availability");
+    assert.equal(await getAvailableStock({ productId: product._id }), 0);
+
+    const reloaded = await ProductModel.findById(product._id);
+    assert.equal(reloaded?.reserved, 5);
+  });
+
+  it("does not over-reserve when concurrent requests compete for the same variant", async () => {
+    const product = await createProduct({
+      variants: [
+        { sku: "SIZE-S", size: "S", price: 100, stock: 5, reserved: 0 },
+        { sku: "SIZE-M", size: "M", price: 100, stock: 4, reserved: 0 },
+      ],
+    });
+
+    const [first, second] = await Promise.all([
+      reserveAvailableStock({ productId: product._id, variantSku: "SIZE-S", quantity: 5 }),
+      reserveAvailableStock({ productId: product._id, variantSku: "SIZE-S", quantity: 5 }),
+    ]);
+
+    assert.equal(first + second, 5, "variant requests must not exceed the variant's available stock");
+    assert.equal(await getAvailableStock({ productId: product._id, variantSku: "SIZE-S" }), 0);
+
+    const reloaded = await ProductModel.findById(product._id);
+    assert.equal(reloaded?.variants.find((variant: IProductVariant) => variant.sku === "SIZE-S")?.reserved, 5);
+  });
+
   it("keeps variant and parent reservation rollups in sync", async () => {
     const product = await createProduct({
       variants: [

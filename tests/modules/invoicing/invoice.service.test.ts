@@ -15,10 +15,14 @@ import { MongoMemoryReplSet } from "mongodb-memory-server";
 import { InvoiceModel } from "@/lib/models/Invoice";
 import { PaymentModel } from "@/lib/models/Payment";
 import {
+  assertPaymentMutationAuthorized,
   deleteDraftInvoice,
   recordPayment,
   voidPayment,
 } from "@/modules/invoicing/invoice.service";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
+import { AuditLogModel } from "@/lib/models/AuditLog";
+import { canEditInvoiceItems } from "@/modules/invoicing/invoice-status";
 
 let replSet: MongoMemoryReplSet;
 
@@ -198,6 +202,17 @@ describe("voidPayment", () => {
   });
 });
 
+describe("invoice lifecycle safeguards", () => {
+  it("keeps commercial lines editable only while the invoice is still draft", () => {
+    assert.equal(canEditInvoiceItems("draft"), true);
+    assert.equal(canEditInvoiceItems("unpaid"), false);
+    assert.equal(canEditInvoiceItems("partially_paid"), false);
+    assert.equal(canEditInvoiceItems("paid"), false);
+    assert.equal(canEditInvoiceItems("overdue"), false);
+    assert.equal(canEditInvoiceItems("cancelled"), false);
+  });
+});
+
 describe("deleteDraftInvoice", () => {
   it("deletes a draft invoice with no payments", async () => {
     const invoice = await makeInvoice("draft");
@@ -226,5 +241,34 @@ describe("deleteDraftInvoice", () => {
       deleteDraftInvoice(String(new mongoose.Types.ObjectId())),
       /__NOT_FOUND__/,
     );
+  });
+});
+
+describe("payment authorization and audit trail", () => {
+  it("allows admin and staff roles to record or void payments", () => {
+    assert.doesNotThrow(() => assertPaymentMutationAuthorized("admin", "record"));
+    assert.doesNotThrow(() => assertPaymentMutationAuthorized("staff", "record"));
+    assert.doesNotThrow(() => assertPaymentMutationAuthorized("admin", "void"));
+    assert.doesNotThrow(() => assertPaymentMutationAuthorized("staff", "void"));
+  });
+
+  it("rejects customer actions on payment mutations", () => {
+    assert.throws(() => assertPaymentMutationAuthorized("customer", "record"), /Unauthorized payment/);
+    assert.throws(() => assertPaymentMutationAuthorized("customer", "void"), /Unauthorized payment/);
+  });
+
+  it("writes a server-side audit entry for payment activity", async () => {
+    await recordAuditEvent({
+      actor: "staff@example.com",
+      action: "payment_recorded",
+      entity: "Invoice",
+      entityId: "inv_123",
+      metadata: { amount: 2500, method: "cash" },
+    });
+
+    const audit = await AuditLogModel.findOne({ action: "payment_recorded" }).lean();
+    assert.ok(audit);
+    assert.equal(audit?.entity, "Invoice");
+    assert.equal(audit?.actor, "staff@example.com");
   });
 });

@@ -44,6 +44,7 @@ export async function POST(
       paymentId,
       user.name || user.email || undefined,
       parsed.data.reason,
+      user.role === "admin" || user.role === "staff" ? user.role : "customer",
     );
 
     return apiSuccess(

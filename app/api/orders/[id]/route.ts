@@ -8,7 +8,11 @@ import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
-import { validateOrderStatusTransition } from "@/modules/orders/order-status";
+import { canDeleteOrderStatus, validateOrderStatusTransition } from "@/modules/orders/order-status";
+import {
+  areOrderItemsLocked,
+  areOrderLineItemsUnchanged,
+} from "@/modules/orders/order-line-items";
 import {
   InventoryError,
   releaseReservation,
@@ -87,6 +91,30 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         const order = await OrderModel.findById(id).session(session);
         if (!order) {
           throw new Error("__ORDER_NOT_FOUND__");
+        }
+
+        if (
+          parsed.data.items &&
+          areOrderItemsLocked(order.status) &&
+          !areOrderLineItemsUnchanged(order.items, parsed.data.items)
+        ) {
+          throw new Error("__ITEMS_IMMUTABLE__Shipped and delivered order items cannot be changed");
+        }
+
+        if (
+          parsed.data.quotationId !== undefined &&
+          order.quotationId &&
+          String(order.quotationId) !== parsed.data.quotationId
+        ) {
+          throw new Error("__REFERENCE__A converted order's quotation reference cannot be changed");
+        }
+
+        if (
+          parsed.data.invoiceId !== undefined &&
+          order.invoiceId &&
+          String(order.invoiceId) !== parsed.data.invoiceId
+        ) {
+          throw new Error("__REFERENCE__An invoiced order's invoice reference cannot be changed");
         }
 
         if (parsed.data.status && parsed.data.status !== order.status) {
@@ -203,6 +231,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (message.startsWith("__FULFILLMENT__")) {
         return apiError(message.replace("__FULFILLMENT__", ""), [], 400);
       }
+      if (message.startsWith("__ITEMS_IMMUTABLE__")) {
+        return apiError(message.replace("__ITEMS_IMMUTABLE__", ""), [], 400);
+      }
+      if (message.startsWith("__REFERENCE__")) {
+        return apiError(message.replace("__REFERENCE__", ""), [], 400);
+      }
 
       return apiError(message, [], 500);
     } finally {
@@ -222,12 +256,21 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 
     const { id } = await params;
     await connectToDatabase();
-    const order = await OrderModel.findByIdAndDelete(id);
+    const order = await OrderModel.findById(id);
 
     if (!order) {
       return apiError("Order not found", [], 404);
     }
 
+    if (!canDeleteOrderStatus(order.status)) {
+      return apiError(
+        "Historical orders cannot be deleted; keep the record for auditability and cancel/archive instead.",
+        [],
+        400,
+      );
+    }
+
+    await OrderModel.deleteOne({ _id: order._id });
     return apiSuccess(null, "Order deleted");
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to delete order", [], 500);

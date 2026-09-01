@@ -9,6 +9,8 @@ import { CartError } from "@/modules/cart/cart";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { getSettings } from "@/lib/settings/get-settings.server";
 import { InventoryError, reserveStock } from "@/modules/inventory/inventory.service";
+import { resolveFinancialSettingsForMutation } from "@/modules/settings/financial-settings";
+import { createNotification } from "@/modules/notifications/notifications.service";
 
 export interface CheckoutInput {
   customer: { name: string; email: string; phone: string };
@@ -117,7 +119,7 @@ export async function performCheckout(
 
       // Tax rate is read fresh from admin Settings on every checkout — never
       // hardcoded — so a rate of 0 (or any change) takes effect immediately.
-      const settings = await getSettings();
+      const settings = resolveFinancialSettingsForMutation(await getSettings());
 
       const subtotal = calculateSubtotal(orderItems.map((item) => ({ price: item.price, quantity: item.quantity })));
       const shippingFee = calculateShippingFee(subtotal);
@@ -204,7 +206,31 @@ export async function performCheckout(
       throw new CartError("Checkout failed", 500);
     }
 
-    return createdOrder;
+    // Captured into a const so the narrowed (non-null) type survives the
+    // function call below — TS re-widens a captured `let` back to its
+    // declared type across a call expression, since the call could in
+    // theory reach the `withTransaction` closure that reassigns it.
+    const confirmedOrder: IStoreOrder = createdOrder;
+
+    // Best-effort, fire-and-forget — mirrors the contact form's "never
+    // block or fail the primary operation over a notification" approach
+    // (see app/api/contact/route.ts). Intentionally not awaited: the
+    // customer's order confirmation should never wait on this write, and
+    // it happens after the transaction has already committed so a failure
+    // here can never roll back a real order.
+    const orderNotification = {
+      type: "new_order" as const,
+      title: "New order received",
+      message: `Order #${confirmedOrder.orderNumber} from ${input.customer.name} — KSh ${confirmedOrder.total.toLocaleString()}`,
+      link: `/sentinel/store-orders/${confirmedOrder._id}`,
+      entity: "StoreOrder",
+      entityId: String(confirmedOrder._id),
+    };
+    createNotification(orderNotification).catch((error) => {
+      console.error("[checkout] Failed to create order notification:", error);
+    });
+
+    return confirmedOrder;
   } finally {
     await session.endSession();
   }

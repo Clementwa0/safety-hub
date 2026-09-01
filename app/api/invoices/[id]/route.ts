@@ -8,6 +8,7 @@ import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { deleteDraftInvoice, translateInvoiceServiceError } from "@/modules/invoicing/invoice.service";
+import { canEditInvoiceItems } from "@/modules/invoicing/invoice-status";
 
 // "paid" and "partially_paid" are deliberately excluded here - those are
 // derived exclusively from the Payment ledger via
@@ -115,6 +116,26 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         [],
         400,
       );
+    }
+
+    if (parsed.data.items && !canEditInvoiceItems(invoice.status)) {
+      return apiError("Issued invoices cannot change their commercial line items", [], 400);
+    }
+
+    if (
+      parsed.data.quotationId !== undefined &&
+      invoice.quotationId &&
+      String(invoice.quotationId) !== parsed.data.quotationId
+    ) {
+      return apiError("Invoice quotation references cannot be changed after issuance", [], 400);
+    }
+
+    if (
+      parsed.data.orderId !== undefined &&
+      invoice.orderId &&
+      String(invoice.orderId) !== parsed.data.orderId
+    ) {
+      return apiError("Invoice order references cannot be changed after issuance", [], 400);
     }
 
     if (parsed.data.customer) {

@@ -82,6 +82,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         notes: parsed.data.notes,
       },
       user.name || user.email || undefined,
+      user.role === "admin" || user.role === "staff" ? user.role : "customer",
     );
 
     return apiSuccess(

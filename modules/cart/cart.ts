@@ -4,6 +4,7 @@ import { ProductModel, type IProduct, type IProductVariant } from "@/lib/models/
 import { calculateShippingFee, calculateSubtotal, calculateTax, calculateTotal } from "@/modules/cart/pricing";
 import { getSettings } from "@/lib/settings/get-settings.server";
 import type { CartIdentity } from "@/modules/cart/session";
+import { resolveFinancialSettingsForMutation } from "@/modules/settings/financial-settings";
 import { getAvailableQuantity } from "@/types/product";
 
 export class CartError extends Error {
@@ -194,7 +195,7 @@ export async function serializeCart(cart: ICart): Promise<SerializedCart> {
     items.filter((item) => !item.unavailable).map((item) => ({ price: item.price, quantity: item.quantity })),
   );
 
-  const settings = await getSettings();
+  const settings = resolveFinancialSettingsForMutation(await getSettings());
   const shippingFee = calculateShippingFee(subtotal);
   const tax = calculateTax(subtotal, settings.taxRate);
   const total = calculateTotal(subtotal, shippingFee, tax);
