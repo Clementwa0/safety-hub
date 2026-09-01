@@ -13,7 +13,6 @@ import {
 import { PageHeader } from "@/components/shared/PageHeader";
 import {
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";

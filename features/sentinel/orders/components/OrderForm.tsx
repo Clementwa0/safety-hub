@@ -52,6 +52,7 @@ interface OrderFormProps {
 
 export default function OrderForm({ order }: OrderFormProps) {
   const router = useRouter();
+  const itemsLocked = order?.status === "shipped" || order?.status === "delivered";
 
   const [customer, setCustomer] = useState<Customer>(
     order?.customer ?? EMPTY_CUSTOMER,
@@ -154,11 +155,20 @@ export default function OrderForm({ order }: OrderFormProps) {
         <CardHeader>
           <CardTitle>Items</CardTitle>
           <CardDescription>
-            Products included in this order. Totals include tax and discounts.
+            {itemsLocked
+              ? "Shipped and delivered order items are locked to preserve the commercial record."
+              : "Products included in this order. Totals include tax and discounts."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LineItemsEditor items={items} onChange={setItems} error={errors.items} />
+          <fieldset disabled={itemsLocked} aria-describedby={itemsLocked ? "order-items-locked" : undefined}>
+            <LineItemsEditor items={items} onChange={setItems} error={errors.items} />
+          </fieldset>
+          {itemsLocked ? (
+            <p id="order-items-locked" className="mt-3 text-sm text-muted-foreground">
+              To correct a shipped order, create the appropriate follow-up document rather than changing its original items.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
