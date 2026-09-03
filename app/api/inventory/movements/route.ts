@@ -8,7 +8,7 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 /**
- * Recent Movements feed for the Inventory page — a read of the
+ * Recent Movements feed for the Inventory page - a read of the
  * append-only Movement ledger (see lib/models/Movement.ts and
  * modules/inventory/movements.ts for what writes to it). Newest first, capped
  * at `limit` (default 20). Populates just the product name/sku, not the

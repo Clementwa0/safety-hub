@@ -1,4 +1,4 @@
-# Spec 08 — Protect Invoice Lifecycle
+# Spec 08 - Protect Invoice Lifecycle
 
 ## Objective
 Prevent invalid or destructive invoice lifecycle changes.

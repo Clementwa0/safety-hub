@@ -3,7 +3,7 @@ import { FaDatabase, FaLock } from "react-icons/fa";
 import { FaAward, FaEye, FaFileLines, FaShieldHalved, FaTruck, FaUsers } from "react-icons/fa6";
 
 /**
- * Seed defaults only — used to populate the Settings singleton the first
+ * Seed defaults only - used to populate the Settings singleton the first
  * time it's read (see `app/api/settings/route.ts` and
  * `lib/settings/get-settings.server.ts`), and as a last-resort fallback if
  * the DB is unreachable. Runtime company/contact info that gets shown to

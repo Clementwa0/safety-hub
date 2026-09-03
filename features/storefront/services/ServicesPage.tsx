@@ -117,7 +117,7 @@ export default function ServicesPage() {
             </span>
 
             <h1 className="mt-5 text-4xl font-bold leading-tight text-primary md:text-6xl">
-              More Than Products —
+              More Than Products -
               <br />
               Complete Safety Solutions
             </h1>

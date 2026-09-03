@@ -5,7 +5,7 @@ export interface IInvoiceLineItem {
   name: string;
   description?: string;
   /** Present only when this line is a specific size/variant of a
-   *  variant-enabled product — matches `IProductVariant.sku`/`size` on the
+   *  variant-enabled product - matches `IProductVariant.sku`/`size` on the
    *  Product document. Absent for simple (non-variant) products. */
   variantSku?: string;
   size?: string;

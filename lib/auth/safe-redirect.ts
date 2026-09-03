@@ -17,7 +17,7 @@ export function getSafeCallbackUrl(next: string | null | undefined, fallback: st
   if (!next) return fallback;
 
   // Must start with exactly one leading slash, and that slash must not be
-  // followed by another slash or a backslash — both are parsed by
+  // followed by another slash or a backslash - both are parsed by
   // browsers as "switch host", i.e. an open redirect.
   if (!/^\/(?!\/|\\)/.test(next)) return fallback;
 

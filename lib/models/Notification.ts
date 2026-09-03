@@ -1,7 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
 
 /**
- * Sentinel notifications are staff-wide (not per-user) — the same
+ * Sentinel notifications are staff-wide (not per-user) - the same
  * convention already used for the pending-orders and new-messages counts
  * they replace (see adminStoreOrderService.stats / contactMessageService.stats,
  * which are also global counters rather than scoped to a signed-in staff
@@ -21,7 +21,7 @@ export interface INotification extends Document {
   entityId?: string;
   read: boolean;
   readAt?: Date | null;
-  /** Soft-deleted — dismissed notifications are excluded from every list/count query, never physically removed. */
+  /** Soft-deleted - dismissed notifications are excluded from every list/count query, never physically removed. */
   dismissed: boolean;
   createdAt: Date;
   updatedAt: Date;

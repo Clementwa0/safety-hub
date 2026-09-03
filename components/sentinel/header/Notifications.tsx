@@ -16,7 +16,7 @@ import type { Notification } from "@/types/sentinel/notification";
 
 export default function Notifications() {
   // Mounted once at the Sentinel layout level (via Header), so this is the
-  // single place the poll interval lives for the whole admin session —
+  // single place the poll interval lives for the whole admin session -
   // navigating between /sentinel pages doesn't spin up a second poller.
   useNotificationsPolling();
 

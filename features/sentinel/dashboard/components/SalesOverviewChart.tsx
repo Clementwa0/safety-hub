@@ -1,9 +1,11 @@
 "use client";
 
+import { Info } from "lucide-react";
 import {
-  Line,
-  LineChart,
+  Bar,
   CartesianGrid,
+  ComposedChart,
+  Line,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
@@ -18,17 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { TrendPoint, TrendRange } from "../computeDashboardData";
-import { formatCurrency } from "@/lib/format";
+import type { RevenueOrdersPoint, TrendRange } from "../computeDashboardData";
+import { formatDashboardCurrency } from "../computeDashboardData";
 
 interface SalesOverviewChartProps {
-  data: TrendPoint[];
+  data: RevenueOrdersPoint[];
   range: TrendRange;
   onRangeChange: (range: TrendRange) => void;
   loading?: boolean;
-  /** Defaults to "Sales" — the Dashboard's restrained overview passes
-   *  "Business Activity" so the card doesn't read as a revenue chart. */
-  title?: string;
 }
 
 export default function SalesOverviewChart({
@@ -36,85 +35,113 @@ export default function SalesOverviewChart({
   range,
   onRangeChange,
   loading = false,
-  title = "Sales",
 }: SalesOverviewChartProps) {
   return (
     <Card className="border-border/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-1.5">
-        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
-        <Select 
-          value={range} 
+      <CardHeader className="flex flex-row items-center justify-between gap-1.5 py-1.5 px-3">
+        <CardTitle className="flex items-center gap-1 text-[11px] font-semibold">
+          Revenue & Orders
+          <Info className="h-2.5 w-2.5 text-muted-foreground" aria-hidden="true" />
+        </CardTitle>
+        <Select
+          value={range}
           onValueChange={(v) => typeof v === "string" && onRangeChange(v as TrendRange)}
         >
-          <SelectTrigger className="h-7 w-[110px] text-xs">
+          <SelectTrigger className="h-6 w-[100px] text-[10px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="week">Week</SelectItem>
-            <SelectItem value="month">Month</SelectItem>
-            <SelectItem value="quarter">Quarter</SelectItem>
+            <SelectItem value="week">Last 7 days</SelectItem>
+            <SelectItem value="month">This month</SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="mb-2 flex items-center gap-3 text-[10px] font-medium text-muted-foreground">
+      <CardContent className="px-2 pb-2 pt-0">
+        <div className="mb-1.5 flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-            Current
+            Revenue
           </span>
           <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-            Previous
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-200" />
+            Orders
           </span>
         </div>
 
         {loading ? (
-          <div className="h-[250px] w-full animate-pulse rounded bg-muted" />
+          <div className="h-[200px] w-full animate-pulse rounded bg-muted" />
         ) : data.length === 0 ? (
-          <div className="flex h-[250px] items-center justify-center text-xs text-muted-foreground">
-            No data
+          <div className="flex h-[200px] items-center justify-center text-[10px] text-muted-foreground">
+            No data for this period
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={200}>
+            <ComposedChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 2 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 10, fill: "#64748B" }}
+                tick={{ fontSize: 9, fill: "#64748B" }}
                 axisLine={false}
                 tickLine={false}
-                interval={Math.max(0, Math.floor(data.length / 8))}
+                interval={Math.max(0, Math.floor(data.length / 5))}
               />
               <YAxis
-                tick={{ fontSize: 10, fill: "#64748B" }}
+                yAxisId="revenue"
+                tick={{ fontSize: 9, fill: "#64748B" }}
                 axisLine={false}
                 tickLine={false}
-                width={40}
-                tickFormatter={(v: number) =>
-                  v >= 1000 ? `${Math.round(v / 1000)}K` : String(v)
-                }
+                width={32}
+                tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))}
+                label={{
+                  value: "KES",
+                  position: "insideTopLeft",
+                  fontSize: 8,
+                  fill: "#94A3B8",
+                  offset: 2,
+                }}
+              />
+              <YAxis
+                yAxisId="orders"
+                orientation="right"
+                tick={{ fontSize: 9, fill: "#64748B" }}
+                axisLine={false}
+                tickLine={false}
+                width={24}
+                allowDecimals={false}
+                label={{
+                  value: "Orders",
+                  position: "insideTopRight",
+                  fontSize: 8,
+                  fill: "#94A3B8",
+                  offset: 2,
+                }}
               />
               <RechartsTooltip
-                formatter={(value) => formatCurrency(Number(value))}
-                contentStyle={{ fontSize: 11, padding: "4px 8px" }}
+                formatter={(value, name) =>
+                  name === "revenue" ? formatDashboardCurrency(Number(value)) : String(value)
+                }
+                labelFormatter={(label) => label}
+                contentStyle={{ fontSize: 10, padding: "4px 6px", borderRadius: 4 }}
+              />
+              <Bar
+                yAxisId="orders"
+                dataKey="orders"
+                name="orders"
+                fill="#BFDBFE"
+                radius={[2, 2, 0, 0]}
+                barSize={14}
               />
               <Line
+                yAxisId="revenue"
                 type="monotone"
-                dataKey="current"
+                dataKey="revenue"
+                name="revenue"
                 stroke="#2563EB"
-                strokeWidth={2}
-                dot={{ r: 2 }}
-                activeDot={{ r: 4 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="previous"
-                stroke="#CBD5E1"
                 strokeWidth={1.5}
-                strokeDasharray="3 3"
-                dot={false}
+                dot={{ r: 2.5, fill: "#2563EB", strokeWidth: 0 }}
+                activeDot={{ r: 3.5 }}
               />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         )}
       </CardContent>

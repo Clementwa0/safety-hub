@@ -32,7 +32,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     await connectToDatabase();
 
-    // Every write here is scoped to `{ _id: id, customer: customer.id }` —
+    // Every write here is scoped to `{ _id: id, customer: customer.id }` -
     // the id in the URL alone is never enough to touch a row; it must also
     // belong to the signed-in customer resolved from the session.
     if (parsed.data.isDefault) {

@@ -27,7 +27,7 @@ export function Footer() {
   const socialLinks = getSocialLinks(settings.social);
 
   // Categories live in the DB now, so fetch them instead of using a
-  // hardcoded list — keeps the footer in sync with admin changes.
+  // hardcoded list - keeps the footer in sync with admin changes.
   useEffect(() => {
     let cancelled = false;
 

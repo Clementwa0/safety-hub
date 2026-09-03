@@ -3,7 +3,7 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
 /**
  * NOTE ON NAMING
  * ---------------
- * This codebase already has a `lib/models/Order.ts` — but that model backs
+ * This codebase already has a `lib/models/Order.ts` - but that model backs
  * the internal Sentinel CRM (quotations -> orders -> invoices for
  * B2B "Customer" records) and is unrelated to the public storefront.
  * Renaming or repurposing it would break /sentinel/orders, /sentinel/quotations
@@ -48,7 +48,7 @@ export interface IStoreOrderItem {
   slug?: string;
   sku?: string;
   /** Present only when the ordered line is a specific size/variant of a
-   *  variant-enabled product — matches `IProductVariant.sku`/`size` on the
+   *  variant-enabled product - matches `IProductVariant.sku`/`size` on the
    *  Product document. Absent for simple (non-variant) products. */
   variantSku?: string;
   size?: string;
@@ -60,12 +60,12 @@ export interface IStoreOrderItem {
 
 export interface IStoreOrder extends Document {
   orderNumber: string;
-  /** Refs `User` — the single identity collection post-unification (stored
+  /** Refs `User` - the single identity collection post-unification (stored
    *  in the `storefront_customers` collection for compatibility). */
   user?: mongoose.Types.ObjectId;
   sessionId?: string;
   /** Refs the CRM `Customer` record matched/created at checkout via
-   *  findOrCreateCustomer (see modules/checkout/checkout.ts) — separate from
+   *  findOrCreateCustomer (see modules/checkout/checkout.ts) - separate from
    *  `user`, which is the storefront login identity, not the CRM contact.
    *  Optional only because orders placed before this linkage existed
    *  won't have it backfilled. */
@@ -182,7 +182,7 @@ const storeOrderSchema = new Schema<IStoreOrder>(
 storeOrderSchema.index({ orderNumber: 1 }, { unique: true });
 // (user, createdAt): every ownership-scoped query (customerOrderFilter,
 // the store-orders list/detail routes) filters by `user` then sorts by
-// `createdAt` — this index satisfies both from the index alone. There's
+// `createdAt` - this index satisfies both from the index alone. There's
 // only one identity model now, so no second discriminator field is
 // needed alongside `user`.
 storeOrderSchema.index({ user: 1, createdAt: -1 });

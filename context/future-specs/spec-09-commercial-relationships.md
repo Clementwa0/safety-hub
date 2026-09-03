@@ -1,4 +1,4 @@
-# Spec 09 — Protect Commercial Relationships
+# Spec 09 - Protect Commercial Relationships
 
 ## Objective
 Keep `Quotation → Order → Invoice → Payment` relationships intact.

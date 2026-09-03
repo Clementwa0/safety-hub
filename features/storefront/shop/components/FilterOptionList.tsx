@@ -30,7 +30,7 @@ export interface FilterOptionListProps {
 
 /**
  * One list primitive for every option-style filter: categories, brands,
- * availability, offers — multi or single select, optionally searchable.
+ * availability, offers - multi or single select, optionally searchable.
  *
  * Rows are real `<input type="checkbox|radio">` elements inside a
  * `role="group"`, so keyboard navigation, screen readers and form semantics

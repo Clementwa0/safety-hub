@@ -1,7 +1,7 @@
 /**
  * Integration tests for modules/invoicing/invoice.service.ts against a
- * real (in-memory) MongoDB replica set, since the behavior under test —
- * transactions, write-conflict retries, atomic balance checks — can't be
+ * real (in-memory) MongoDB replica set, since the behavior under test -
+ * transactions, write-conflict retries, atomic balance checks - can't be
  * verified against a mock. Requires `mongodb-memory-server` (added to
  * devDependencies) and `mongoose`, so `pnpm install` must be run before
  * `pnpm test` picks these up. A replica set is required because

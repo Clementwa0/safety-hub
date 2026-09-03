@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     // `category` is stored as a Category ObjectId on Product, so a
-    // name/slug filter has to be resolved to that id first — comparing an
+    // name/slug filter has to be resolved to that id first - comparing an
     // ObjectId field against a string (even via $regex) never matches.
     if (category) {
       const matchedCategory = await CategoryModel.findOne({

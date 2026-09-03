@@ -75,7 +75,7 @@ export function LineItemRow({
       variantSku: variant.sku,
       size: variant.size,
       unitPrice: variant.price,
-      name: `${selectedProduct.name} — ${variant.size}`,
+      name: `${selectedProduct.name} - ${variant.size}`,
     });
   };
 

@@ -20,7 +20,7 @@ export interface UseInventoryRowsResult {
 
 /**
  * Loads the catalogue plus its reserved/available projection and returns
- * `InventoryRow[]` — the same real data source the Inventory page uses.
+ * `InventoryRow[]` - the same real data source the Inventory page uses.
  * Extracted so the Inventory Report tab can't drift from what the
  * Inventory page itself shows (no separate, possibly-stale computation).
  */

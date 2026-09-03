@@ -12,7 +12,7 @@ export const fadeUp = {
   show: { opacity: 1, y: 0 },
 };
 
-/** Sourced from live settings — call with `useSettings().settings`. */
+/** Sourced from live settings - call with `useSettings().settings`. */
 export function getContactCards(settings: PortalSettings) {
   return [
     {

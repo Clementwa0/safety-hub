@@ -1,4 +1,4 @@
-# Spec 10 — Add Audit Trail
+# Spec 10 - Add Audit Trail
 
 ## Objective
 Create an authoritative audit trail for sensitive operations.

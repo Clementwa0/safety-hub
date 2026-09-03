@@ -45,7 +45,7 @@ export default function StockMovements({
             </p>
 
             <p className="max-w-[220px] text-xs text-muted-foreground/70">
-              Stock changes aren&apos;t tracked as individual events yet —
+              Stock changes aren&apos;t tracked as individual events yet -
               this panel is ready to populate once that&apos;s added.
             </p>
           </div>

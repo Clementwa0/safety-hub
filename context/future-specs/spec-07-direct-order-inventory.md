@@ -1,4 +1,4 @@
-# Spec 07 — Protect Direct Order Creation
+# Spec 07 - Protect Direct Order Creation
 
 ## Objective
 Ensure staff-created orders cannot bypass inventory rules.

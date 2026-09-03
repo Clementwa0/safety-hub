@@ -307,7 +307,7 @@ export const handlers = {
   POST: nextAuthHandler,
 };
 
-// v4 has no server-side `auth()` helper like v5 — this wraps the v4
+// v4 has no server-side `auth()` helper like v5 - this wraps the v4
 // equivalent, `getServerSession(authOptions)`, so the rest of the app can
 // keep calling `auth()` the same way everywhere.
 export async function auth() {

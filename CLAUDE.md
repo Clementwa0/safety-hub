@@ -163,7 +163,7 @@ database/external services
 
 ---
 
-# 3. APP ROUTES — DO NOT MOVE THEM
+# 3. APP ROUTES - DO NOT MOVE THEM
 
 These should remain under `app/`.
 
@@ -373,7 +373,7 @@ features/sentinel/testimonials/
 
 ---
 
-# 6. API routes — DO NOT MOVE OUT OF `app/api`
+# 6. API routes - DO NOT MOVE OUT OF `app/api`
 
 This is important.
 
@@ -672,7 +672,7 @@ and have that call the notification module.
 
 ---
 
-# 17. COMPONENTS — this is where the biggest cleanup happens
+# 17. COMPONENTS - this is where the biggest cleanup happens
 
 Your current:
 
@@ -1569,7 +1569,7 @@ are application-level React providers.
 
 ---
 
-# 45. `features/` — how the existing files should change
+# 45. `features/` - how the existing files should change
 
 You currently have:
 
@@ -1720,7 +1720,7 @@ features/sentinel/dashboard/
 
 ---
 
-# 49. MODULES — this is where server logic goes
+# 49. MODULES - this is where server logic goes
 
 This is the biggest architectural distinction.
 
@@ -2697,7 +2697,7 @@ lib/utils/doEverything.ts
 
 ---
 
-# 85. SERVICES — rename them to `client`
+# 85. SERVICES - rename them to `client`
 
 This is one of the clearest changes I recommend.
 

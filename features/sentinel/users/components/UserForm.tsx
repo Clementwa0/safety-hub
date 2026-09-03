@@ -116,7 +116,7 @@ export default function UserForm({ open, onOpenChange, user, onSaved }: UserForm
             </Label>
             <Input id="user-email" value={user?.email ?? ""} disabled className="h-10" />
             <p className="text-[11px] text-muted-foreground">
-              Email can't be changed here — contact support if it needs to change.
+              Email can't be changed here - contact support if it needs to change.
             </p>
           </div>
 

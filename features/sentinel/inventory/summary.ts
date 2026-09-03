@@ -6,7 +6,7 @@ export interface InventorySummary {
   totalReserved: number;
   totalValue: number;
   /** Counts below are over active (non-archived) rows only, bucketed by
-   *  `available` stock — the same field and thresholds the Inventory
+   *  `available` stock - the same field and thresholds the Inventory
    *  table/filters already use, so these numbers always agree with what's
    *  on screen. */
   healthyCount: number;
@@ -47,7 +47,7 @@ export function computeInventorySummary(rows: InventoryRow[]): InventorySummary 
 }
 
 export interface StockHealthSlice {
-  /** Deliberately its own 3-value type, not `StockLevel` — this bar merges
+  /** Deliberately its own 3-value type, not `StockLevel` - this bar merges
    *  "low" and "running-low" into a single "Low Stock" slice (see below),
    *  so it never actually emits `StockLevel`'s "running-low" or "all". */
   level: "in-stock" | "low" | "out";
@@ -57,7 +57,7 @@ export interface StockHealthSlice {
 }
 
 /** Groups "Low" and "Running Low" under one "Low Stock" bucket for the
- *  Stock Health bar — the table keeps them separate for filtering, but a
+ *  Stock Health bar - the table keeps them separate for filtering, but a
  *  three-way health bar (Healthy / Low Stock / Out of Stock) reads better
  *  than four thin slices. */
 export function computeStockHealthSlices(summary: InventorySummary): StockHealthSlice[] {

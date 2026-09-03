@@ -1,4 +1,4 @@
-# Spec 12 — Payment Authorization
+# Spec 12 - Payment Authorization
 
 ## Objective
 Enforce server-side authorization for sensitive payment operations.

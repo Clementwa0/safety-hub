@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           const previousStatus = order.status;
           order.status = parsed.data.status;
 
-          // Stock actually leaves inventory here, at "shipped" — not at
+          // Stock actually leaves inventory here, at "shipped" - not at
           // checkout (see performCheckout in modules/checkout/checkout.ts,
           // which only places a `reserved` hold) and not at any other
           // status change. Guarded by `stockDecremented` so re-saving or
@@ -100,7 +100,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
           // Cancellation is only reachable before "shipped" (enforced by
           // validateStatusTransition above), so `stock` was never touched
-          // for this order — only the checkout-time reservation needs
+          // for this order - only the checkout-time reservation needs
           // releasing. No Movement is logged: nothing actually moved.
           if (parsed.data.status === "cancelled" && previousStatus !== "shipped") {
             for (const item of order.items) {

@@ -101,7 +101,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // even limited to draft/unpaid/cancelled, setting status back to
     // "draft" or "unpaid" on an invoice that actually has money against
     // it would make the stored status lie about the real balance (the
-    // ledger — Invoice.amountPaid — is unaffected by this PATCH, so the
+    // ledger - Invoice.amountPaid - is unaffected by this PATCH, so the
     // two would silently disagree). Cancelling is unaffected by this
     // check: a partially paid invoice can still be cancelled, preserving
     // both its payment history and its true amountPaid.

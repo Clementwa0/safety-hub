@@ -7,7 +7,7 @@ import crypto from "node:crypto";
  * `/api/uploads/cloudinary/sign` for a short-lived signature, then uploads
  * the file straight to Cloudinary. That keeps large files off our own
  * serverless functions (no body-size limit, no extra bandwidth cost) while
- * still restricting who can upload — the signing route is staff-gated.
+ * still restricting who can upload - the signing route is staff-gated.
  */
 
 export interface CloudinaryServerConfig {
@@ -77,7 +77,7 @@ export async function destroyCloudinaryAsset(publicId: string): Promise<void> {
     throw new Error(payload?.error?.message ?? "Cloudinary delete failed");
   }
 
-  // "not found" is treated as success — the goal is "this asset is gone".
+  // "not found" is treated as success - the goal is "this asset is gone".
   if (payload?.result && payload.result !== "ok" && payload.result !== "not found") {
     throw new Error(`Cloudinary delete returned "${payload.result}"`);
   }

@@ -17,7 +17,7 @@ export class CartError extends Error {
 
 function identityFilter(identity: CartIdentity) {
   // Cart's uniqueness is enforced by a unique index on `user` alone (see
-  // `lib/models/Cart.ts` — "One cart per authenticated user").
+  // `lib/models/Cart.ts` - "One cart per authenticated user").
   if (identity.userId) return { user: identity.userId };
   if (identity.sessionId) return { sessionId: identity.sessionId };
   throw new CartError("No cart identity available", 400);
@@ -91,7 +91,7 @@ export interface SerializedCart {
   subtotal: number;
   shippingFee: number;
   tax: number;
-  /** Admin-configured Settings.taxRate (0-100) this cart's `tax` was computed with — shown to the shopper, e.g. "VAT (0%)". */
+  /** Admin-configured Settings.taxRate (0-100) this cart's `tax` was computed with - shown to the shopper, e.g. "VAT (0%)". */
   taxRatePercent: number;
   total: number;
 }
@@ -105,8 +105,8 @@ export interface SerializedCart {
  * and stock come from the matching variant, not the parent product.
  *
  * Shipping/tax/total are computed here too (not left to the client) so the
- * displayed numbers always reflect the current admin Settings.taxRate —
- * including a deliberate 0% rate — the same way `performCheckout` computes
+ * displayed numbers always reflect the current admin Settings.taxRate -
+ * including a deliberate 0% rate - the same way `performCheckout` computes
  * the authoritative order totals.
  */
 export async function serializeCart(cart: ICart): Promise<SerializedCart> {
@@ -292,7 +292,7 @@ export async function addItemToCart(
     existing.quantity = newQuantity;
   } else {
     // The schema declares `{ _id: false }` for cart items, so there's no
-    // real `id` field on a pushed item — this cast is only to satisfy
+    // real `id` field on a pushed item - this cast is only to satisfy
     // Mongoose 9's `DocumentArray.push()` typing, not a behavior change.
     cart.items.push({
       product: new mongoose.Types.ObjectId(productId),

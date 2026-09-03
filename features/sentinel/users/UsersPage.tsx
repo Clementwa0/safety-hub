@@ -175,7 +175,7 @@ export default function UsersPage() {
                   <div className="p-4">
                     <EmptyState
                       title="No admin account found"
-                      description="This shouldn't normally happen — the first admin is provisioned outside of Sentinel. Contact whoever set up this deployment."
+                      description="This shouldn't normally happen - the first admin is provisioned outside of Sentinel. Contact whoever set up this deployment."
                     />
                   </div>
                 )}

@@ -19,6 +19,7 @@ interface DocumentPreviewProps {
   notes?: string;
   terms?: string;
   footer?: ReactNode;
+  className?: string;
 }
 
 export function DocumentPreview({
@@ -33,6 +34,7 @@ export function DocumentPreview({
   notes,
   terms,
   footer,
+  className = "",
 }: DocumentPreviewProps) {
   const totals = computeTotals(items);
   const { settings } = useSettings();
@@ -49,84 +51,80 @@ export function DocumentPreview({
   return (
     <div
       id="document-print-area"
-      className="
+      className={`
         invoice-document
         mx-auto
         max-w-4xl
-        rounded-2xl
+        rounded-xl
         border
-        border-border
-        bg-white
-        p-6
+        border-border/40
+        bg-background
+        p-3
         shadow-sm
-        sm:p-10
+        sm:p-4
+        md:p-6
         print:mx-0
         print:max-w-none
         print:rounded-none
         print:border-0
         print:p-0
         print:shadow-none
-      "
+        ${className}
+      `}
     >
       {/* HEADER */}
       <header
         className="
           flex
           flex-col
-          gap-6
+          gap-3
           border-b
-          border-border
-          pb-6
+          border-border/40
+          pb-3
           sm:flex-row
           sm:items-start
           sm:justify-between
+          sm:pb-4
           print:flex-row
           print:items-start
           print:justify-between
-          print:gap-8
-          print:pb-5
+          print:gap-6
+          print:pb-4
         "
       >
-        {/* Document information */}
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-xs">
             {documentType}
           </p>
-
-          <h2 className="mt-1 text-2xl font-semibold text-foreground print:text-2xl">
+          <h2 className="mt-0.5 text-lg font-semibold text-foreground sm:text-xl md:text-2xl print:text-2xl">
             {documentNumber}
           </h2>
-
-          {status ? (
-            <p className="mt-1 text-sm capitalize text-muted-foreground">
+          {status && (
+            <p className="mt-0.5 text-xs capitalize text-muted-foreground sm:text-sm">
               Status: {formattedStatus}
             </p>
-          ) : null}
+          )}
         </div>
 
-        {/* Company information */}
         <div className="text-sm sm:text-right">
-          <p className="text-base font-bold text-foreground">
+          <p className="text-sm font-bold text-foreground sm:text-base">
             {settings.companyName}
           </p>
-
-          {settings.address ? (
-            <p className="mt-1 text-muted-foreground">
+          {settings.address && (
+            <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
               {settings.address}
             </p>
-          ) : null}
-
-          {settings.contactEmail ? (
-            <p className="text-muted-foreground">
+          )}
+          {settings.contactEmail && (
+            <p className="text-xs text-muted-foreground sm:text-sm">
               {settings.contactEmail}
             </p>
-          ) : null}
-
-          {settings.contactPhone ? (
-            <p className="text-muted-foreground">
+          )}
+          {settings.contactPhone && (
+            <p className="text-xs text-muted-foreground sm:text-sm">
               {settings.contactPhone}
             </p>
-          ) : null}
+          )}
         </div>
       </header>
 
@@ -134,152 +132,126 @@ export function DocumentPreview({
       <section
         className="
           grid
-          gap-6
+          gap-3
           border-b
-          border-border
-          py-6
+          border-border/40
+          py-3
           sm:grid-cols-2
+          sm:gap-4
+          sm:py-4
           print:grid-cols-2
-          print:gap-10
-          print:py-5
+          print:gap-6
+          print:py-4
         "
       >
-        {/* Customer */}
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-xs">
             Bill to
           </p>
-
-          <p className="mt-2 text-sm font-semibold text-foreground">
-            {customerName || "—"}
+          <p className="mt-1 text-sm font-semibold text-foreground sm:text-base">
+            {customerName || "-"}
           </p>
-
-          {customerCompany ? (
-            <p className="text-sm text-muted-foreground">
+          {customerCompany && (
+            <p className="text-xs text-muted-foreground sm:text-sm">
               {customerCompany}
             </p>
-          ) : null}
-
-          {customerEmail ? (
-            <p className="text-sm text-muted-foreground">
+          )}
+          {customerEmail && (
+            <p className="text-xs text-muted-foreground sm:text-sm">
               {customerEmail}
             </p>
-          ) : null}
-
-          {customerPhone ? (
-            <p className="text-sm text-muted-foreground">
+          )}
+          {customerPhone && (
+            <p className="text-xs text-muted-foreground sm:text-sm">
               {customerPhone}
             </p>
-          ) : null}
-
-          {customerAddress ? (
-            <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+          )}
+          {customerAddress && (
+            <p className="mt-1 whitespace-pre-line text-xs text-muted-foreground sm:text-sm">
               {customerAddress}
             </p>
-          ) : null}
+          )}
         </div>
 
-        {/* Dates */}
         <dl
           className="
             grid
             grid-cols-2
-            gap-x-6
-            gap-y-2
-            text-sm
+            gap-x-4
+            gap-y-1
+            text-xs
             sm:justify-self-end
-            print:min-w-[250px]
+            sm:text-sm
+            print:min-w-[200px]
             print:justify-self-end
           "
         >
-          {issueDate ? (
+          {issueDate && (
             <>
-              <dt className="text-muted-foreground">
-                Issue date
-              </dt>
-
+              <dt className="text-muted-foreground">Issue date</dt>
               <dd className="whitespace-nowrap text-right font-medium">
                 {formatDate(issueDate)}
               </dd>
             </>
-          ) : null}
-
-          {dueDate ? (
+          )}
+          {dueDate && (
             <>
-              <dt className="text-muted-foreground">
-                Due date
-              </dt>
-
+              <dt className="text-muted-foreground">Due date</dt>
               <dd className="whitespace-nowrap text-right font-medium">
                 {formatDate(dueDate)}
               </dd>
             </>
-          ) : null}
-
-          {validUntil ? (
+          )}
+          {validUntil && (
             <>
-              <dt className="text-muted-foreground">
-                Valid until
-              </dt>
-
+              <dt className="text-muted-foreground">Valid until</dt>
               <dd className="whitespace-nowrap text-right font-medium">
                 {formatDate(validUntil)}
               </dd>
             </>
-          ) : null}
-
-          {status ? (
+          )}
+          {status && (
             <>
-              <dt className="text-muted-foreground">
-                Status
-              </dt>
-
-              <dd className="text-right font-medium capitalize">
+              <dt className="text-muted-foreground">Status</dt>
+              <dd className="whitespace-nowrap text-right font-medium capitalize">
                 {formattedStatus}
               </dd>
             </>
-          ) : null}
+          )}
         </dl>
       </section>
 
       {/* MOBILE ITEMS */}
-      <div className="divide-y divide-border py-2 sm:hidden print:hidden">
+      <div className="divide-y divide-border/40 py-2 sm:hidden print:hidden">
         {items.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
+          <p className="py-4 text-center text-xs text-muted-foreground">
             No items on this document.
           </p>
         ) : (
           items.map((item, index) => (
             <div
               key={`${item.id ?? "item"}-${index}`}
-              className="space-y-1.5 py-3 text-sm"
+              className="space-y-1 py-2 text-xs"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-medium text-foreground">
                     {item.name || "Untitled item"}
                   </p>
-
-                  {item.description ? (
-                    <p className="text-xs text-muted-foreground">
+                  {item.description && (
+                    <p className="text-[10px] text-muted-foreground">
                       {item.description}
                     </p>
-                  ) : null}
+                  )}
                 </div>
-
                 <p className="shrink-0 font-medium tabular-nums">
                   {formatKES(lineItemTotal(item))}
                 </p>
               </div>
-
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground">
                 {item.quantity} × {formatKES(item.unitPrice)}
-                {item.discount
-                  ? ` · ${item.discount}% disc.`
-                  : ""}
-                {item.taxRate
-                  ? ` · ${item.taxRate}% tax`
-                  : ""}
+                {item.discount ? ` · ${item.discount}% disc.` : ""}
+                {item.taxRate ? ` · ${item.taxRate}% tax` : ""}
               </p>
             </div>
           ))
@@ -287,132 +259,35 @@ export function DocumentPreview({
       </div>
 
       {/* DESKTOP + PRINT TABLE */}
-      <div
-        className="
-          hidden
-          py-6
-          sm:block
-          print:block
-          print:py-5
-        "
-      >
-        <table
-          className="
-            w-full
-            table-fixed
-            border-collapse
-            text-sm
-          "
-        >
+      <div className="hidden py-2 sm:block print:block print:py-3">
+        <table className="w-full table-fixed border-collapse text-xs sm:text-sm">
           <colgroup>
-            <col className="w-[40%]" />
-            <col className="w-[9%]" />
-            <col className="w-[18%]" />
+            <col className="w-[35%]" />
+            <col className="w-[8%]" />
+            <col className="w-[16%]" />
             <col className="w-[10%]" />
-            <col className="w-[9%]" />
-            <col className="w-[14%]" />
+            <col className="w-[8%]" />
+            <col className="w-[13%]" />
           </colgroup>
 
           <thead>
-            <tr className="border-b-2 border-border">
-              <th
-                scope="col"
-                className="
-                  py-3
-                  pr-3
-                  text-left
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  text-muted-foreground
-                "
-              >
+            <tr className="border-b-2 border-border/40">
+              <th scope="col" className="py-2 pr-2 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs">
                 Item
               </th>
-
-              <th
-                scope="col"
-                className="
-                  whitespace-nowrap
-                  px-2
-                  py-3
-                  text-right
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  text-muted-foreground
-                "
-              >
+              <th scope="col" className="whitespace-nowrap px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-2 sm:text-xs">
                 Qty
               </th>
-
-              <th
-                scope="col"
-                className="
-                  whitespace-nowrap
-                  px-2
-                  py-3
-                  text-right
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  text-muted-foreground
-                "
-              >
-                Unit price
+              <th scope="col" className="whitespace-nowrap px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-2 sm:text-xs">
+                Unit
               </th>
-
-              <th
-                scope="col"
-                className="
-                  whitespace-nowrap
-                  px-2
-                  py-3
-                  text-right
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  text-muted-foreground
-                "
-              >
+              <th scope="col" className="whitespace-nowrap px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-2 sm:text-xs">
                 Disc %
               </th>
-
-              <th
-                scope="col"
-                className="
-                  whitespace-nowrap
-                  px-2
-                  py-3
-                  text-right
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  text-muted-foreground
-                "
-              >
+              <th scope="col" className="whitespace-nowrap px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:px-2 sm:text-xs">
                 Tax %
               </th>
-
-              <th
-                scope="col"
-                className="
-                  whitespace-nowrap
-                  py-3
-                  pl-2
-                  text-right
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  text-muted-foreground
-                "
-              >
+              <th scope="col" className="whitespace-nowrap py-2 pl-1 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:pl-2 sm:text-xs">
                 Total
               </th>
             </tr>
@@ -421,10 +296,7 @@ export function DocumentPreview({
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="py-8 text-center text-muted-foreground"
-                >
+                <td colSpan={6} className="py-6 text-center text-muted-foreground">
                   No items on this document.
                 </td>
               </tr>
@@ -432,42 +304,31 @@ export function DocumentPreview({
               items.map((item, index) => (
                 <tr
                   key={`${item.id ?? "item"}-${index}`}
-                  className="
-                    border-b
-                    border-border/60
-                    align-top
-                    print:break-inside-avoid
-                  "
+                  className="border-b border-border/30 align-top print:break-inside-avoid"
                 >
-                  <td className="py-3 pr-3">
+                  <td className="py-2 pr-2">
                     <p className="break-words font-medium text-foreground">
                       {item.name || "Untitled item"}
                     </p>
-
-                    {item.description ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                    {item.description && (
+                      <p className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
                         {item.description}
                       </p>
-                    ) : null}
+                    )}
                   </td>
-
-                  <td className="whitespace-nowrap px-2 py-3 text-right tabular-nums">
+                  <td className="whitespace-nowrap px-1 py-2 text-right tabular-nums">
                     {item.quantity}
                   </td>
-
-                  <td className="whitespace-nowrap px-2 py-3 text-right tabular-nums">
+                  <td className="whitespace-nowrap px-1 py-2 text-right tabular-nums">
                     {formatKES(item.unitPrice)}
                   </td>
-
-                  <td className="whitespace-nowrap px-2 py-3 text-right tabular-nums">
+                  <td className="whitespace-nowrap px-1 py-2 text-right tabular-nums">
                     {item.discount}%
                   </td>
-
-                  <td className="whitespace-nowrap px-2 py-3 text-right tabular-nums">
+                  <td className="whitespace-nowrap px-1 py-2 text-right tabular-nums">
                     {item.taxRate}%
                   </td>
-
-                  <td className="whitespace-nowrap py-3 pl-2 text-right font-medium tabular-nums">
+                  <td className="whitespace-nowrap py-2 pl-1 text-right font-medium tabular-nums">
                     {formatKES(lineItemTotal(item))}
                   </td>
                 </tr>
@@ -482,122 +343,61 @@ export function DocumentPreview({
         className="
           flex
           flex-col-reverse
-          items-stretch
-          gap-6
+          gap-3
           border-t
-          border-border
-          pt-6
+          border-border/40
+          pt-3
           sm:flex-row
           sm:justify-between
+          sm:pt-4
           print:flex-row
           print:items-start
-          print:gap-10
-          print:pt-5
+          print:gap-6
+          print:pt-4
         "
       >
-        {/* Notes / Terms / Footer */}
-        <div
-          className="
-            min-w-0
-            flex-1
-            space-y-4
-            text-sm
-            print:max-w-[55%]
-          "
-        >
-          {notes ? (
+        <div className="min-w-0 flex-1 space-y-3 text-xs sm:text-sm print:max-w-[55%]">
+          {notes && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-xs">
                 Notes
               </p>
-
-              <p className="mt-1 whitespace-pre-line text-muted-foreground">
+              <p className="mt-0.5 whitespace-pre-line text-muted-foreground">
                 {notes}
               </p>
             </div>
-          ) : null}
-
-          {terms ? (
+          )}
+          {terms && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-xs">
                 Terms
               </p>
-
-              <p className="mt-1 whitespace-pre-line text-muted-foreground">
+              <p className="mt-0.5 whitespace-pre-line text-muted-foreground">
                 {terms}
               </p>
             </div>
-          ) : null}
-
-          {footer ? (
-            <div className="pt-1">
-              {footer}
-            </div>
-          ) : null}
+          )}
+          {footer && <div className="pt-1">{footer}</div>}
         </div>
 
-        {/* Totals */}
-        <dl
-          className="
-            grid
-            w-full
-            grid-cols-2
-            gap-x-8
-            gap-y-2
-            text-sm
-            sm:w-72
-            sm:justify-self-end
-            print:w-[280px]
-            print:shrink-0
-            print:justify-self-end
-          "
-        >
-          <dt className="text-muted-foreground">
-            Subtotal
-          </dt>
-
+        <dl className="grid w-full grid-cols-2 gap-x-4 gap-y-0.5 text-xs sm:w-64 sm:text-sm print:w-[220px] print:shrink-0">
+          <dt className="text-muted-foreground">Subtotal</dt>
           <dd className="whitespace-nowrap text-right font-medium tabular-nums">
             {formatKES(totals.subtotal)}
           </dd>
-
-          <dt className="text-muted-foreground">
-            Discount
-          </dt>
-
+          <dt className="text-muted-foreground">Discount</dt>
           <dd className="whitespace-nowrap text-right font-medium tabular-nums">
             - {formatKES(totals.discount)}
           </dd>
-
-          <dt className="text-muted-foreground">
-            Tax
-          </dt>
-
+          <dt className="text-muted-foreground">Tax</dt>
           <dd className="whitespace-nowrap text-right font-medium tabular-nums">
             {formatKES(totals.tax)}
           </dd>
-
-          <dt
-            className="
-              col-span-2
-              mt-2
-              border-t
-              border-border
-              pt-3
-              text-right
-              text-xs
-              uppercase
-              tracking-wide
-              text-muted-foreground
-            "
-          >
+          <dt className="col-span-2 mt-1 border-t border-border/40 pt-2 text-right text-[10px] uppercase tracking-wide text-muted-foreground sm:text-xs">
             Total due
           </dt>
-
-          <dt className="text-base font-semibold text-foreground">
-            Total
-          </dt>
-
-          <dd className="whitespace-nowrap text-right text-base font-semibold text-foreground tabular-nums">
+          <dt className="text-sm font-semibold text-foreground sm:text-base">Total</dt>
+          <dd className="whitespace-nowrap text-right text-sm font-semibold text-foreground tabular-nums sm:text-base">
             {formatKES(totals.total)}
           </dd>
         </dl>

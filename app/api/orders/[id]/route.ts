@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     await connectToDatabase();
 
-    // Resolve/create the customer up front — it doesn't touch stock, so it
+    // Resolve/create the customer up front - it doesn't touch stock, so it
     // doesn't need to be inside the transaction below.
     let resolvedCustomerId: mongoose.Types.ObjectId | string | undefined;
     if (parsed.data.customer) {
@@ -129,7 +129,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           }
           order.status = parsed.data.status;
 
-          // Stock actually leaves inventory here, at "shipped" — not when
+          // Stock actually leaves inventory here, at "shipped" - not when
           // the order is converted to an invoice (see
           // app/api/orders/[id]/convert-to-invoice/route.ts, which no
           // longer touches stock at all). Guarded by `stockDecremented`
@@ -165,7 +165,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
           // Cancellation is only reachable before "shipped" (enforced by
           // validateOrderStatusTransition above), so `stock` was never
-          // touched for this order — only a `reserved` hold (if any)
+          // touched for this order - only a `reserved` hold (if any)
           // needs releasing. No Movement is logged: nothing actually
           // moved.
           if (parsed.data.status === "cancelled" && previousStatus !== "shipped" && order.reservedStock) {

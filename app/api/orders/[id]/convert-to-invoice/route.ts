@@ -10,7 +10,7 @@ import { createWithDocumentNumber } from "@/lib/db/document-number";
 //
 // The second half of the Quotation -> Order -> Invoice pipeline (see
 // convertQuotationToOrder in app/api/quotations/[id]/route.ts for the
-// first half). This route is now purely a billing-document step — it no
+// first half). This route is now purely a billing-document step - it no
 // longer touches `Product.stock` or `Product.reserved`. Stock actually
 // leaves inventory when the Order reaches "shipped" (see the PATCH
 // handler in app/api/orders/[id]/route.ts), which can happen before or

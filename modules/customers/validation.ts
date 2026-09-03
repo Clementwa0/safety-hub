@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 /**
- * Storefront customer self-service profile update — used by both the
+ * Storefront customer self-service profile update - used by both the
  * `/account/profile` page and the "Save updated details to my profile"
  * checkbox at checkout.
  *
  * Deliberately excludes `email`: email is owned by the auth provider
  * (Google / magic-link) and the `User` document (in the `storefront_customers`
  * collection) the Auth.js adapter maintains. It must only ever change via that sign-in flow, never
- * through this endpoint — see `resolveStorefrontCustomer()` in
+ * through this endpoint - see `resolveStorefrontCustomer()` in
  * `lib/auth/identity.ts` for how identity/email is resolved
  * independently of anything the client sends.
  */

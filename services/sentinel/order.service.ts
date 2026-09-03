@@ -5,6 +5,7 @@ import type { Order, OrderInput, OrderStatus } from "@/types/sentinel/order";
 import type { Invoice } from "@/types/sentinel/invoice";
 
 export interface OrderQuery {
+  page?: number;
   search?: string;
   status?: OrderStatus | "all";
   limit?: number;
@@ -14,6 +15,7 @@ export interface OrderQuery {
 export const orderService = {
   async list(query: OrderQuery = {}): Promise<Order[]> {
     const params = new URLSearchParams();
+    if (query.page) params.set("page", String(query.page));
     if (query.search) params.set("q", query.search);
     if (query.status && query.status !== "all") params.set("status", query.status);
     if (query.limit) params.set("limit", String(query.limit));

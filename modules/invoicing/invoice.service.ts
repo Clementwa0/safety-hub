@@ -16,8 +16,8 @@ import {
  * Server-side invoicing operations that touch money. Every function here
  * that mutates both a Payment and its Invoice runs inside a single
  * MongoDB/Mongoose transaction (`session.withTransaction`), so a failure
- * partway through — a validation error, a network blip, a concurrent
- * write conflict — rolls back everything instead of leaving the ledger
+ * partway through - a validation error, a network blip, a concurrent
+ * write conflict - rolls back everything instead of leaving the ledger
  * and the invoice out of sync.
  *
  * Errors are thrown as `Error`s whose `message` starts with a
@@ -64,7 +64,7 @@ export interface RecordPaymentResult {
  * and on retry it re-reads the now-updated amountPaid and correctly
  * rejects the payment if it would overpay. Two concurrent KES 70,000
  * payments against a KES 100,000 invoice can therefore never both
- * succeed — one lands, the other is rejected against the real remaining
+ * succeed - one lands, the other is rejected against the real remaining
  * balance of KES 30,000.
  */
 export async function recordPayment(
@@ -93,7 +93,7 @@ export async function recordPayment(
       }
 
       // Authoritative figures, computed server-side from the invoice's
-      // own line items and its just-read amountPaid — never trust a
+      // own line items and its just-read amountPaid - never trust a
       // client-provided total/balance/status for this check.
       const total = calculateInvoiceTotals(invoice.items).total;
       const balance = calculateInvoiceBalance(total, invoice.amountPaid);
@@ -121,7 +121,7 @@ export async function recordPayment(
       );
 
       // Clamped to `total` as a defensive floor, not because the guard
-      // above can be beaten — it can't — but so a hypothetical future
+      // above can be beaten - it can't - but so a hypothetical future
       // caller of this function can never push amountPaid past total.
       invoice.amountPaid = roundMoney(Math.min(total, invoice.amountPaid + input.amount));
       invoice.status = calculatePaymentStatus(total, invoice.amountPaid);
@@ -161,8 +161,8 @@ export interface VoidPaymentResult {
  * Voids a recorded payment (refund or correction) without ever deleting
  * it: the row stays in the ledger with `status: "voided"` plus who/when,
  * and the invoice's amountPaid/status are recalculated from scratch off
- * the remaining active payments — not by simply subtracting the voided
- * amount — so the invoice can never drift from what the ledger actually
+ * the remaining active payments - not by simply subtracting the voided
+ * amount - so the invoice can never drift from what the ledger actually
  * shows. A `cancelled` invoice's status is left alone (voiding a payment
  * shouldn't silently un-cancel it).
  */

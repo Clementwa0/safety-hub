@@ -7,7 +7,7 @@ import type { PortalSettings } from "@/services/sentinel/settings.service";
 
 /**
  * Server-only settings read. Only import this from server components,
- * layouts, or route handlers — never from a "use client" file (it talks
+ * layouts, or route handlers - never from a "use client" file (it talks
  * to Mongoose directly).
  *
  * Wrapped in React's `cache()` so every server component that calls this
@@ -67,7 +67,7 @@ export const getSettings = cache(async (): Promise<PortalSettings> => {
     };
   } catch {
     // DB unreachable at build/edge time (e.g. static generation without
-    // MONGODB_URI) — fall back to constants so the page still renders.
+    // MONGODB_URI) - fall back to constants so the page still renders.
     return DEFAULT_SETTINGS as PortalSettings;
   }
 });

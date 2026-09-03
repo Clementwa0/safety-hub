@@ -7,13 +7,13 @@ import path from "path";
  * the render tree.
  *
  * - `settings.logoUrl` (when set) is a Cloudinary URL uploaded via the
- *   settings page — fetched over the network.
+ *   settings page - fetched over the network.
  * - Otherwise falls back to the same bundled `public/logo.png` the
  *   storefront navbar uses when no custom logo is configured.
  *
  * Best-effort: any failure (network error, bad content-type, missing
  * file) resolves to `undefined` rather than throwing, so a broken or
- * slow logo never breaks invoice PDF generation — the document just
+ * slow logo never breaks invoice PDF generation - the document just
  * renders without one.
  */
 export async function resolveLogoDataUri(logoUrl: string): Promise<string | undefined> {

@@ -62,14 +62,14 @@ export async function POST(request: Request) {
       status: "new",
     });
 
-    // Fire-and-forget in-app notification for the Sentinel bell — never
+    // Fire-and-forget in-app notification for the Sentinel bell - never
     // awaited, so a notification write failure can never delay this
     // response or affect whether the message was saved (same rule as the
     // email step below).
     createNotification({
       type: "new_contact_message",
       title: "New contact message",
-      message: `${name} — ${subject}`,
+      message: `${name} - ${subject}`,
       link: "/sentinel/contact-messages",
       entity: "ContactMessage",
       entityId: String(saved._id),

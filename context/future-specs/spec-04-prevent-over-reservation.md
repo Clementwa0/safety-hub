@@ -1,4 +1,4 @@
-# Spec 04 — Prevent Over-Reservation
+# Spec 04 - Prevent Over-Reservation
 
 ## Status
 Planned

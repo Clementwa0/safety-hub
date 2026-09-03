@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FulfillmentBadge } from "@/components/sentinel/sales/FulfillmentBadge";
 import type { LineItem } from "@/types/sentinel/sales";
 
@@ -6,17 +5,6 @@ interface StockAvailabilityPanelProps {
   items: LineItem[];
 }
 
-/**
- * Shows the stock snapshot captured when the quotation's items were last
- * saved (availableAtQuote/fulfillmentPlan - see
- * modules/inventory/availability.ts). Deliberately not a live re-check against
- * current stock: the whole point of the snapshot is that a quotation
- * reflects what was available when it was quoted, not what's available
- * right now while someone happens to be viewing it.
- *
- * Only renders for lines that reference a real product - custom/one-off
- * lines have no stock concept and are silently skipped.
- */
 export function StockAvailabilityPanel({ items }: StockAvailabilityPanelProps) {
   const stockLines = items.filter((item) => item.productId && item.availableAtQuote !== undefined);
   if (stockLines.length === 0) return null;
@@ -25,33 +13,29 @@ export function StockAvailabilityPanel({ items }: StockAvailabilityPanelProps) {
   const needsPartial = stockLines.some((item) => item.fulfillmentPlan === "partial");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Stock availability</CardTitle>
-        {needsProcurement || needsPartial ? (
-          <p className="text-xs text-muted-foreground">
-            Snapshot from when this quotation was last saved. One or more lines will need
-            procurement before this can be fully delivered.
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Snapshot from when this quotation was last saved. All lines were available in full.
-          </p>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {stockLines.map((item) => {
+    <div className="rounded-lg border border-border/30 bg-background p-1.5 sm:p-3 shadow-sm">
+      <h3 className="text-xs font-medium text-muted-foreground sm:text-sm">Stock availability</h3>
+      <p className="text-[10px] text-muted-foreground sm:text-xs">
+        {needsProcurement || needsPartial
+          ? "Snapshot from when this quotation was last saved. One or more lines will need procurement before this can be fully delivered."
+          : "Snapshot from when this quotation was last saved. All lines were available in full."}
+      </p>
+
+      <div className="mt-1.5 space-y-1.5 sm:space-y-2">
+        {stockLines.map((item, index) => {
           const available = item.availableAtQuote ?? 0;
           const reserved = Math.max(0, Math.min(item.quantity, available));
           const procurement = Math.max(0, item.quantity - available);
+          // Use a stable key: prefer item.id, fallback to index if missing
+          const key = item.id ? `stock-${item.id}` : `stock-${index}`;
           return (
             <div
-              key={item.id}
-              className="flex flex-col gap-2 rounded-md border border-border p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+              key={key}
+              className="flex flex-col gap-1 rounded-md border border-border/40 p-2 text-xs sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:p-2.5 sm:text-sm"
             >
               <div className="min-w-0">
-                <p className="font-medium">{item.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="font-medium text-foreground">{item.name}</p>
+                <p className="text-[10px] text-muted-foreground sm:text-xs">
                   Requested {item.quantity} · Available at quote time {available}
                   {procurement > 0 ? ` · Reserved ${reserved} · Procurement ${procurement}` : ""}
                 </p>
@@ -62,8 +46,8 @@ export function StockAvailabilityPanel({ items }: StockAvailabilityPanelProps) {
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

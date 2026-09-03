@@ -2,8 +2,8 @@
  * Tests for modules/analytics/sales-dashboard.ts, focused on the bug this
  * change fixes: cash-flow figures (the "Cash Collected" KPI, its time
  * series, aging, and outstanding balances) must be driven by the actual
- * `Payment.date` an active (non-voided) payment was recorded on — never
- * by `Invoice.issueDate` or the invoice's cached `amountPaid` — and must
+ * `Payment.date` an active (non-voided) payment was recorded on - never
+ * by `Invoice.issueDate` or the invoice's cached `amountPaid` - and must
  * stay consistent with each other and with the centralized balance math
  * in modules/invoicing/calculations.ts.
  *

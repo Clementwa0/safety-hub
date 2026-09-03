@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // mutations and records the corresponding Movement ledger entry.
     const { stock: requestedStock, variants: requestedVariants, ...productChanges } = parsed.data;
     Object.assign(product, productChanges);
-    // Product.category is an ObjectId ref — never assign the raw category
+    // Product.category is an ObjectId ref - never assign the raw category
     // name string that `parsed.data.category` carries.
     if (resolvedCategoryId) {
       product.category = new mongoose.Types.ObjectId(resolvedCategoryId);

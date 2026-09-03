@@ -74,7 +74,7 @@ export default function InvoiceTable({ invoices, onDelete }: Props) {
 
               {/* Due date */}
               <TableCell>
-                {inv.dueDate ? formatDate(inv.dueDate) : "—"}
+                {inv.dueDate ? formatDate(inv.dueDate) : "-"}
               </TableCell>
 
               {/* Status */}

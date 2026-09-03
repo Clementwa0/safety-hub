@@ -53,7 +53,7 @@ export function serializeDoc<T>(doc: unknown): T {
 
 /**
  * Serializes a `StoreOrder` for the CUSTOMER-facing endpoints
- * (`GET /api/store-orders`, `GET /api/store-orders/[id]`) — never for the
+ * (`GET /api/store-orders`, `GET /api/store-orders/[id]`) - never for the
  * admin routes, which may return the full document via `serializeDoc`.
  *
  * Currently just delegates to `serializeDoc`; kept as its own function

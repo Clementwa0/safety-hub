@@ -16,7 +16,7 @@ const TERMINAL_STATUSES: StoreOrderStatus[] = ["delivered", "cancelled"];
  *  - Forward-only along pending -> confirmed -> processing -> shipped -> delivered.
  *  - No skipping ahead, no moving backward.
  *  - Cancellation is only allowed before an order ships.
- *  - `delivered` and `cancelled` are terminal — no further status changes.
+ *  - `delivered` and `cancelled` are terminal - no further status changes.
  */
 export function validateStatusTransition(
   current: StoreOrderStatus,
@@ -49,7 +49,7 @@ export function validateStatusTransition(
   }
 
   if (nextIndex > currentIndex + 1) {
-    return `Cannot skip statuses — move to "${FORWARD_FLOW[currentIndex + 1]}" first`;
+    return `Cannot skip statuses - move to "${FORWARD_FLOW[currentIndex + 1]}" first`;
   }
 
   return null;

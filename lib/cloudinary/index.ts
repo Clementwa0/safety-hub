@@ -1,7 +1,7 @@
 /**
  * Cloudinary delivery layer (client-safe).
  *
- * Nothing in this file touches the API secret — it only reads the public
+ * Nothing in this file touches the API secret - it only reads the public
  * cloud name (`NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`) and rewrites delivery
  * URLs so Cloudinary does the resizing/format negotiation instead of the
  * Next.js image optimizer.
@@ -49,9 +49,9 @@ export interface CloudinaryTransformOptions {
   height?: number;
   /** Defaults to "limit" (never upscales, preserves aspect ratio). */
   crop?: CloudinaryCrop;
-  /** Defaults to "auto" — Cloudinary picks the quality per image. */
+  /** Defaults to "auto" - Cloudinary picks the quality per image. */
   quality?: number | "auto" | "auto:eco" | "auto:good" | "auto:best";
-  /** Defaults to "auto" — AVIF/WebP when the browser supports it. */
+  /** Defaults to "auto" - AVIF/WebP when the browser supports it. */
   format?: "auto" | "webp" | "avif" | "jpg" | "png";
   /** Device pixel ratio; "auto" requires Client Hints, so we default to 2 for crisp retina output. */
   dpr?: number | "auto";

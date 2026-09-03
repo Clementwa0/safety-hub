@@ -27,7 +27,7 @@ export async function requireAdmin() {
 }
 
 /**
- * Any signed-in Sentinel user — admin or staff. Staff have the same
+ * Any signed-in Sentinel user - admin or staff. Staff have the same
  * portal access as admin EXCEPT Users, Settings, and Reports, which are
  * gated separately with requireAdmin() at the route/page level.
  */

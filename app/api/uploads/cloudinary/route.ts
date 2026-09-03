@@ -10,7 +10,7 @@ const bodySchema = z.object({
 });
 
 /**
- * Best-effort cleanup for `CloudinaryImageField`'s "Remove" action — deletes
+ * Best-effort cleanup for `CloudinaryImageField`'s "Remove" action - deletes
  * an asset we own by public_id when a staff member clears or replaces an
  * image, so orphaned uploads don't pile up in the Cloudinary media library.
  */

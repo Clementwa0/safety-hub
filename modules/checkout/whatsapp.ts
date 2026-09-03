@@ -2,7 +2,7 @@ import { formatKES } from "@/lib/format";
 
 /**
  * WhatsApp Checkout is a *parallel* ordering channel, not a replacement for
- * the normal checkout. It never creates a `StoreOrder` — it only builds a
+ * the normal checkout. It never creates a `StoreOrder` - it only builds a
  * pre-filled message and hands the customer off to WhatsApp, where a human
  * takes over. Because of that, everything in this module is pure/client-safe
  * and deliberately has no dependency on the database or the checkout API.
@@ -46,7 +46,7 @@ export interface BuildWhatsAppOrderMessageInput {
 /**
  * Generates a temporary, human-friendly reference for a WhatsApp order,
  * e.g. `WH-20260805-431207`. This is only ever mentioned in the chat
- * message so the team can find/tag the conversation — it is NOT a
+ * message so the team can find/tag the conversation - it is NOT a
  * database order id and nothing in the app looks it up.
  */
 export function generateWhatsAppReference(date: Date = new Date()): string {
@@ -59,12 +59,12 @@ export function generateWhatsAppReference(date: Date = new Date()): string {
 /**
  * Builds the exact text sent to WhatsApp. Kept as one function so every
  * entry point (Cart page button, Checkout page option) produces an
- * identically formatted message — never duplicate this formatting inline.
+ * identically formatted message - never duplicate this formatting inline.
  */
 export function buildWhatsAppOrderMessage(input: BuildWhatsAppOrderMessageInput): string {
   const { customer, items, totals, preferredPayment, reference } = input;
 
-  const itemLines = items.map((item) => `• ${item.name} ×${item.quantity} — ${formatKES(item.lineTotal)}`);
+  const itemLines = items.map((item) => `• ${item.name} ×${item.quantity} - ${formatKES(item.lineTotal)}`);
 
   const lines = [
     "Hello Safety Hub,",

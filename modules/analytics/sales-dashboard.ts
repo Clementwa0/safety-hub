@@ -19,14 +19,14 @@ import type {
 } from "@/types/sentinel/sales-dashboard";
 
 /**
- * ACCOUNTING POLICY — the definitions below are the one place in the app
+ * ACCOUNTING POLICY - the definitions below are the one place in the app
  * that decides what counts as "sold", "invoiced", "collected" and
  * "recognized". Every KPI card and chart on the dashboard reads from
  * here rather than re-deriving these figures, so the numbers can never
  * drift apart from each other or get looser under UI pressure.
  *
  * - CONFIRMED SALES: the value of orders (storefront + B2B) that the
- *   business has committed to fulfil — i.e. no longer just "pending" —
+ *   business has committed to fulfil - i.e. no longer just "pending" -
  *   and that have not been cancelled. This is a sales/demand figure,
  *   not a cash or accounting figure.
  *
@@ -36,8 +36,8 @@ import type {
  *
  * - CASH COLLECTED: money that has actually changed hands. For B2B this
  *   is the sum of active (non-voided) `Payment` ledger rows whose own
- *   `date` — the date the cash was actually received, not the date the
- *   invoice was issued — falls in the selected range. This is NOT
+ *   `date` - the date the cash was actually received, not the date the
+ *   invoice was issued - falls in the selected range. This is NOT
  *   `invoice.amountPaid` (that field is the invoice's current
  *   cumulative total, and dating it by `invoice.issueDate` would book a
  *   payment collected in March against a January-issued invoice as
@@ -58,18 +58,18 @@ import type {
  *   (delivered) AND fully paid. An accepted quotation is not revenue.
  *   An issued invoice is not revenue. Even a paid invoice for goods
  *   that haven't shipped is not, on its own, treated as recognized
- *   here — this dashboard uses a delivered-and-paid policy, which is
+ *   here - this dashboard uses a delivered-and-paid policy, which is
  *   deliberately conservative. A future finance configuration could
  *   swap this for accrual-on-invoice or another policy; this function
  *   is the only place that would need to change.
  *   For B2B, this is scoped to the period by the date the invoice
- *   actually became fully paid (its latest active `Payment.date` — the
+ *   actually became fully paid (its latest active `Payment.date` - the
  *   same "date cash actually moved" signal CASH COLLECTED uses above),
  *   NOT by the unrelated order's `createdAt`. An order is routinely
  *   created well before it's delivered and its invoice paid off, so
  *   gating on order creation date would silently drop revenue that was
  *   recognized in-range just because the order document itself was
- *   created in an earlier period — the exact bug class already fixed
+ *   created in an earlier period - the exact bug class already fixed
  *   for Cash Collected. For the storefront there is still no separate
  *   payment-date ledger, so order creation date remains the closest
  *   available proxy there (same limitation as Cash Collected).
@@ -200,7 +200,7 @@ export async function buildSalesDashboard(
   // equivalent rule applied to a single invoice's amountPaid.
   const paymentsInRange = payments.filter((p) => inRange(p.date) && isActivePayment(p));
 
-  // All active payments grouped by invoice (not range-filtered — we need
+  // All active payments grouped by invoice (not range-filtered - we need
   // this to find the date an invoice actually crossed into "paid" even
   // when that date falls outside the current window's `paymentsInRange`,
   // so that a since-paid invoice from an earlier period is correctly
@@ -285,7 +285,7 @@ export async function buildSalesDashboard(
   // value from the invoice for this same reason; Revenue Recognized
   // must match them rather than silently drift when an invoice is
   // discounted or corrected after the order was placed.
-  // Sourced from ALL orders, not `ordersInRange` — gating on
+  // Sourced from ALL orders, not `ordersInRange` - gating on
   // `o.createdAt` would silently drop an order created before the
   // window but delivered-and-paid within it (see the accounting-policy
   // comment above). Instead each candidate is dated by when its invoice
@@ -404,12 +404,12 @@ export async function buildSalesDashboard(
     bump(periodKey(new Date(inv.issueDate), granularity), "invoiced", total(inv.items));
   }
   // Bucket by when the cash actually came in (payment.date), not when the
-  // invoice was issued — an invoice issued in one period is often paid
+  // invoice was issued - an invoice issued in one period is often paid
   // (fully or partially, in one or several installments) in a later one.
   // `paymentsInRange` is already scoped to that window and to
   // non-voided/non-refunded payments (see its definition above), and using
-  // the per-payment amount here — instead of the invoice's cumulative
-  // `amountPaid` — is what correctly spreads multiple/partial payments
+  // the per-payment amount here - instead of the invoice's cumulative
+  // `amountPaid` - is what correctly spreads multiple/partial payments
   // across the periods they were each actually collected in rather than
   // dumping the invoice's whole running total onto one date. This also
   // keeps the chart consistent with the `cashFromInvoices` KPI above,

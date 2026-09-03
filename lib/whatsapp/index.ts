@@ -3,7 +3,7 @@ import { formatKES } from "../format";
 
 /**
  * Pure WhatsApp message/link helpers. Deliberately don't read company info
- * from a module-level constant — callers pass in the business name/number
+ * from a module-level constant - callers pass in the business name/number
  * from `useSettings()` so these stay in sync with Sentinel → Settings
  * without needing a page reload.
  */
@@ -32,7 +32,7 @@ export function buildOrderMessage(businessName: string, lines: CartLine[]) {
   const items = lines
     .map(
       (l) =>
-        `• ${l.product.name} ×${l.qty} — ${formatKES(l.product.price * l.qty)}`,
+        `• ${l.product.name} ×${l.qty} - ${formatKES(l.product.price * l.qty)}`,
     )
     .join("\n");
   const total = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
@@ -40,7 +40,7 @@ export function buildOrderMessage(businessName: string, lines: CartLine[]) {
 }
 
 export function buildInquiryMessage(businessName: string, product: Product) {
-  return `Hello ${businessName}, I'd like to inquire about:\n\n• ${product.name} — ${formatKES(product.price)}\n\nCould you share more details and availability?`;
+  return `Hello ${businessName}, I'd like to inquire about:\n\n• ${product.name} - ${formatKES(product.price)}\n\nCould you share more details and availability?`;
 }
 
 export function buildQuotationMessage(businessName: string, lines: CartLine[]) {

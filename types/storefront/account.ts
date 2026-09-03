@@ -6,12 +6,12 @@ export interface AccountMe {
   email: string | null;
   image: string | null;
   phone: string | null;
-  /** The customer's saved default address, if any — used to autofill checkout. */
+  /** The customer's saved default address, if any - used to autofill checkout. */
   address: { address: string; city: string; country: string } | null;
 }
 
 export interface AccountProfileUpdate {
-  /** Email is intentionally omitted — it's managed by the sign-in provider only. */
+  /** Email is intentionally omitted - it's managed by the sign-in provider only. */
   name?: string;
   phone?: string;
   address?: string;

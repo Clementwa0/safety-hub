@@ -85,7 +85,7 @@ export default function CategoryProductsSection({
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
       default:
-        // "Relevance" — featured items first, then newest.
+        // "Relevance" - featured items first, then newest.
         result.sort((a, b) => {
           if (Boolean(b.featured) !== Boolean(a.featured)) {
             return Number(b.featured) - Number(a.featured);

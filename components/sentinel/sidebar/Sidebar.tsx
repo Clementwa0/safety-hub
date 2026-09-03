@@ -2,30 +2,20 @@
 
 import { useCallback } from "react";
 import Link from "next/link";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Headset,
-  ShieldCheck,
-} from "lucide-react";
+import { Shield } from "lucide-react";
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
 
 import AppSidebarGroup from "./SidebarGroup";
+import QuickActions from "./QuickActions";
 
 const AppSidebar = () => {
-  const {
-    state,
-    isMobile,
-    setOpenMobile,
-    toggleSidebar,
-  } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
 
   const collapsed = state === "collapsed";
 
@@ -38,263 +28,104 @@ const AppSidebar = () => {
   return (
     <Sidebar
       collapsible="icon"
-      className="
-        group/sidebar
-        border-sidebar-border
-        bg-sidebar
-        text-sidebar-foreground
-      "
+      className="dark group/sidebar border-sidebar-border bg-sidebar text-sidebar-foreground"
     >
-      {/* =====================================================
-          COLLAPSE TOGGLE
-      ====================================================== */}
-      {!isMobile && (
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          aria-label={
-            collapsed ? "Expand sidebar" : "Collapse sidebar"
-          }
-          aria-expanded={!collapsed}
-          className="
-            absolute
-            -right-3
-            top-6
-            z-50
-            flex
-            h-7
-            w-7
-            items-center
-            justify-center
-            rounded-full
-            border
-            border-sidebar-border
-            bg-sidebar
-            text-sidebar-foreground
-            shadow-sm
-            opacity-0
-            transition-all
-            duration-200
-            hover:scale-105
-            hover:bg-sidebar-accent
-            hover:text-sidebar-accent-foreground
-            focus-visible:opacity-100
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-sidebar-ring
-            group-hover/sidebar:opacity-100
-          "
-        >
-          {collapsed ? (
-            <ChevronRight
-              className="h-4 w-4"
-              aria-hidden="true"
-            />
-          ) : (
-            <ChevronLeft
-              className="h-4 w-4"
-              aria-hidden="true"
-            />
-          )}
-        </button>
-      )}
-
-      {/* =====================================================
-          HEADER / BRAND
-      ====================================================== */}
-      <SidebarHeader
-        className="
-          border-b
-          border-sidebar-border
-          px-3
-          py-4
-        "
-      >
+      <SidebarHeader className="border-b border-sidebar-border px-2 py-2.5">
         <Link
           href="/sentinel/dashboard"
           onClick={handleItemClick}
-          aria-label="HSE Hub dashboard"
-          className={`
-            flex
-            h-9
-            items-center
-            transition-all
-            duration-300
-            ${collapsed ? "justify-center" : "gap-2.5"}
-          `}
+          aria-label="Safety Hub dashboard"
+          className={`flex h-8 items-center transition-all duration-300 ${collapsed ? "justify-center" : "gap-2"}`}
         >
-          {/* Logo */}
-          <div
-            className="
-              flex
-              h-9
-              w-9
-              shrink-0
-              items-center
-              justify-center
-              rounded-xl
-              bg-sidebar-primary
-              shadow-sm
-            "
-          >
-            <ShieldCheck
-              className="h-5 w-5 text-sidebar-primary-foreground"
-              strokeWidth={2.25}
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-400 shadow-sm">
+            <Shield
+              className="h-4 w-4 text-sidebar"
+              strokeWidth={2.5}
+              fill="currentColor"
               aria-hidden="true"
             />
           </div>
 
-          {/* Brand */}
           {!collapsed && (
-            <div
-              className="
-                flex
-                min-w-0
-                flex-col
-                overflow-hidden
-                animate-in
-                fade-in
-                duration-300
-              "
-            >
-              <h2
-                className="
-                  truncate
-                  text-base
-                  font-extrabold
-                  leading-tight
-                  tracking-tight
-                  text-sidebar-foreground
-                "
-              >
-                HSE HUB
+            <div className="flex min-w-0 flex-col overflow-hidden animate-in fade-in duration-300">
+              <h2 className="truncate text-sm font-bold leading-tight tracking-tight text-sidebar-foreground">
+                Safety Hub
               </h2>
-
-              <p
-                className="
-                  truncate
-                  text-[10px]
-                  font-semibold
-                  leading-tight
-                  tracking-wider
-                  text-sidebar-foreground/60
-                "
-              >
-                PPE &amp; SAFETY SOLUTIONS
+              <p className="truncate text-[10px] leading-tight text-sidebar-foreground/60">
+                Admin Panel
               </p>
             </div>
           )}
         </Link>
       </SidebarHeader>
 
-      {/* =====================================================
-          NAVIGATION
-      ====================================================== */}
-      <SidebarContent
-        className="
-          px-2.5
-          py-3
-          [scrollbar-width:thin]
-          [scrollbar-color:var(--sidebar-border)_transparent]
-        "
-      >
-        <AppSidebarGroup
-          collapsed={collapsed}
-          onItemClick={handleItemClick}
-        />
-      </SidebarContent>
-
-      {/* =====================================================
-          FOOTER / SUPPORT
-      ====================================================== */}
-      {!collapsed && (
-        <SidebarFooter
-          className="
-            border-t
-            border-sidebar-border
-            p-3
-            animate-in
-            fade-in
-            duration-300
-          "
+      <SidebarContent className="relative px-2 py-2 [scrollbar-width:thin] [scrollbar-color:var(--sidebar-border)_transparent]">
+        {/* Decorative vector SVG background – covers bottom 1/4 of sidebar */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden"
+          style={{ height: "25%" }}
+          aria-hidden="true"
         >
-          <div
-            className="
-              flex
-              items-start
-              gap-3
-              rounded-xl
-              bg-sidebar-accent
-              p-3
-              transition-colors
-              duration-200
-            "
+          <svg
+            viewBox="0 0 400 200"
+            preserveAspectRatio="none"
+            className="h-full w-full"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Support Icon */}
-            <span
-              className="
-                flex
-                h-9
-                w-9
-                shrink-0
-                items-center
-                justify-center
-                rounded-full
-                bg-sidebar-primary/15
-                text-sidebar-primary
-              "
-            >
-              <Headset
-                className="h-[18px] w-[18px]"
-                aria-hidden="true"
-              />
-            </span>
+            <defs>
+              <linearGradient id="sidebar-shapes" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
+                <stop offset="30%" stopColor="currentColor" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="currentColor" stopOpacity="0.35" />
+              </linearGradient>
+              <linearGradient id="sidebar-shapes-2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
+                <stop offset="40%" stopColor="currentColor" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="currentColor" stopOpacity="0.3" />
+              </linearGradient>
+            </defs>
 
-            {/* Support Content */}
-            <div className="min-w-0 space-y-1">
-              <p
-                className="
-                  text-[13px]
-                  font-semibold
-                  leading-tight
-                  text-sidebar-accent-foreground
-                "
-              >
-                Need Help?
-              </p>
+            {/* Large soft circles */}
+            <circle cx="60" cy="160" r="90" fill="currentColor" opacity="0.15" />
+            <circle cx="340" cy="120" r="70" fill="currentColor" opacity="0.12" />
+            <circle cx="200" cy="190" r="50" fill="currentColor" opacity="0.1" />
 
-              <p
-                className="
-                  text-[11px]
-                  leading-snug
-                  text-sidebar-foreground/70
-                "
-              >
-                We&apos;re here to support you
-              </p>
+            {/* Abstract flowing waves */}
+            <path
+              d="M0 180 Q50 140 100 170 T200 150 T300 175 T400 140 L400 200 L0 200Z"
+              fill="url(#sidebar-shapes)"
+            />
+            <path
+              d="M0 160 Q80 120 160 155 T320 130 T400 165 L400 200 L0 200Z"
+              fill="url(#sidebar-shapes-2)"
+            />
 
-              <button
-                type="button"
-                className="
-                  text-[11px]
-                  font-semibold
-                  text-emerald-600
-                  transition-colors
-                  hover:text-emerald-700
-                  focus-visible:outline-none
-                  focus-visible:ring-2
-                  focus-visible:ring-sidebar-ring
-                  dark:text-emerald-400
-                  dark:hover:text-emerald-300
-                  dark:hover:text-emerald-300
-                "
-              >
-                Contact Support
-              </button>
-            </div>
-          </div>
-        </SidebarFooter>
-      )}
+            {/* Decorative dots – more visible */}
+            <circle cx="50" cy="130" r="5" fill="currentColor" opacity="0.2" />
+            <circle cx="120" cy="100" r="4" fill="currentColor" opacity="0.15" />
+            <circle cx="280" cy="90" r="6" fill="currentColor" opacity="0.18" />
+            <circle cx="350" cy="150" r="4" fill="currentColor" opacity="0.2" />
+            <circle cx="200" cy="180" r="5" fill="currentColor" opacity="0.15" />
+            <circle cx="400" cy="80" r="3" fill="currentColor" opacity="0.12" />
+
+            {/* Hexagon-inspired shapes */}
+            <polygon
+              points="380,50 400,60 400,80 380,90 360,80 360,60"
+              fill="currentColor"
+              opacity="0.12"
+            />
+            <polygon
+              points="30,30 50,40 50,60 30,70 10,60 10,40"
+              fill="currentColor"
+              opacity="0.08"
+            />
+          </svg>
+        </div>
+
+        <AppSidebarGroup collapsed={collapsed} onItemClick={handleItemClick} />
+        {!collapsed && <QuickActions onItemClick={handleItemClick} />}
+      </SidebarContent>
     </Sidebar>
   );
 };

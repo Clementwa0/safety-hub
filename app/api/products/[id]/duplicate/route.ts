@@ -28,7 +28,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     const name = `${rest.name} (Copy)`;
     let slug = slugify(name);
 
-    // Slugs are unique — if a copy already exists, keep appending a counter.
+    // Slugs are unique - if a copy already exists, keep appending a counter.
     let attempt = 1;
     while (await ProductModel.exists({ slug })) {
       attempt += 1;

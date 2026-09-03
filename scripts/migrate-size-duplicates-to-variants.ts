@@ -1,48 +1,3 @@
-/**
- * One-off migration: finds products whose names differ only by a trailing
- * size token — the pre-variants convention was literally separate
- * products named e.g. "Eye Wash Care Size S", "Eye Wash Care Size M",
- * "Eye Wash Care Size L" — and consolidates each group into a single
- * variant-enabled product (see IProductVariant in lib/models/Product.ts),
- * one variant per former duplicate.
- *
- * SAFE BY DEFAULT: runs as a dry run and only prints the plan. Nothing is
- * written to the database until you pass --apply.
- *
- * WHAT THIS DOES NOT DO:
- *  - It does not rewrite historical references. Existing StoreOrder/Order/
- *    Quotation/Invoice line items keep their own denormalized
- *    name/sku/price snapshot fields, so past documents still display
- *    correctly, but their `product`/`productId` ref will point at a
- *    product _id that this script deletes. That's consistent with how
- *    this codebase already treats a deleted product (see the "product no
- *    longer exists" checks in modules/checkout/checkout.ts) — but it means
- *    admin screens that try to re-resolve an old order's product link
- *    (rather than reading the snapshot) will see it as gone. Read
- *    carefully before running --apply on production data.
- *  - It does not touch Cart documents. A cart line referencing a
- *    to-be-deleted duplicate product would break at next checkout with a
- *    "product no longer exists" error rather than silently mis-pricing —
- *    acceptable for a one-off admin-run migration, but worth running
- *    during low-traffic hours.
- *  - It picks ONE surviving product per group (the lowest _id / oldest,
- *    i.e. natural creation order) to become the variant parent, and
- *    deletes the rest. If any of the fields that don't vary by size
- *    (category, description, images, features, specs, brand, etc.)
- *    actually differ between duplicates in your data — this script
- *    assumes they don't and just keeps the survivor's — check the
- *    printed plan for surprises before applying.
- *
- * GROUPING RULE: two products group together if, after stripping a
- * trailing "Size <token>" (case-insensitive, token = word chars, e.g. S,
- * M, L, XL, XXL, 32, 10-12), their remaining names are identical
- * (case-insensitive, whitespace-trimmed). Products that don't match this
- * pattern, or whose stripped name has no other match, are left untouched.
- *
- * Usage:
- *   npx tsx scripts/migrate-size-duplicates-to-variants.ts            # dry run
- *   npx tsx scripts/migrate-size-duplicates-to-variants.ts --apply    # commit
- */
 
 import "dotenv/config";
 import mongoose from "mongoose";
@@ -110,7 +65,7 @@ async function main() {
     for (const dup of group.products) {
       const size = extractSize(dup);
       console.log(
-        `    -> variant ${size}: sku=${dup.sku ?? "(none — will need one)"} stock=${dup.stock} reserved=${dup.reserved} price=${dup.price}`,
+        `    -> variant ${size}: sku=${dup.sku ?? "(none - will need one)"} stock=${dup.stock} reserved=${dup.reserved} price=${dup.price}`,
       );
     }
     if (duplicates.length > 0) {
@@ -118,7 +73,7 @@ async function main() {
     }
 
     // A variant SKU is required by the schema (see productVariantSchema in
-    // lib/models/Product.ts) — if a duplicate has no sku at all, fall back
+    // lib/models/Product.ts) - if a duplicate has no sku at all, fall back
     // to a generated one derived from the survivor's id + size, rather
     // than silently failing the whole group.
     const variants: IProductVariant[] = group.products.map((p) => {
@@ -139,7 +94,7 @@ async function main() {
     const dupeSkus = skus.filter((sku, i) => skus.indexOf(sku) !== i);
     if (dupeSkus.length > 0) {
       console.log(
-        `  SKIPPING — duplicate variant SKU(s) within this group after fallback generation: ${dupeSkus.join(", ")}. Fix source data and re-run.`,
+        `  SKIPPING - duplicate variant SKU(s) within this group after fallback generation: ${dupeSkus.join(", ")}. Fix source data and re-run.`,
       );
       console.log();
       continue;
@@ -149,7 +104,7 @@ async function main() {
       survivor.name = group.baseName;
       survivor.variants = variants;
       // stock/reserved are recomputed from variants by the pre-validate
-      // hook in lib/models/Product.ts on save — no need to set them here.
+      // hook in lib/models/Product.ts on save - no need to set them here.
       await survivor.save();
 
       await ProductModel.deleteMany({
@@ -163,7 +118,7 @@ async function main() {
   }
 
   if (!apply) {
-    console.log("Dry run only — no changes written. Re-run with --apply to commit.");
+    console.log("Dry run only - no changes written. Re-run with --apply to commit.");
   }
 
   await mongoose.disconnect();

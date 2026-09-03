@@ -349,7 +349,7 @@ export default function AdminProductsPage() {
         onExport={handleExport}
       />
 
-      {/* Product table — no Card */}
+      {/* Product table - no Card */}
       <div className="w-full">
         {loading ? (
           <TableSkeleton rows={6} columns={5} />

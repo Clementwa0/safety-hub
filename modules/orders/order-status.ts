@@ -19,10 +19,10 @@ const TERMINAL_STATUSES: OrderStatus[] = ["delivered", "cancelled"];
  *  - Forward-only along pending -> confirmed -> processing -> shipped -> delivered.
  *  - No skipping ahead, no moving backward.
  *  - Cancellation is only allowed before an order ships (stock only ever
- *    leaves inventory at "shipped" — see app/api/orders/[id]/route.ts —
+ *    leaves inventory at "shipped" - see app/api/orders/[id]/route.ts -
  *    so a pre-ship cancellation has nothing to restore, only a
  *    `reserved` hold to release).
- *  - `delivered` and `cancelled` are terminal — no further status changes.
+ *  - `delivered` and `cancelled` are terminal - no further status changes.
  */
 export function validateOrderStatusTransition(current: OrderStatus, next: OrderStatus): string | null {
   if (current === next) {
@@ -52,7 +52,7 @@ export function validateOrderStatusTransition(current: OrderStatus, next: OrderS
   }
 
   if (nextIndex > currentIndex + 1) {
-    return `Cannot skip statuses — move to "${FORWARD_FLOW[currentIndex + 1]}" first`;
+    return `Cannot skip statuses - move to "${FORWARD_FLOW[currentIndex + 1]}" first`;
   }
 
   return null;

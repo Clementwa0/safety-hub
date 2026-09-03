@@ -2,7 +2,7 @@
  * Types for the sales & revenue dashboard (GET /api/sales-dashboard).
  *
  * These mirror the business rules enforced server-side in
- * modules/analytics/sales-dashboard.ts — see that file for the accounting
+ * modules/analytics/sales-dashboard.ts - see that file for the accounting
  * policy behind each figure. Nothing here is computed on the client;
  * this module only describes the shape of what the server already
  * calculated, so the dashboard never has to (and never should)

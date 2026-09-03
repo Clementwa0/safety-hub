@@ -132,19 +132,19 @@ export default function InvoiceViewPage() {
   const handlePrint = () => {
     if (!invoice) return;
     // Open a blank tab synchronously, inside this click handler's user
-    // gesture — some browsers only allow window.open to bypass the popup
+    // gesture - some browsers only allow window.open to bypass the popup
     // blocker when called synchronously from the gesture, so opening it
     // after the `await fetchInvoicePdf()` below (as before) could get
     // silently blocked. We point this tab at the PDF once it's ready.
     // (No "noopener" here: that flag makes window.open return null,
-    // which we need in order to set its location afterward — safe in
+    // which we need in order to set its location afterward - safe in
     // this case since the tab only ever shows our own blob: URL.)
     const printTab = window.open("", "_blank", "noreferrer");
     void (async () => {
       setPdfBusy("print");
       try {
         if (!printTab) {
-          throw new Error("Your browser blocked the new tab — allow pop-ups for this site and try again.");
+          throw new Error("Your browser blocked the new tab - allow pop-ups for this site and try again.");
         }
         const blob = await fetchInvoicePdf();
         const url = URL.createObjectURL(blob);

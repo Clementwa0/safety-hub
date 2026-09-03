@@ -42,7 +42,7 @@ function serializeCategory(category: LeanCategoryDoc): LeanCategory {
 
 /**
  * Looks up a single category by its URL slug. This is the only supported
- * way to resolve `/categories/[slug]` — never query products by name or
+ * way to resolve `/categories/[slug]` - never query products by name or
  * slug directly, always go through the category's `_id`.
  */
 export const getCategoryBySlug = cache(
@@ -90,7 +90,7 @@ export const getProductsByCategoryId = cache(
 /**
  * Fetches active-by-default public products flagged either `featured` or
  * `isNewArrival`. Used by the dedicated `/featured` and `/new-arrivals`
- * landing pages — never query products by these flags directly elsewhere,
+ * landing pages - never query products by these flags directly elsewhere,
  * always go through here so category names stay populated consistently.
  */
 export const getProductsByFlag = cache(

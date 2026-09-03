@@ -6,7 +6,7 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
  * `Invoice.amountPaid` was a bare number staff edited by hand, with no
  * record of how or when any of it was actually collected.
  *
- * Payments are never destructively deleted — there is no DELETE route.
+ * Payments are never destructively deleted - there is no DELETE route.
  * If a payment was recorded in error, or needs to be refunded, it's
  * voided instead (`status: "voided"`, plus `voidedAt`/`voidedBy`/
  * `voidReason`): the row stays in the ledger forever as a historical

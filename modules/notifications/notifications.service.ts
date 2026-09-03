@@ -15,7 +15,7 @@ export interface CreateNotificationInput {
  *
  * This is intentionally side-effect-only and never awaited by its callers
  * in the request path that matters to the customer/visitor (order
- * placement, contact form submission) — the same "best-effort, never
+ * placement, contact form submission) - the same "best-effort, never
  * blocks or rolls back the primary operation" approach already used for
  * the contact form's email notification in app/api/contact/route.ts.
  * Callers should attach a `.catch()` (or otherwise swallow the promise)

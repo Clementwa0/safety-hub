@@ -9,7 +9,7 @@ import { NotificationModel } from "@/lib/models/Notification";
  * GET /api/notifications
  *
  * Query params:
- * - `since` (optional ISO timestamp) — only return notifications created
+ * - `since` (optional ISO timestamp) - only return notifications created
  *   after this cursor. The poller passes the `createdAt` of the newest
  *   notification it already has, so a poll only ever returns *new* items
  *   instead of re-downloading the whole recent list every time.

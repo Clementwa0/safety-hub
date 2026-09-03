@@ -49,7 +49,7 @@ export function useNotificationsPolling() {
         const current = useNotificationsStore.getState();
 
         // Nothing new since the last time we checked, and the local
-        // unread count already agrees — skip the (more expensive) list
+        // unread count already agrees - skip the (more expensive) list
         // fetch entirely.
         if (latestAt === latestSeenAt.current && unreadCount === current.unreadCount) {
           return;
@@ -58,7 +58,7 @@ export function useNotificationsPolling() {
         latestSeenAt.current = latestAt;
         await poll();
       } catch {
-        // A single failed poll shouldn't take down the badge — just try again next tick.
+        // A single failed poll shouldn't take down the badge - just try again next tick.
       } finally {
         inFlight.current = false;
       }

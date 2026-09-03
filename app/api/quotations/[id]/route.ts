@@ -150,7 +150,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 const postActionSchema = z.object({
   // Present + true only on the "Duplicate" action (see
   // services/sentinel/quotation.service.ts's duplicate() vs
-  // convertToOrder() — both POST to this same endpoint). Absent/false
+  // convertToOrder() - both POST to this same endpoint). Absent/false
   // means "convert this quotation to a sales order", the original meaning
   // of a bare POST here (originally converted straight to an Invoice;
   // see convertQuotationToOrder's docstring for why that changed).
@@ -173,7 +173,7 @@ async function duplicateQuotation(quotation: IQuotation) {
     validUntil: new Date(now.getTime() + validityMs),
     notes: quotation.notes,
     terms: quotation.terms,
-    // orderId intentionally omitted — a duplicate is a fresh quotation,
+    // orderId intentionally omitted - a duplicate is a fresh quotation,
     // never linked to the original's (or anyone's) order.
   }));
 
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
 
-    // Body is optional — convertToOrder() sends none at all, so an
+    // Body is optional - convertToOrder() sends none at all, so an
     // empty body must not be treated as invalid JSON.
     let body: unknown = {};
     const raw = await request.text();

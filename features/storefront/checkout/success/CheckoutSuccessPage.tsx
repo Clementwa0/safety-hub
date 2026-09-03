@@ -177,7 +177,7 @@ export default function CheckoutSuccessPage() {
       ========================================================= */}
       <div className="mt-6 grid w-full grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         {/* =======================================================
-            LEFT — ORDER DETAILS
+            LEFT - ORDER DETAILS
         ======================================================= */}
         <Card className="h-full w-full overflow-hidden text-left">
           <CardContent className="space-y-3.5 p-4 sm:p-5">
@@ -388,7 +388,7 @@ export default function CheckoutSuccessPage() {
         </Card>
 
         {/* =======================================================
-            RIGHT — SAVE ORDER
+            RIGHT - SAVE ORDER
         ======================================================= */}
         <div className="h-full w-full">
           <SaveOrderPrompt order={order} />

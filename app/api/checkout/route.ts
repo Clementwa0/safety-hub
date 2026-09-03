@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const identity = await resolveCartIdentity(request);
 
     // For a signed-in storefront customer, the email stored on the order
-    // snapshot is always the authenticated account's email — never
+    // snapshot is always the authenticated account's email - never
     // whatever the (disabled, but not un-spoofable) client-side field
     // happened to submit. Guests are unaffected: they have no session
     // email to pin to, so their typed email passes through unchanged.

@@ -1,4 +1,4 @@
-# Spec 11 — Fail Closed on Financial Settings
+# Spec 11 - Fail Closed on Financial Settings
 
 ## Objective
 Prevent financial mutations from silently using unsafe fallback settings.

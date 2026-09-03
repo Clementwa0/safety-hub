@@ -137,7 +137,7 @@ export const navLinks: NavLink[] = [
 /**
  * Corporate / bulk purchasing entry point, surfaced in the top utility
  * bar and the homepage hero. Routes to the existing contact form with
- * the subject pre-filled — there's no dedicated bulk-order flow yet.
+ * the subject pre-filled - there's no dedicated bulk-order flow yet.
  */
 export const corporateLink: LinkItem = {
   label: "Corporate / Bulk Orders",
@@ -245,7 +245,7 @@ export const legalLinks: FooterLink[] = [
   },
 ];
 
-/** Same rationale as `getContactInfo` — sourced from live settings, not a constant. */
+/** Same rationale as `getContactInfo` - sourced from live settings, not a constant. */
 export function getSocialLinks(social: PortalSettings["social"]): SocialLink[] {
   return [
     {

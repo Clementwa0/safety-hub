@@ -45,7 +45,7 @@ interface CloudinaryImageFieldProps {
  *
  * Primary path: pick a file, it uploads straight to Cloudinary via a signed
  * request and the returned secure URL is stored. Secondary path: paste an
- * existing HTTPS URL — kept so the catalog's pre-Cloudinary images stay
+ * existing HTTPS URL - kept so the catalog's pre-Cloudinary images stay
  * editable and so staff can point at an external CDN when they need to.
  */
 export function CloudinaryImageField({
@@ -90,7 +90,7 @@ export function CloudinaryImageField({
       return;
     }
 
-    // Cloudinary URLs we just created are trusted — skip the round trip.
+    // Cloudinary URLs we just created are trusted - skip the round trip.
     if (isCloudinaryUrl(url)) {
       setStatus("valid");
       setUrlError(null);
@@ -213,7 +213,7 @@ export function CloudinaryImageField({
 
       {!uploadEnabled ? (
         <p className="text-xs text-amber-600">
-          Cloudinary uploads are unavailable — NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not set. Paste an
+          Cloudinary uploads are unavailable - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not set. Paste an
           image URL instead.
         </p>
       ) : null}

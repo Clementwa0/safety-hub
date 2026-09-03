@@ -16,7 +16,7 @@ export async function GET() {
     await connectToDatabase();
 
     // `resolveStorefrontCustomer()` only carries what Auth.js puts on the
-    // session (id/email/name/image) — phone and the saved default address
+    // session (id/email/name/image) - phone and the saved default address
     // live outside the session and are read from the database here.
     const [record, defaultAddress] = await Promise.all([
       StorefrontCustomerModel.findById(customer.id).select("phone").lean(),
@@ -64,7 +64,7 @@ export async function PATCH(request: Request) {
 
     const { name, phone, address, city, country } = parsed.data;
 
-    // Whitelisted update — only `name` and `phone` ever touch the
+    // Whitelisted update - only `name` and `phone` ever touch the
     // StorefrontCustomer document. Email, the Auth.js-managed identifiers,
     // and the customer id are never accepted from the request body (the
     // schema doesn't even define them), and `customer.id` here comes from
@@ -77,7 +77,7 @@ export async function PATCH(request: Request) {
     }
 
     // Shipping address fields, if provided, are saved as the customer's
-    // default saved address rather than on the profile document itself —
+    // default saved address rather than on the profile document itself -
     // this reuses the same address book `/account/addresses` already
     // maintains, so there's a single source of truth for saved addresses.
     let savedAddress: { address: string; city: string; country: string } | null = null;

@@ -6,7 +6,7 @@ import { NotificationModel } from "@/lib/models/Notification";
 /**
  * GET /api/notifications/unread-count
  *
- * Deliberately the *only* thing the poller hits on its regular interval —
+ * Deliberately the *only* thing the poller hits on its regular interval -
  * a count() and a single-doc findOne(), not the full notification list.
  * The poller only fetches the full list (GET /api/notifications) when
  * `latestAt` here has moved past what it already has, so a tab left open

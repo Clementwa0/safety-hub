@@ -1,7 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
 
 /**
- * An append-only ledger of actual `Product.stock` changes — never
+ * An append-only ledger of actual `Product.stock` changes - never
  * `Product.reserved` changes, since a reservation being placed or
  * released isn't stock leaving or entering inventory, just stock being
  * spoken for. Only three things ever write here:

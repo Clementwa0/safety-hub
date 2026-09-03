@@ -15,7 +15,7 @@ const patchSchema = z.object({
   read: z.boolean(),
 });
 
-/** PATCH /api/notifications/[id] — mark a notification read/unread. */
+/** PATCH /api/notifications/[id] - mark a notification read/unread. */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
     const user = await requireStaff();
@@ -60,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 }
 
 /**
- * DELETE /api/notifications/[id] — dismiss a notification. Soft-deletes
+ * DELETE /api/notifications/[id] - dismiss a notification. Soft-deletes
  * (sets `dismissed: true`) rather than removing the document, so
  * dismissed notifications stay excluded from every list/count query
  * without losing the audit trail.

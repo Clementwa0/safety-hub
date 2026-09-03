@@ -78,7 +78,7 @@ const ProductBadges = ({
 
 const MAX_VARIANT_SIZES_SHOWN = 4;
 
-/** "4 variants · S · M · XL · XXL" — omitted entirely for simple products. */
+/** "4 variants · S · M · XL · XXL" - omitted entirely for simple products. */
 const VariantsBadge = ({ product }: { product: Product }) => {
   if (!hasVariants(product)) return null;
   const sizes = product.variants!.map((v) => v.size).filter(Boolean);
@@ -239,7 +239,7 @@ export default function ProductTable({
             {product.category}
           </TableCell>
           <TableCell className="hidden xl:table-cell py-1 text-xs text-muted-foreground">
-            {product.brand || "—"}
+            {product.brand || "-"}
           </TableCell>
           <TableCell className="py-1">{priceCell}</TableCell>
           <TableCell className="hidden sm:table-cell py-1">

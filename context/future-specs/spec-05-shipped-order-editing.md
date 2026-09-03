@@ -1,4 +1,4 @@
-# Spec 05 — Protect Shipped Orders
+# Spec 05 - Protect Shipped Orders
 
 ## Objective
 Prevent shipped/delivered orders from changing commercial line items.

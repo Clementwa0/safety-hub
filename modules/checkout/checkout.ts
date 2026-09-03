@@ -27,7 +27,7 @@ export async function performCheckout(
   // ownership already falls back to the guest session cookie whenever
   // there's no signed-in userId (see `identity.sessionId` below). M-Pesa
   // orders are paid manually to the Paybill/Till shown on the checkout
-  // page (see `MpesaPaymentCard`) — there is no STK push or automated
+  // page (see `MpesaPaymentCard`) - there is no STK push or automated
   // callback; staff mark `paymentStatus` as paid from the admin panel
   // once they see the payment come through.
 
@@ -65,7 +65,7 @@ export async function performCheckout(
         }
 
         // A cart item selected a specific size/variant when it carries a
-        // variantSku — resolve stock/reserved/price against that variant
+        // variantSku - resolve stock/reserved/price against that variant
         // rather than the parent product in that case (mirrors the
         // pre-validate rollup in lib/models/Product.ts, which treats the
         // parent's stock/reserved as just the sum across variants).
@@ -80,7 +80,7 @@ export async function performCheckout(
         }
 
         // Available = stock minus whatever's already reserved by other
-        // pending/unshipped orders and accepted quotations — not raw
+        // pending/unshipped orders and accepted quotations - not raw
         // stock. Checkout no longer decrements `stock` directly (that now
         // only happens once an order actually ships, see
         // app/api/admin/store-orders/[id]/route.ts); it holds a
@@ -97,7 +97,7 @@ export async function performCheckout(
           );
         }
 
-        // Server reads the current price — the frontend's price is never trusted.
+        // Server reads the current price - the frontend's price is never trusted.
         const price = variant ? variant.price : product.price;
         const subtotal = Math.round(price * cartItem.quantity * 100) / 100;
 
@@ -117,8 +117,8 @@ export async function performCheckout(
         });
       }
 
-      // Tax rate is read fresh from admin Settings on every checkout — never
-      // hardcoded — so a rate of 0 (or any change) takes effect immediately.
+      // Tax rate is read fresh from admin Settings on every checkout - never
+      // hardcoded - so a rate of 0 (or any change) takes effect immediately.
       const settings = resolveFinancialSettingsForMutation(await getSettings());
 
       const subtotal = calculateSubtotal(orderItems.map((item) => ({ price: item.price, quantity: item.quantity })));
@@ -130,7 +130,7 @@ export async function performCheckout(
 
       // Matches/creates a CRM Customer record from the checkout details,
       // the same findOrCreateCustomer used by the Quotation/Order/Invoice
-      // forms — so a storefront shopper shows up in the Customers list
+      // forms - so a storefront shopper shows up in the Customers list
       // too, deduped against an existing B2B contact if they share an
       // email or phone. Runs inside this transaction so it commits or
       // rolls back atomically with the rest of the order.
@@ -207,12 +207,12 @@ export async function performCheckout(
     }
 
     // Captured into a const so the narrowed (non-null) type survives the
-    // function call below — TS re-widens a captured `let` back to its
+    // function call below - TS re-widens a captured `let` back to its
     // declared type across a call expression, since the call could in
     // theory reach the `withTransaction` closure that reassigns it.
     const confirmedOrder: IStoreOrder = createdOrder;
 
-    // Best-effort, fire-and-forget — mirrors the contact form's "never
+    // Best-effort, fire-and-forget - mirrors the contact form's "never
     // block or fail the primary operation over a notification" approach
     // (see app/api/contact/route.ts). Intentionally not awaited: the
     // customer's order confirmation should never wait on this write, and
@@ -221,7 +221,7 @@ export async function performCheckout(
     const orderNotification = {
       type: "new_order" as const,
       title: "New order received",
-      message: `Order #${confirmedOrder.orderNumber} from ${input.customer.name} — KSh ${confirmedOrder.total.toLocaleString()}`,
+      message: `Order #${confirmedOrder.orderNumber} from ${input.customer.name} - KSh ${confirmedOrder.total.toLocaleString()}`,
       link: `/sentinel/store-orders/${confirmedOrder._id}`,
       entity: "StoreOrder",
       entityId: String(confirmedOrder._id),

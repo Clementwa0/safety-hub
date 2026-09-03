@@ -167,7 +167,7 @@ export default function StaffForm({ open, onOpenChange, staff, onSaved }: StaffF
               <>
                 <Input id="staff-email" value={email} disabled className="h-10" />
                 <p className="text-[11px] text-muted-foreground">
-                  Email can&apos;t be changed here — contact support if it needs to change.
+                  Email can&apos;t be changed here - contact support if it needs to change.
                 </p>
               </>
             )}

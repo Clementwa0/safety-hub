@@ -10,7 +10,7 @@ const CART_SESSION_MAX_AGE = 60 * 60 * 24 * 90; // 90 days
 /** Resolves who a cart/order request belongs to. The actual rule
  *  (admin/staff never own a cart/order, only a signed-in `customer`
  *  does) lives in `resolveCartIdentityFromSession` in
- *  `modules/cart/cart-identity-rules.ts` — this is just the I/O
+ *  `modules/cart/cart-identity-rules.ts` - this is just the I/O
  *  wrapper that calls `auth()` and reads the request's cookies. */
 export async function resolveCartIdentity(request: NextRequest): Promise<CartIdentity> {
   const session = await auth();

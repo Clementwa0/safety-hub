@@ -1,11 +1,12 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
 import CustomerFields from "@/components/sentinel/sales/CustomerFields";
 import LineItemsEditor from "@/components/sentinel/sales/LineItemsEditor";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,59 +55,107 @@ export default function QuotationForm({ quotation }: { quotation?: Quotation }) 
   };
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-      <Card>
-        <CardHeader><CardTitle>Customer</CardTitle></CardHeader>
-        <CardContent><CustomerFields value={customer} onChange={setCustomer} /></CardContent>
-      </Card>
+    <form onSubmit={submit} className="space-y-1.5 px-1 sm:space-y-2">
+      {/* Customer */}
+      <div className="rounded-lg border border-border/30 bg-background p-1.5 sm:p-3">
+        <h3 className="text-xs font-medium text-muted-foreground sm:text-sm">Customer</h3>
+        <div className="mt-1">
+          <CustomerFields value={customer} onChange={setCustomer} />
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader><CardTitle>Details</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <Label>Issue date</Label>
-            <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
+      {/* Details */}
+      <div className="rounded-lg border border-border/30 bg-background p-1.5 sm:p-3">
+        <h3 className="text-xs font-medium text-muted-foreground sm:text-sm">Details</h3>
+        <div className="mt-1 grid grid-cols-2 gap-1 sm:grid-cols-3 sm:gap-2">
+          <div>
+            <Label className="text-[10px] sm:text-xs">Issue</Label>
+            <Input
+              type="date"
+              value={issueDate}
+              onChange={(e) => setIssueDate(e.target.value)}
+              className="h-7 text-xs sm:h-8 sm:text-sm"
+            />
           </div>
-          <div className="space-y-2">
-            <Label>Valid until</Label>
-            <Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
+          <div>
+            <Label className="text-[10px] sm:text-xs">Valid until</Label>
+            <Input
+              type="date"
+              value={validUntil}
+              onChange={(e) => setValidUntil(e.target.value)}
+              className="h-7 text-xs sm:h-8 sm:text-sm"
+            />
           </div>
-          <div className="space-y-2">
-            <Label>Status</Label>
+          <div>
+            <Label className="text-[10px] sm:text-xs">Status</Label>
             <Select value={status} onValueChange={(v) => typeof v === "string" && setStatus(v as QuotationStatus)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-7 text-xs sm:h-8 sm:text-sm">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {QUOTATION_STATUSES.map((o) => (
-                  <SelectItem key={o} value={o}><span className="capitalize">{o}</span></SelectItem>
+                  <SelectItem key={o} value={o} className="capitalize text-xs sm:text-sm">
+                    {o}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader><CardTitle>Line items</CardTitle></CardHeader>
-        <CardContent><LineItemsEditor items={items} onChange={setItems} stockAware /></CardContent>
-      </Card>
+      {/* Line Items */}
+      <div className="rounded-lg border border-border/30 bg-background p-1.5 sm:p-3">
+        <h3 className="text-xs font-medium text-muted-foreground sm:text-sm">Line items</h3>
+        <div className="mt-1">
+          <LineItemsEditor items={items} onChange={setItems} stockAware />
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader><CardTitle>Notes & terms</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Notes</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} />
+      {/* Notes & Terms */}
+      <div className="rounded-lg border border-border/30 bg-background p-1.5 sm:p-3">
+        <h3 className="text-xs font-medium text-muted-foreground sm:text-sm">Notes &amp; terms</h3>
+        <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-2">
+          <div>
+            <Label className="text-[10px] sm:text-xs">Notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="min-h-[50px] resize-none text-xs sm:min-h-[60px] sm:text-sm"
+            />
           </div>
-          <div className="space-y-2">
-            <Label>Terms</Label>
-            <Textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={4} />
+          <div>
+            <Label className="text-[10px] sm:text-xs">Terms</Label>
+            <Textarea
+              value={terms}
+              onChange={(e) => setTerms(e.target.value)}
+              rows={2}
+              className="min-h-[50px] resize-none text-xs sm:min-h-[60px] sm:text-sm"
+            />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{saving ? "Saving..." : quotation ? "Save changes" : "Create quotation"}</Button>
+      {/* Actions */}
+      <div className="flex flex-wrap justify-end gap-1 px-1 pb-2 sm:gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          size="sm"
+          className="h-7 text-xs sm:h-8 sm:text-sm"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={saving}
+          size="sm"
+          className="h-7 text-xs sm:h-8 sm:text-sm"
+        >
+          {saving ? "Saving…" : quotation ? "Save changes" : "Create quotation"}
+        </Button>
       </div>
     </form>
   );

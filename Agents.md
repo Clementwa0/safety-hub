@@ -1,4 +1,4 @@
-# Safety Hub — AI Agent Instructions
+# Safety Hub - AI Agent Instructions
 
 ## Mission
 Improve the existing Safety Hub system without unnecessary rewrites.

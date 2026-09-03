@@ -5,6 +5,7 @@ import type { Invoice, InvoiceInput, InvoiceStatus } from "@/types/sentinel/invo
 import { effectiveInvoiceStatus, invoiceOutstandingBalance } from "@/lib/sales";
 
 export interface InvoiceQuery {
+  page?: number;
   search?: string;
   status?: InvoiceStatus | "all";
   limit?: number;
@@ -14,6 +15,7 @@ export interface InvoiceQuery {
 export const invoiceService = {
   async list(query: InvoiceQuery = {}): Promise<Invoice[]> {
     const params = new URLSearchParams();
+    if (query.page) params.set("page", String(query.page));
     if (query.search) params.set("q", query.search);
     if (query.status && query.status !== "all") params.set("status", query.status);
     if (query.limit) params.set("limit", String(query.limit));

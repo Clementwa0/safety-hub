@@ -67,7 +67,7 @@ export function computeDocumentTotals(items: LineItem[]): DocumentTotals {
 }
 
 /**
- * The status an invoice should be treated as *right now* — same as
+ * The status an invoice should be treated as *right now* - same as
  * `invoice.status` except a still-open invoice past its due date reads as
  * "overdue" without needing a background job to flip the stored value.
  * Pulled out of the "use client" invoiceService so server code (e.g. the

@@ -23,7 +23,7 @@ export function useCart() {
   }, [hasLoaded, loading, fetchCart]);
 
   // shippingFee/tax/total come straight from the server (modules/cart/cart.ts),
-  // computed against the live admin Settings.taxRate — never re-derived here,
+  // computed against the live admin Settings.taxRate - never re-derived here,
   // so a 0% tax rate (or any change) shows up correctly without a stale/guessed rate.
   return {
     cart,

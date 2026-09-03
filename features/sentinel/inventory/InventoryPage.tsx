@@ -67,7 +67,7 @@ export default function InventoryPage() {
   const error = rowsError ?? categoriesError;
 
   // Recent Movements is supplementary to the main inventory table, so a
-  // failure here shouldn't block the rest of the page — it just leaves
+  // failure here shouldn't block the rest of the page - it just leaves
   // the panel in its "no data" empty state.
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +90,7 @@ export default function InventoryPage() {
 
 
   // Categories are only needed for the filter dropdown, so they're loaded
-  // alongside — not inside — the shared inventory-rows hook.
+  // alongside - not inside - the shared inventory-rows hook.
   useEffect(() => {
     let cancelled = false;
     categoryService

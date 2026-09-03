@@ -275,7 +275,7 @@ export function InvoicePdfDocument({
         <View style={styles.metaRow}>
           <View style={styles.billTo}>
             <Text style={styles.billToLabel}>Bill to</Text>
-            <Text style={styles.billToName}>{customer.name || "—"}</Text>
+            <Text style={styles.billToName}>{customer.name || "-"}</Text>
             {customer.company ? <Text style={styles.billToLine}>{customer.company}</Text> : null}
             {customer.email ? <Text style={styles.billToLine}>{customer.email}</Text> : null}
             {customer.phone ? <Text style={styles.billToLine}>{customer.phone}</Text> : null}

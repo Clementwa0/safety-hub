@@ -31,7 +31,7 @@ interface UseOrderPaymentStatusResult {
  * (`GET /api/store-orders/[id]`) every 5s so the UI picks up admin-side
  * payment updates without a manual refresh.
  *
- * The client never sets payment status itself — it only reflects whatever
+ * The client never sets payment status itself - it only reflects whatever
  * the backend reports. Polling stops as soon as the status becomes
  * terminal (paid/failed/refunded), after MAX_POLL_DURATION_MS, or when the
  * component unmounts.
@@ -45,7 +45,7 @@ export function useOrderPaymentStatus(orderId: string | null): UseOrderPaymentSt
 
   const paymentStatus = order?.paymentStatus ?? null;
 
-  // Initial load. When there's no orderId, there's nothing to fetch — the
+  // Initial load. When there's no orderId, there's nothing to fetch - the
   // "no order" state is derived below rather than written via setState here,
   // so the effect only ever manages the actual async fetch lifecycle.
   useEffect(() => {
@@ -53,7 +53,7 @@ export function useOrderPaymentStatus(orderId: string | null): UseOrderPaymentSt
 
     let cancelled = false;
     // Resetting loading/error before the fetch starts is the standard
-    // "reset state before an async fetch" pattern — safe here since the
+    // "reset state before an async fetch" pattern - safe here since the
     // effect's own cleanup (`cancelled`) guards against stale writes.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
@@ -111,7 +111,7 @@ export function useOrderPaymentStatus(orderId: string | null): UseOrderPaymentSt
           clearInterval(interval);
         }
       } catch {
-        // Transient network/API hiccup — keep the current state and retry
+        // Transient network/API hiccup - keep the current state and retry
         // on the next tick rather than surfacing an error.
       }
     }, POLL_INTERVAL_MS);

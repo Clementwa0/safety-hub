@@ -66,7 +66,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
   poll: async () => {
     // Guards against overlapping requests if a poll tick fires before the
-    // previous one has resolved (e.g. a slow connection) — never lets two
+    // previous one has resolved (e.g. a slow connection) - never lets two
     // poll requests be in flight at once, which is how duplicate/stale
     // merges would otherwise happen.
     if (get().fetching) return;
@@ -84,7 +84,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
         hasLoaded: true,
       }));
     } catch {
-      // Silent — polling failures shouldn't surface as errors; the next
+      // Silent - polling failures shouldn't surface as errors; the next
       // tick will simply try again.
       set({ fetching: false });
     }
@@ -113,7 +113,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     const target = previous.find((item) => item.id === id);
     if (!target) return;
 
-    // Optimistic removal — the item disappears from the list immediately.
+    // Optimistic removal - the item disappears from the list immediately.
     set((state) => ({
       notifications: state.notifications.filter((item) => item.id !== id),
       unreadCount: target.read ? state.unreadCount : Math.max(0, state.unreadCount - 1),

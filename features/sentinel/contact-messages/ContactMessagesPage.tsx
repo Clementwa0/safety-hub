@@ -152,25 +152,25 @@ export default function ContactMessagesPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="New"
-          value={stats ? String(stats.new) : "—"}
+          value={stats ? String(stats.new) : "-"}
           icon={Inbox}
           loading={!stats}
         />
         <StatsCard
           title="Read"
-          value={stats ? String(stats.read) : "—"}
+          value={stats ? String(stats.read) : "-"}
           icon={MailOpen}
           loading={!stats}
         />
         <StatsCard
           title="Replied"
-          value={stats ? String(stats.replied) : "—"}
+          value={stats ? String(stats.replied) : "-"}
           icon={Reply}
           loading={!stats}
         />
         <StatsCard
           title="Archived"
-          value={stats ? String(stats.archived) : "—"}
+          value={stats ? String(stats.archived) : "-"}
           icon={Archive}
           loading={!stats}
         />

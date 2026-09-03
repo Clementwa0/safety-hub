@@ -1,27 +1,27 @@
 # Progress Tracker
 
 ## Current Phase
-Phase 1 — Inventory Integrity
+Phase 1 - Inventory Integrity
 
 ## Current Specification
-**Spec 13 — Financial Integration Tests**
+**Spec 13 - Financial Integration Tests**
 
 Status: Complete
 
 ## Completed
-- Spec 01 — Centralize Inventory Mutations
-- Spec 02 — Fix Simple Product Availability
-- Spec 03 — Transactional Quotation → Order
-- Spec 04 — Prevent Over-Reservation
-- Spec 05 — Protect Shipped Orders
-- Spec 06 — Protect Historical Orders
-- Spec 07 — Protect Direct Order Creation
-- Spec 08 — Protect Invoice Lifecycle
-- Spec 09 — Protect Commercial Relationships
-- Spec 10 — Add Audit Trail
-- Spec 11 — Fail Closed on Financial Settings
-- Spec 12 — Payment Authorization
-- Spec 13 — Financial Integration Tests
+- Spec 01 - Centralize Inventory Mutations
+- Spec 02 - Fix Simple Product Availability
+- Spec 03 - Transactional Quotation → Order
+- Spec 04 - Prevent Over-Reservation
+- Spec 05 - Protect Shipped Orders
+- Spec 06 - Protect Historical Orders
+- Spec 07 - Protect Direct Order Creation
+- Spec 08 - Protect Invoice Lifecycle
+- Spec 09 - Protect Commercial Relationships
+- Spec 10 - Add Audit Trail
+- Spec 11 - Fail Closed on Financial Settings
+- Spec 12 - Payment Authorization
+- Spec 13 - Financial Integration Tests
 
 ## Future Work
 See `future-specs/`.

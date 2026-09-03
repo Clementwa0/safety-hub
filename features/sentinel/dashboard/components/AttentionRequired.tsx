@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Info, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ChevronRight, Info, type LucideIcon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -7,10 +7,8 @@ import { cn } from "@/lib/utils";
 export interface AttentionItem {
   id: string;
   label: string;
-  count: number;
+  description: string;
   href: string;
-  /** "warning" for stock-outs and similarly urgent items, "info" for
-   *  routine follow-ups like drafts or unread messages. */
   severity: "warning" | "info";
 }
 
@@ -20,8 +18,8 @@ const SEVERITY_ICON: Record<AttentionItem["severity"], LucideIcon> = {
 };
 
 const SEVERITY_STYLES: Record<AttentionItem["severity"], string> = {
-  warning: "bg-destructive/10 text-destructive",
-  info: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  warning: "bg-red-100 text-red-600",
+  info: "bg-amber-100 text-amber-600",
 };
 
 export default function AttentionRequired({
@@ -32,11 +30,22 @@ export default function AttentionRequired({
   loading?: boolean;
 }) {
   return (
-    <Card className="border-border/70 shadow-sm">
-      <CardHeader className="pb-1">
-        <CardTitle className="text-sm font-medium text-foreground">Attention Required</CardTitle>
+    <Card className="flex h-full flex-col border-border/70 shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 py-1.5 px-4">
+        <CardTitle className="text-xs font-semibold text-foreground">
+          Needs Your Attention
+        </CardTitle>
+        {items.length > 0 && (
+          <Link
+            href="/sentinel/inventory"
+            className="flex items-center gap-0.5 text-[11px] font-semibold text-primary hover:underline"
+          >
+            View all alerts
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        )}
       </CardHeader>
-      <CardContent className="p-3 pt-1">
+      <CardContent className="flex-1 px-4 pb-3 pt-0">
         {loading ? (
           <div className="space-y-1.5">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -44,30 +53,41 @@ export default function AttentionRequired({
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex h-[100px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-[120px] items-center justify-center text-xs text-muted-foreground">
             Nothing needs attention right now.
           </div>
         ) : (
-          <div className="space-y-1">
+          <ul className="divide-y divide-border">
             {items.map((item) => {
               const Icon = SEVERITY_ICON[item.severity];
               return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-lg px-1.5 py-2 text-sm transition-colors hover:bg-accent/60"
-                >
-                  <span className={cn("shrink-0 rounded-full p-1", SEVERITY_STYLES[item.severity])}>
-                    <Icon className="h-3.5 w-3.5" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">{item.label}</span>
-                  <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
-                    {item.count}
-                  </span>
-                </Link>
+                <li key={item.id}>
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-2.5 rounded-lg px-0.5 py-2 transition-colors hover:bg-accent/60"
+                  >
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-lg p-1.5",
+                        SEVERITY_STYLES[item.severity]
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-semibold text-foreground">
+                        {item.label}
+                      </span>
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {item.description}
+                      </span>
+                    </span>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </CardContent>
     </Card>

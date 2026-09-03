@@ -19,6 +19,7 @@ export default function UserMenu() {
   const { data: session } = useSession();
 
   const user = session?.user;
+  const isAdmin = user?.role === "admin";
 
   const displayName = user?.name?.trim() || "Sentinel User";
   const email = user?.email || "";
@@ -108,6 +109,13 @@ export default function UserMenu() {
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
+
+        {isAdmin && (
+          <DropdownMenuItem onClick={() => router.push("/sentinel/users")}>
+            <User className="mr-2 h-4 w-4" />
+            Manage Users
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem
           onClick={() => router.push("/sentinel/help")}

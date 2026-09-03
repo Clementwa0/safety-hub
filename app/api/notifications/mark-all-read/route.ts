@@ -3,7 +3,7 @@ import { connectToDatabase } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { NotificationModel } from "@/lib/models/Notification";
 
-/** PATCH /api/notifications/mark-all-read — marks every unread, non-dismissed notification as read in one query. */
+/** PATCH /api/notifications/mark-all-read - marks every unread, non-dismissed notification as read in one query. */
 export async function PATCH() {
   try {
     const user = await requireStaff();

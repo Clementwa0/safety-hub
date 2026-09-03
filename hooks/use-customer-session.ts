@@ -14,13 +14,13 @@ import { useSession } from "next-auth/react";
  * shopper.
  *
  * Drop-in replacement for `useSession()` in any storefront-facing
- * component — same `{ data, status, update }` shape — except `status`
+ * component - same `{ data, status, update }` shape - except `status`
  * reports `"unauthenticated"` (and `data` is `null`) whenever the
  * underlying session belongs to a staff/admin account rather than a
  * plain customer.
  *
  * The server-side equivalent is `resolveStorefrontCustomer()` in
- * lib/auth/identity.ts — keep the two in sync.
+ * lib/auth/identity.ts - keep the two in sync.
  */
 export function useCustomerSession() {
   const session = useSession();

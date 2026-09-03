@@ -1,6 +1,6 @@
 /**
  * All pricing math the checkout depends on lives here, on the server.
- * The frontend never sends price, subtotal, shipping, tax, or total —
+ * The frontend never sends price, subtotal, shipping, tax, or total -
  * it only ever displays what these functions returned.
  */
 
@@ -20,7 +20,7 @@ export function calculateShippingFee(subtotal: number): number {
 
 /**
  * `taxRatePercent` is the admin-configured Settings.taxRate (0-100, e.g.
- * 16 for 16%) — always pass it explicitly, never assume a rate here.
+ * 16 for 16%) - always pass it explicitly, never assume a rate here.
  * A rate of 0 is a completely valid, intentional "no tax" configuration
  * and must round to exactly 0, not fall back to any default.
  */

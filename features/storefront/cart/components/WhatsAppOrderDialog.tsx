@@ -137,7 +137,7 @@ export function WhatsAppOrderDialog() {
             Order via WhatsApp
           </DialogTitle>
           <DialogDescription>
-            We&apos;ll open WhatsApp with your order pre-filled — a member of our team will confirm availability and
+            We&apos;ll open WhatsApp with your order pre-filled - a member of our team will confirm availability and
             payment with you there. Your cart stays saved here either way.
           </DialogDescription>
         </DialogHeader>

@@ -33,7 +33,7 @@ import LineItemsEditor from "@/components/sentinel/sales/LineItemsEditor";
 const EMPTY_CUSTOMER: Customer = { name: "" };
 
 // True for a line item that still matches createLineItem()'s blank
-// defaults (minus id/taxRate) — i.e. the staffer hasn't touched it yet, so
+// defaults (minus id/taxRate) - i.e. the staffer hasn't touched it yet, so
 // it's safe to swap in the real admin-configured tax rate once it loads.
 function isUntouchedLineItem(item: LineItem): boolean {
   return (
@@ -67,7 +67,7 @@ export default function OrderForm({ order }: OrderFormProps) {
 
   // For a brand-new order, the pre-populated first row above was created
   // before the real Settings.taxRate could be fetched. Swap it in once
-  // loaded — but only while that row is still untouched, so it never
+  // loaded - but only while that row is still untouched, so it never
   // overwrites something the staffer already edited.
   useEffect(() => {
     if (order) return;
@@ -85,7 +85,7 @@ export default function OrderForm({ order }: OrderFormProps) {
         );
       })
       .catch(() => {
-        // Fetch failed — the pre-populated row just keeps its fallback rate.
+        // Fetch failed - the pre-populated row just keeps its fallback rate.
       });
 
     return () => {

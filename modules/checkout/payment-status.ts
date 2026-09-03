@@ -10,13 +10,13 @@ import type { StorePaymentStatus } from "@/lib/models/StoreOrder";
  *    attempt), or stays `pending` (e.g. a status poll that hasn't
  *    resolved yet).
  *  - `failed` -> `pending` (customer/staff retries the payment) or `paid`
- *    (a late confirmation — e.g. staff reconciling a manual Paybill/Till
+ *    (a late confirmation - e.g. staff reconciling a manual Paybill/Till
  *    payment against the M-Pesa statement after initially marking it
  *    failed).
  *  - `paid` -> `refunded` only. A paid order can never silently become
- *    unpaid again through a status edit — that would hide money that was
+ *    unpaid again through a status edit - that would hide money that was
  *    actually received. Refunds are the only way out of `paid`.
- *  - `refunded` is terminal — no further transitions.
+ *  - `refunded` is terminal - no further transitions.
  */
 const ALLOWED_TRANSITIONS: Record<StorePaymentStatus, StorePaymentStatus[]> = {
   pending: ["pending", "paid", "failed"],

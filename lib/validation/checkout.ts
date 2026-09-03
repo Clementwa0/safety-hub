@@ -6,7 +6,7 @@ import type { CheckoutInput, StorePaymentMethod } from "@/types/storefront/store
  * Flat checkout form schema for React Hook Form (`zodResolver`).
  *
  * The API (`/api/checkout`) validates against the nested
- * `checkoutSchema` in `modules/cart/validation.ts, modules/checkout/validation.ts, and modules/customers/validation.ts` — that's the real
+ * `checkoutSchema` in `modules/cart/validation.ts, modules/checkout/validation.ts, and modules/customers/validation.ts` - that's the real
  * source of truth server-side. This flat shape mirrors the same rules
  * for the on-page form, where every field is its own `<Input>`, plus a
  * couple of UI-only fields (`paymentMethod` as a superset including
@@ -16,7 +16,7 @@ import type { CheckoutInput, StorePaymentMethod } from "@/types/storefront/store
  * `email` is included so it round-trips through the form for guests,
  * but for a signed-in customer the field is rendered disabled and the
  * server independently re-pins it to the authenticated session's email
- * regardless of what's submitted — see `/api/checkout`.
+ * regardless of what's submitted - see `/api/checkout`.
  */
 export const checkoutFormSchema = z.object({
   name: z.string().trim().min(2, "Name is required"),

@@ -158,14 +158,14 @@ export default function AdminStoreOrdersPage() {
 
   const getStatValue = (key: (typeof STATS_CONFIG)[number]["key"]): string => {
     if (!stats) {
-      return "—";
+      return "-";
     }
 
     if (key === "revenue") {
       return formatKES(stats.totalRevenue);
     }
 
-    return String(stats[key as keyof StoreOrderStats] ?? "—");
+    return String(stats[key as keyof StoreOrderStats] ?? "-");
   };
 
   /*

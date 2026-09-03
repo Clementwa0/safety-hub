@@ -220,7 +220,7 @@ export default function InventoryTable({ rows, loading = false, savingId = null,
                     {row.reserved > 0 ? (
                       <span className="text-sm font-medium tabular-nums text-amber-600">{row.reserved}</span>
                     ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
+                      <span className="text-sm text-muted-foreground">-</span>
                     )}
                   </TableCell>
 
@@ -304,7 +304,7 @@ export default function InventoryTable({ rows, loading = false, savingId = null,
                       <div>
                         <p className="text-[9px] uppercase tracking-wide text-muted-foreground">Reserved</p>
                         <p className="text-sm font-medium tabular-nums text-amber-600">
-                          {row.reserved > 0 ? row.reserved : "—"}
+                          {row.reserved > 0 ? row.reserved : "-"}
                         </p>
                       </div>
                       <div>

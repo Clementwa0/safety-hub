@@ -11,7 +11,7 @@ import { formatKES } from "@/lib/format";
 import { getMpesaNumberLabel, getMpesaTypeLabel, type MpesaPaymentType } from "@/lib/config/mpesa";
 
 export interface MpesaPaymentCardProps {
-  /** Order total in KES — rendered as the amount the customer must pay. */
+  /** Order total in KES - rendered as the amount the customer must pay. */
   total: number;
   /** Paybill or Till, drives copy and step-by-step instructions. */
   paymentType: MpesaPaymentType;
@@ -80,7 +80,7 @@ async function copyToClipboard(value: string): Promise<boolean> {
 }
 
 /**
- * Read-only field with a label and a one-click copy button — used for the
+ * Read-only field with a label and a one-click copy button - used for the
  * Business Number and Account Number rows.
  */
 function CopyField({
@@ -183,7 +183,7 @@ export function MpesaPaymentCard({
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <FaCircleInfo className="mt-0.5 h-3 w-3 shrink-0 text-success" aria-hidden="true" />
               <span>
-                Complete this payment on your phone before you place the order — we&apos;ll match it to your order
+                Complete this payment on your phone before you place the order - we&apos;ll match it to your order
                 using the account number below.
               </span>
             </p>

@@ -46,7 +46,7 @@ export const customerService = {
   /**
    * Authoritative customer count from the Customer domain. Uses `limit=1`
    * so callers that only need the total (e.g. the Dashboard KPI) don't pull
-   * every customer record — the count comes from `pagination.total`.
+   * every customer record - the count comes from `pagination.total`.
    */
   async count(): Promise<number> {
     const result = await this.list({ limit: 1 });

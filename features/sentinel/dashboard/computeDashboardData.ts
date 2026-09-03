@@ -46,7 +46,7 @@ export interface IncomeEvent {
  *
  * - Storefront orders, excluding cancelled (unchanged from before).
  * - B2B/manual orders (`Order`) that are confirmed-or-beyond and not yet
- *   linked to an invoice — once an order is converted to an invoice
+ *   linked to an invoice - once an order is converted to an invoice
  *   (`order.invoiceId` set), it stops being counted here so it isn't
  *   double-counted alongside the invoice below.
  * - Issued invoices (excludes drafts, which aren't a real financial
@@ -123,24 +123,31 @@ export interface CategorySalesRow {
 }
 
 const DISPLAY_STATUS_COLORS: Record<string, string> = {
-  pending: "#94A3B8",
-  processing: "#2563EB",
-  shipped: "#F59E0B",
-  delivered: "#16A34A",
-  cancelled: "#DC2626",
+  pending: "#F59E0B",
+  processing: "#3B82F6",
+  shipped: "#8B5CF6",
+  delivered: "#22C55E",
+  cancelled: "#EF4444",
 };
 
 export function statusColor(status: string): string {
   return DISPLAY_STATUS_COLORS[status] ?? "#94A3B8";
 }
 
+/**
+ * Whole-shilling currency formatting for the Dashboard specifically
+ * ("KES 248,500", no cents) - distinct from the shared `formatCurrency`
+ * (which renders cents, e.g. "KES 248,500.00") used on invoices/receipts
+ * where exact amounts matter. Dashboard summary figures read better
+ * rounded.
+ */
+export function formatDashboardCurrency(amount: number): string {
+  return `KES ${Math.round(amount).toLocaleString("en-KE")}`;
+}
+
 function computeChange(current: number, previous: number): number | null {
   if (previous === 0) return current === 0 ? null : 100;
   return ((current - previous) / previous) * 100;
-}
-
-function sumTotals(orders: StoreOrder[]): number {
-  return orders.filter((o) => o.status !== "cancelled").reduce((sum, o) => sum + o.total, 0);
 }
 
 function uniqueCustomers(orders: StoreOrder[]): number {
@@ -165,14 +172,26 @@ export interface DashboardKpis {
   customers: ChangeStat;
 }
 
-export function computeKpis(orders: StoreOrder[], now: Date): DashboardKpis {
+export function computeKpis(
+  orders: StoreOrder[],
+  now: Date,
+  incomeEvents: IncomeEvent[] = orders
+    .filter((o) => o.status !== "cancelled")
+    .map((o) => ({ date: o.createdAt, amount: o.total })),
+): DashboardKpis {
   const { weekStart, weekEnd, prevWeekStart, prevWeekEnd } = buildWeekWindows(now);
 
   const thisWeek = orders.filter((o) => inRange(new Date(o.createdAt), weekStart, weekEnd));
   const lastWeek = orders.filter((o) => inRange(new Date(o.createdAt), prevWeekStart, prevWeekEnd));
 
-  const salesThis = sumTotals(thisWeek);
-  const salesLast = sumTotals(lastWeek);
+  // Revenue is blended across storefront orders, B2B orders, and invoices
+  // (see buildIncomeEvents) so "Total Revenue" reflects the whole business,
+  // not just the storefront channel.
+  const incomeThisWeek = incomeEvents.filter((e) => inRange(new Date(e.date), weekStart, weekEnd));
+  const incomeLastWeek = incomeEvents.filter((e) => inRange(new Date(e.date), prevWeekStart, prevWeekEnd));
+
+  const salesThis = incomeThisWeek.reduce((sum, e) => sum + e.amount, 0);
+  const salesLast = incomeLastWeek.reduce((sum, e) => sum + e.amount, 0);
 
   const ordersThis = thisWeek.length;
   const ordersLast = lastWeek.length;
@@ -308,7 +327,7 @@ export function computeStatusBreakdown(orders: StoreOrder[]): StatusSlice[] {
   }
 
   const total = orders.length || 1;
-  const statusOrder: (StoreOrderStatus | "pending")[] = ["delivered", "shipped", "processing", "pending", "cancelled"];
+  const statusOrder: (StoreOrderStatus | "pending")[] = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
   return statusOrder
     .map((status) => {
@@ -329,7 +348,7 @@ export function computeStatusBreakdown(orders: StoreOrder[]): StatusSlice[] {
  * thresholds as the Inventory page (`getStockBucket`) so "low stock" means
  * the same thing everywhere in Sentinel. This intentionally does NOT
  * replicate the Inventory page's `reserved`/`available` split (which
- * requires a per-product availability fetch) — the Dashboard already has
+ * requires a per-product availability fetch) - the Dashboard already has
  * the product list in memory, so this stays a single, cheap pass over data
  * that's already loaded rather than firing extra requests.
  */
@@ -362,6 +381,180 @@ export function computeCatalogSnapshot(products: Product[]): CatalogSnapshot {
     lowStockCount,
     outOfStockCount,
   };
+}
+
+export interface RevenueOrdersPoint {
+  label: string;
+  revenue: number;
+  orders: number;
+}
+
+/**
+ * Feeds the "Revenue & Orders Overview" combo chart - daily revenue
+ * (storefront orders, excluding cancelled) paired with the number of
+ * orders placed that day, over the selected range. The "Orders" series is
+ * deliberately scoped to storefront orders only (not the blended
+ * `buildIncomeEvents`) so it stays a real, countable thing rather than a
+ * mix of orders/invoices with no shared unit - an Order can later become
+ * an Invoice, so counting both would double-count the same sale. Revenue
+ * *is* blended via `incomeEvents`, so this number matches the Total
+ * Revenue KPI card instead of silently under-reporting the B2B side.
+ */
+export function computeRevenueOrdersTrend(
+  orders: StoreOrder[],
+  now: Date,
+  range: TrendRange,
+  incomeEvents: IncomeEvent[] = orders
+    .filter((o) => o.status !== "cancelled")
+    .map((o) => ({ date: o.createdAt, amount: o.total })),
+): RevenueOrdersPoint[] {
+  const onDate = (day: Date) => {
+    const dayOrders = orders.filter(
+      (o) => o.status !== "cancelled" && new Date(o.createdAt).toDateString() === day.toDateString(),
+    );
+    const dayIncome = incomeEvents.filter(
+      (e) => new Date(e.date).toDateString() === day.toDateString(),
+    );
+    return {
+      revenue: dayIncome.reduce((sum, e) => sum + e.amount, 0),
+      orders: dayOrders.length,
+    };
+  };
+
+  if (range === "week") {
+    const { weekStart, weekEnd } = buildWeekWindows(now);
+    const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+    return days.map((day) => ({ label: format(day, "EEE"), ...onDate(day) }));
+  }
+
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
+  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  return days.map((day) => ({ label: format(day, "d"), ...onDate(day) }));
+}
+
+export interface KpiSeries {
+  /** One point per day of the current week (Mon–Sun), oldest first. */
+  revenue: number[];
+  orders: number[];
+  unitsSold: number[];
+  customers: number[];
+}
+
+/**
+ * Small per-day series for the KPI cards' sparklines. All four derive
+ * from the same already-loaded storefront orders - no extra requests -
+ * so "decorative" here still means "real": each line traces an actual
+ * daily total for the current week.
+ *
+ * Two of these (`unitsSold`, `customers`) are order-activity metrics, not
+ * the same thing as the "Available Stock" and "Total Customers" KPI cards
+ * they used to be wired into - see `computeStockTrend` and
+ * `computeCustomerTrend` below for the sparklines that actually match
+ * those cards' values.
+ */
+export function computeKpiSeries(
+  orders: StoreOrder[],
+  now: Date,
+  incomeEvents: IncomeEvent[] = orders
+    .filter((o) => o.status !== "cancelled")
+    .map((o) => ({ date: o.createdAt, amount: o.total })),
+): KpiSeries {
+  const { weekStart, weekEnd } = buildWeekWindows(now);
+  const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const series: KpiSeries = { revenue: [], orders: [], unitsSold: [], customers: [] };
+
+  for (const day of days) {
+    const dayOrders = orders.filter(
+      (o) => o.status !== "cancelled" && new Date(o.createdAt).toDateString() === day.toDateString(),
+    );
+    const dayIncome = incomeEvents.filter((e) => new Date(e.date).toDateString() === day.toDateString());
+
+    series.revenue.push(dayIncome.reduce((sum, e) => sum + e.amount, 0));
+    series.orders.push(dayOrders.length);
+    series.unitsSold.push(
+      dayOrders.reduce((sum, o) => sum + o.items.reduce((s, item) => s + item.quantity, 0), 0),
+    );
+    series.customers.push(
+      new Set(dayOrders.map((o) => o.customer?.email?.toLowerCase()).filter(Boolean)).size,
+    );
+  }
+
+  return series;
+}
+
+/** A single real stock-ledger movement, as returned by movementService. */
+export interface StockMovementLike {
+  delta: number;
+  createdAt: string;
+}
+
+/**
+ * Real daily "Available Stock" trend for the current week, reconstructed
+ * from the stock movement ledger by walking backward from today's actual
+ * total units (`currentTotalUnits`). Each point is a genuine end-of-day
+ * total, not a proxy metric - this replaces the previous sparkline, which
+ * plotted daily units *sold* under the "Available Stock" card, a metric
+ * that doesn't track stock levels at all.
+ */
+export function computeStockTrend(
+  movements: StockMovementLike[],
+  currentTotalUnits: number,
+  now: Date,
+): number[] {
+  const { weekStart, weekEnd } = buildWeekWindows(now);
+  const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const deltaAfterToday = movements
+    .filter((m) => new Date(m.createdAt).getTime() > now.getTime())
+    .reduce((sum, m) => sum + m.delta, 0);
+  const totalsAtEndOfToday = currentTotalUnits - deltaAfterToday;
+
+  const deltaByDay = new Map<string, number>();
+  for (const day of days) deltaByDay.set(day.toDateString(), 0);
+  for (const m of movements) {
+    const day = new Date(m.createdAt);
+    if (day.getTime() > now.getTime()) continue;
+    const key = day.toDateString();
+    if (deltaByDay.has(key)) deltaByDay.set(key, (deltaByDay.get(key) ?? 0) + m.delta);
+  }
+
+  let running = totalsAtEndOfToday;
+  const endingByDay = new Map<string, number>();
+  for (let i = days.length - 1; i >= 0; i--) {
+    const key = days[i].toDateString();
+    endingByDay.set(key, running);
+    running -= deltaByDay.get(key) ?? 0;
+  }
+
+  return days.map((day) => Math.max(0, Math.round(endingByDay.get(day.toDateString()) ?? 0)));
+}
+
+/** A single real customer record's signup date, as returned by customerService. */
+export interface CustomerSignupLike {
+  createdAt: string;
+}
+
+export function computeCustomerGrowth(
+  customers: CustomerSignupLike[],
+  now: Date,
+  totalCustomers: number,
+): { series: number[]; change: number | null; isUp: boolean } {
+  const { weekStart, weekEnd, prevWeekStart, prevWeekEnd } = buildWeekWindows(now);
+  const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const newThisWeek = customers.filter((c) => inRange(new Date(c.createdAt), weekStart, weekEnd)).length;
+  const newLastWeek = customers.filter((c) => inRange(new Date(c.createdAt), prevWeekStart, prevWeekEnd)).length;
+
+  const totalBeforeThisWeek = totalCustomers - newThisWeek;
+  const change = computeChange(newThisWeek, newLastWeek);
+
+  const series = days.map(
+    (day) => customers.filter((c) => new Date(c.createdAt).toDateString() === day.toDateString()).length,
+  );
+
+  return { series, change, isUp: newThisWeek >= newLastWeek || totalBeforeThisWeek < 0 };
 }
 
 export function computeCategorySales(

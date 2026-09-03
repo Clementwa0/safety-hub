@@ -69,7 +69,7 @@ const PAYMENT_OPTIONS: {
   {
     value: "whatsapp",
     label: "Order via WhatsApp",
-    description: "Chat with our team to confirm availability and payment — no order is placed here.",
+    description: "Chat with our team to confirm availability and payment - no order is placed here.",
     icon: FaWhatsapp,
     requiresAccount: false,
   },
@@ -190,7 +190,7 @@ export default function CheckoutPage() {
           return;
         }
 
-        toast.success("Opening WhatsApp — your cart is still saved here.");
+        toast.success("Opening WhatsApp - your cart is still saved here.");
       } finally {
         setSubmitting(false);
       }
@@ -274,7 +274,7 @@ export default function CheckoutPage() {
                   placeholder="john@example.com"
                   // Read-only for authenticated customers: the account's
                   // email is the only source of truth for it, and it can
-                  // only be changed through the sign-in provider — never
+                  // only be changed through the sign-in provider - never
                   // from this form. Disabling here is a UX cue only; the
                   // server independently re-pins the email for signed-in
                   // customers regardless of what this input contains.
@@ -424,7 +424,7 @@ export default function CheckoutPage() {
                     </Label>
                   </RadioGroup>
                   <p className="text-xs text-muted-foreground">
-                    No order is placed yet — our team will confirm this with you on WhatsApp.
+                    No order is placed yet - our team will confirm this with you on WhatsApp.
                   </p>
                 </div>
               )}

@@ -5,17 +5,14 @@ import {
   BarChart3,
   Boxes,
   ChartNoAxesCombined,
+  CheckIcon,
   ChevronDown,
   Package,
   Users,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/PageHeader";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,30 +21,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-import SalesReport from "./sales/SalesReport";
-import ProductReport from "./product/ProductReport";
+import SalesOverviewReport from "./sales/SalesReport";
+import ProductPerformanceReport from "./product/ProductReport";
 import InventoryReport from "./inventory/InventoryReport";
-import CustomerReport from "./customer/CustomerReport";
+import CustomerInsightsReport from "./customer/CustomerReport";
 
 const TABS = [
   {
     value: "sales",
-    label: "Sales",
+    label: "Sales Overview",
     icon: ChartNoAxesCombined,
   },
   {
-    value: "product",
-    label: "Products",
-    icon: Package,
-  },
-  {
     value: "inventory",
-    label: "Inventory",
+    label: "Inventory Report",
     icon: Boxes,
   },
   {
+    value: "product",
+    label: "Product Performance",
+    icon: Package,
+  },
+  {
     value: "customer",
-    label: "Customers",
+    label: "Customer Insights",
     icon: Users,
   },
 ] as const;
@@ -61,109 +58,69 @@ export default function ReportsPage() {
   const ActiveIcon = activeTab.icon;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <PageHeader
         title="Reports"
-        description="Sales pipeline and accounting figures, catalog health, inventory position, and customer overview — all sourced from real data."
+        description="Sales pipeline and accounting figures, catalog health, inventory position, and customer overview - all sourced from real data."
         actions={
-          <span className="rounded-xl bg-primary/10 p-2 text-primary">
-            <BarChart3 className="h-5 w-5" />
+          <span className="rounded-lg bg-primary/10 p-1.5 text-primary">
+            <BarChart3 className="h-4 w-4" />
           </span>
         }
+        className="[&>h1]:text-lg [&>p]:text-sm"
       />
 
       {/* Desktop tabs */}
       <div className="hidden sm:block">
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as TabValue)}
-        >
-          <TabsList className="w-full">
+        <Tabs value={tab} onValueChange={(value) => setTab(value as TabValue)}>
+          <TabsList className="h-9 w-full gap-0.5 rounded-lg bg-muted/60 p-0.5">
             {TABS.map(({ value, label, icon: Icon }) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="flex-1 gap-2"
+                className="flex-1 gap-1.5 rounded-md px-2 py-1 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
               >
-                <Icon className="size-4 shrink-0" />
-                <span>{label}</span>
+                <Icon className="size-3.5 shrink-0" />
+                <span className="hidden sm:inline">{label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
 
-          <ReportContent tab={tab} />
+          <div className="mt-3">
+            <ReportContent tab={tab} />
+          </div>
         </Tabs>
       </div>
 
       {/* Mobile dropdown */}
       <div className="sm:hidden">
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Button
-              variant="outline"
-              className="
-                h-11 w-full justify-between
-                rounded-xl
-                border-border/60
-                bg-background
-                px-3.5
-                font-medium
-                shadow-sm
-              "
-            >
-              <span className="flex items-center gap-2.5">
-                <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <ActiveIcon className="size-4" />
-                </span>
-
-                <span>{activeTab.label} Report</span>
-              </span>
-
-              <ChevronDown className="size-4 text-muted-foreground" />
-            </Button>
+          <DropdownMenuTrigger className="flex h-11 w-full items-center justify-between rounded-lg border-border/50 bg-background px-4 text-base font-medium shadow-sm">
+            <span className="flex items-center gap-3">
+              <ActiveIcon className="size-5 text-primary" />
+              <span>{activeTab.label}</span>
+            </span>
+            <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
           </DropdownMenuTrigger>
-
           <DropdownMenuContent
             align="start"
-            className="w-[var(--anchor-width)] min-w-0"
+            className="w-[var(--radix-dropdown-menu-trigger-width)] rounded-lg p-1.5 shadow-lg"
           >
             {TABS.map(({ value, label, icon: Icon }) => (
               <DropdownMenuItem
                 key={value}
                 onClick={() => setTab(value)}
-                className="
-                  h-10
-                  gap-2.5
-                  rounded-lg
-                  px-2.5
-                "
+                className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-base hover:bg-accent"
               >
-                <span
-                  className={`
-                    flex size-7 items-center justify-center rounded-md
-                    ${
-                      tab === value
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted text-muted-foreground"
-                    }
-                  `}
-                >
-                  <Icon className="size-4" />
-                </span>
-
+                <Icon className="size-5 text-muted-foreground" />
                 <span className="flex-1">{label}</span>
-
-                {tab === value && (
-                  <span className="text-xs font-medium text-primary">
-                    Active
-                  </span>
-                )}
+                {tab === value && <CheckIcon className="size-4 text-primary" />}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="mt-4">
+        <div className="mt-3">
           <ReportContent tab={tab} />
         </div>
       </div>
@@ -174,17 +131,13 @@ export default function ReportsPage() {
 function ReportContent({ tab }: { tab: TabValue }) {
   switch (tab) {
     case "sales":
-      return <SalesReport />;
-
+      return <SalesOverviewReport />;
     case "product":
-      return <ProductReport />;
-
+      return <ProductPerformanceReport />;
     case "inventory":
       return <InventoryReport />;
-
     case "customer":
-      return <CustomerReport />;
-
+      return <CustomerInsightsReport />;
     default:
       return null;
   }

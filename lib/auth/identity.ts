@@ -13,8 +13,8 @@ export interface SentinelUserIdentity {
 }
 
 /**
- * Resolves the signed-in user as a storefront customer identity — i.e.
- * "who is this person for account/order purposes" — but ONLY when their
+ * Resolves the signed-in user as a storefront customer identity - i.e.
+ * "who is this person for account/order purposes" - but ONLY when their
  * role is a plain customer.
  *
  * There's exactly one signed-in identity per browser (one Auth.js
@@ -23,17 +23,17 @@ export interface SentinelUserIdentity {
  * it must never resolve as a customer here: opening the storefront in
  * another tab and clicking "My Account" must not show that admin's
  * own account as if they were a shopper. Returns `null` for that case,
- * same as a signed-out visitor — callers (the /api/account/* routes,
+ * same as a signed-out visitor - callers (the /api/account/* routes,
  * checkout's email-pinning, etc.) already treat `null` as "no customer
  * session", so a admin browsing the storefront is handled exactly
  * like a guest for every customer-facing purpose. Order/cart ownership
- * for a signed-in admin follows the identical rule — see
+ * for a signed-in admin follows the identical rule - see
  * `resolveCartIdentityFromSession` in
  * modules/cart/cart-identity-rules.ts, which applies the same role
  * check and must be kept in sync with this one.
  *
  * The client-side equivalent is `useCustomerSession()` in
- * hooks/use-customer-session.ts — keep the two in sync.
+ * hooks/use-customer-session.ts - keep the two in sync.
  *
  * Returns `null` if there is no signed-in user, or the signed-in user is
  * admin.
@@ -56,7 +56,7 @@ export async function resolveStorefrontCustomer(): Promise<StorefrontCustomerIde
 /**
  * Resolves the signed-in user as a Sentinel identity, ONLY if their role
  * is admin or staff. Returns `null` for a signed-out visitor or a
- * signed-in plain customer — callers that need Sentinel authorization
+ * signed-in plain customer - callers that need Sentinel authorization
  * should generally prefer requireAdmin()/requireStaff() from
  * lib/auth/permissions over this, which exists mainly for read-only "is
  * there a Sentinel session" checks (e.g. modules/cart/session.ts's

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       ]),
     ]);
 
-    // The aggregate groups by Product.category, which is an ObjectId — key
+    // The aggregate groups by Product.category, which is an ObjectId - key
     // the lookup map by the stringified id, not by category name.
     const countByCategory = new Map(counts.map((entry) => [String(entry._id), entry.count]));
     const payload = categories.map((category) =>

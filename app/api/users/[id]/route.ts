@@ -8,7 +8,7 @@ import { hashPassword, requireAdmin, serializeUser } from "@/lib/auth";
 const updateUserSchema = z.object({
   name: z.string().trim().min(2).optional(),
   status: z.enum(["active", "suspended"]).optional(),
-  // Empty/omitted password means "leave it unchanged" — only hash and
+  // Empty/omitted password means "leave it unchanged" - only hash and
   // save a new one when a non-empty value is actually sent.
   password: z.string().min(6).optional().or(z.literal("")),
 });
@@ -30,7 +30,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     await connectToDatabase();
     // Scoped to role: admin/staff so this endpoint can't be used to edit
-    // an ordinary storefront customer's account — they share the same
+    // an ordinary storefront customer's account - they share the same
     // collection post-unification, but this is Sentinel user management.
     const user = await StorefrontCustomerModel.findOne({
       _id: id,

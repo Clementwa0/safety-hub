@@ -72,7 +72,7 @@ export default function CustomerTable({ customers, onEdit, onDelete }: CustomerT
                         {customer.company}
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">-</span>
                     )}
                   </TableCell>
 

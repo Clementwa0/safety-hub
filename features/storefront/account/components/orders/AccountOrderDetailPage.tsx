@@ -151,7 +151,7 @@ export default function AccountOrderDetailPage() {
             <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_2px_8px_rgba(15,45,82,0.05)]">
               <h2 className="text-sm font-semibold text-foreground">Payment</h2>
               <p className="mt-2 text-sm capitalize text-muted-foreground">
-                {order.paymentMethod} — {order.paymentStatus}
+                {order.paymentMethod} - {order.paymentStatus}
               </p>
             </div>
           </section>

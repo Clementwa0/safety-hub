@@ -1,7 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Users, UserPlus, Mail, Building2, CalendarDays } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Info,
+  MapPin,
+  Repeat,
+  ShoppingCart,
+  Target,
+  UserPlus,
+  Users,
+  Wallet,
+} from "lucide-react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -12,58 +30,53 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import StatsCard from "@/components/sentinel/shared/StatsCard";
 import { formatDate } from "@/lib/format";
-import { customerService } from "@/services/sentinel/customer.service";
-import type { Customer } from "@/types/sentinel/customer";
+import ReportRangePicker from "@/components/sentinel/reports/ReportRangePicker";
+import ReportKpiCard from "@/components/sentinel/reports/ReportKpiCard";
+import ReportDonut from "@/components/sentinel/reports/ReportDonut";
+import { formatDashboardCurrency } from "@/features/sentinel/dashboard/computeDashboardData";
+import { reportsService } from "@/services/sentinel/reports.service";
+import type {
+  CustomerInsightsReport as CustomerInsightsData,
+  ReportRange,
+} from "@/types/sentinel/reports";
 
-const SAMPLE_PAGE_LIMIT = 50;
-const MAX_SAMPLE_PAGES = 10;
+function periodTick(key: string): string {
+  if (/^\d{4}-\d{2}$/.test(key)) {
+    const [y, m] = key.split("-");
+    return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-US", {
+      month: "short",
+    });
+  }
+  return new Date(key).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
 
-export default function CustomerReport() {
-  const [total, setTotal] = useState(0);
-  const [sample, setSample] = useState<Customer[]>([]);
-  const [sampleTruncated, setSampleTruncated] = useState(false);
+const INSIGHT_ICON = {
+  "high-value": Target,
+  reengagement: UserPlus,
+  repeat: Repeat,
+};
+
+export default function CustomerInsightsReport() {
+  const [range, setRange] = useState<ReportRange>("30d");
+  const [data, setData] = useState<CustomerInsightsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (nextRange: ReportRange) => {
     setLoading(true);
     setError(null);
-
     try {
-      const first = await customerService.list({
-        page: 1,
-        limit: SAMPLE_PAGE_LIMIT,
-        sort: "-createdAt",
-      });
-
-      const all = [...first.items];
-      const pagesToFetch = Math.min(
-        first.pagination.pages,
-        MAX_SAMPLE_PAGES,
-      );
-
-      for (let page = 2; page <= pagesToFetch; page += 1) {
-        const next = await customerService.list({
-          page,
-          limit: SAMPLE_PAGE_LIMIT,
-          sort: "-createdAt",
-        });
-
-        all.push(...next.items);
-      }
-
-      setTotal(first.pagination.total);
-      setSample(all);
-      setSampleTruncated(first.pagination.pages > MAX_SAMPLE_PAGES);
+      setData(await reportsService.customerInsights({ range: nextRange }));
     } catch (caught) {
       setError(
         caught instanceof Error
           ? caught.message
-          : "Could not load the customer report",
+          : "Could not load customer insights",
       );
     } finally {
       setLoading(false);
@@ -71,254 +84,332 @@ export default function CustomerReport() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
-
-  const [reportCutoff] = useState<number>(
-    () => Date.now() - 30 * 24 * 60 * 60 * 1000,
-  );
-
-  const newInLast30Days = useMemo(
-    () =>
-      sample.filter(
-        (customer) =>
-          new Date(customer.createdAt).getTime() >= reportCutoff,
-      ).length,
-    [sample, reportCutoff],
-  );
-
-  const recent = sample.slice(0, 10);
+    void load(range);
+  }, [range, load]);
 
   if (error) {
     return (
-      <EmptyState
-        title="Couldn't load the customer report"
-        description={error}
-      />
+      <EmptyState title="Couldn't load customer insights" description={error} />
     );
   }
 
+  const comparisonLabel = data?.period.previousLabel ?? "";
+
   return (
-    <div className="space-y-5">
-      {/* Overview */}
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">
-            Customer overview
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Customer growth and your most recently registered customers.
-          </p>
-        </div>
+    <div className="space-y-3 sm:space-y-4">
+      <div className="flex items-center justify-end">
+        <ReportRangePicker value={range} onChange={setRange} />
+      </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-          <StatsCard
-            title="Total customers"
-            value={String(total)}
-            icon={Users}
-            loading={loading}
-          />
+      {/* KPIs */}
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-5">
+        {loading || !data ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i} className="border-border/70 shadow-sm">
+              <CardContent className="p-4">
+                <div className="h-16 animate-pulse rounded bg-muted" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            <ReportKpiCard
+              title="Total Customers"
+              kpi={data.kpis.totalCustomers}
+              icon={Users}
+              iconTint="bg-blue-100 text-blue-600"
+              accentColor="#2563eb"
+              comparisonLabel={comparisonLabel}
+              formatValue={(v) => v.toLocaleString()}
+            />
+            <ReportKpiCard
+              title="New Customers"
+              kpi={data.kpis.newCustomers}
+              icon={UserPlus}
+              iconTint="bg-emerald-100 text-emerald-600"
+              accentColor="#10b981"
+              comparisonLabel={comparisonLabel}
+              formatValue={(v) => v.toLocaleString()}
+            />
+            <ReportKpiCard
+              title="Repeat Customers"
+              kpi={data.kpis.repeatCustomers}
+              icon={Repeat}
+              iconTint="bg-purple-100 text-purple-600"
+              accentColor="#8b5cf6"
+              comparisonLabel={comparisonLabel}
+              formatValue={(v) => v.toLocaleString()}
+            />
+            <ReportKpiCard
+              title="Avg. Customer Value"
+              kpi={data.kpis.averageCustomerValue}
+              icon={Wallet}
+              iconTint="bg-amber-100 text-amber-600"
+              accentColor="#f59e0b"
+              comparisonLabel={comparisonLabel}
+              formatValue={formatDashboardCurrency}
+            />
+            <ReportKpiCard
+              title="Customer Retention Rate"
+              kpi={data.kpis.retentionRate}
+              icon={MapPin}
+              iconTint="bg-teal-100 text-teal-600"
+              accentColor="#14b8a6"
+              comparisonLabel={comparisonLabel}
+              formatValue={(v) => `${v}%`}
+            />
+          </>
+        )}
+      </div>
 
-          <StatsCard
-            title="New customers"
-            value={String(newInLast30Days)}
-            icon={UserPlus}
-            loading={loading}
-            hint="Registered in the last 30 days"
-          />
-        </div>
-      </section>
+      {/* Trend + segment donut */}
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+        <Card className="border-border/70 shadow-sm lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-foreground">
+              Customer Trend
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {loading || !data ? (
+              <div className="h-[260px] animate-pulse rounded bg-muted" />
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart
+                  data={data.customerTrend}
+                  margin={{ top: 4, right: 8, left: -12, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="hsl(var(--border))"
+                  />
+                  <XAxis
+                    dataKey="period"
+                    tickFormatter={periodTick}
+                    tick={{ fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <RechartsTooltip
+                    formatter={(value, name) => {
+                      const numericValue =
+                        typeof value === "number" ? value : Number(value ?? 0);
 
-      {/* Recent customers */}
-      <Card className="overflow-hidden border-border/70 shadow-sm">
-        <CardHeader className="border-b border-border/60 bg-muted/20 px-4 py-3 sm:px-5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-sm font-semibold">
-                Recent customers
-              </CardTitle>
-
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Latest customer registrations
-              </p>
-            </div>
-
-            {!loading && recent.length > 0 && (
-              <Badge variant="secondary" className="shrink-0">
-                {recent.length} recent
-              </Badge>
+                      return [
+                        numericValue,
+                        name === "newCustomers"
+                          ? "New Customers"
+                          : "Repeat Customers",
+                      ];
+                    }}
+                    labelFormatter={(label) => periodTick(String(label ?? ""))}
+                  />{" "}
+                  <Line
+                    type="monotone"
+                    dataKey="newCustomers"
+                    name="New Customers"
+                    stroke="#2563eb"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="repeatCustomers"
+                    name="Repeat Customers"
+                    stroke="#94a3b8"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             )}
-          </div>
-        </CardHeader>
+          </CardContent>
+        </Card>
 
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="space-y-3 p-4 sm:p-5">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-12 animate-pulse rounded-lg bg-muted"
-                />
-              ))}
-            </div>
-          ) : recent.length === 0 ? (
-            <div className="px-4 py-12">
-              <EmptyState
-                title="No customers yet"
-                description="Customers will appear here once they register."
-                className="border-none bg-transparent p-0 shadow-none"
-              />
-            </div>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <div className="hidden overflow-x-auto md:block">
+        <ReportDonut
+          title="Customers by Segment"
+          data={data?.customersBySegment ?? []}
+          centerLabel="Total Customers"
+          centerValue={
+            data ? data.kpis.totalCustomers.value.toLocaleString() : "-"
+          }
+          loading={loading}
+        />
+      </div>
+      {data && (
+        <p className="flex items-start gap-1.5 rounded-lg bg-muted/40 px-3.5 py-2.5 text-[11px] text-muted-foreground sm:text-xs">
+          <Info className="mt-0.5 size-3.5 shrink-0" />
+          {data.segmentDefinitions}
+        </p>
+      )}
+
+      {/* Top customers / frequency / activity */}
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+        <Card className="overflow-hidden border-border/60 shadow-sm">
+          <CardHeader className="border-b border-border/50 px-3.5 py-3 sm:px-5">
+            <CardTitle className="text-sm font-semibold tracking-tight">
+              Top Customers by Spend
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading || !data ? (
+              <div className="h-[240px] animate-pulse bg-muted/40" />
+            ) : data.topCustomersBySpend.length === 0 ? (
+              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+                No customer orders yet
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/20 hover:bg-muted/20">
-                      <TableHead className="h-10 px-5 text-xs font-medium">
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="h-9 px-3 text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
                         Customer
                       </TableHead>
-
-                      <TableHead className="h-10 text-xs font-medium">
-                        Contact
+                      <TableHead className="h-9 px-3 text-right text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Spend
                       </TableHead>
-
-                      <TableHead className="h-10 text-xs font-medium">
-                        Company
-                      </TableHead>
-
-                      <TableHead className="h-10 pr-5 text-right text-xs font-medium">
-                        Joined
+                      <TableHead className="h-9 px-3 text-right text-[11px] font-medium text-muted-foreground sm:px-5 sm:text-xs">
+                        Orders
                       </TableHead>
                     </TableRow>
                   </TableHeader>
-
                   <TableBody>
-                    {recent.map((customer) => (
+                    {data.topCustomersBySpend.map((c) => (
                       <TableRow
-                        key={customer.id}
-                        className="hover:bg-muted/30"
+                        key={c.id}
+                        className="border-border/40 hover:bg-muted/40"
                       >
-                        <TableCell className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                              {customer.name?.charAt(0)?.toUpperCase() || "?"}
-                            </div>
-
-                            <span className="font-medium text-foreground">
-                              {customer.name}
-                            </span>
-                          </div>
+                        <TableCell className="max-w-[120px] truncate px-3 py-2.5 text-xs font-medium text-foreground sm:px-5 sm:py-3">
+                          {c.name}
                         </TableCell>
-
-                        <TableCell className="py-3">
-                          {customer.email ? (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Mail className="size-3.5 shrink-0" />
-                              <span className="max-w-[220px] truncate">
-                                {customer.email}
-                              </span>
-                            </div>
-                          ) : customer.phone ? (
-                            <span className="text-sm text-muted-foreground">
-                              {customer.phone}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
+                        <TableCell className="px-3 py-2.5 text-right text-xs font-medium tabular-nums text-foreground sm:px-5 sm:py-3">
+                          {formatDashboardCurrency(c.totalSpend)}
                         </TableCell>
-
-                        <TableCell className="py-3">
-                          {customer.company ? (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Building2 className="size-3.5 shrink-0" />
-                              <span>{customer.company}</span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-
-                        <TableCell className="pr-5 text-right py-3">
-                          <div className="flex items-center justify-end gap-1.5 text-sm text-muted-foreground">
-                            <CalendarDays className="size-3.5" />
-                            <span className="tabular-nums">
-                              {formatDate(new Date(customer.createdAt))}
-                            </span>
-                          </div>
+                        <TableCell className="px-3 py-2.5 text-right text-xs tabular-nums text-muted-foreground sm:px-5 sm:py-3">
+                          {c.orders}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              {/* Mobile cards */}
-              <div className="divide-y divide-border/60 md:hidden">
-                {recent.map((customer) => (
-                  <div
-                    key={customer.id}
-                    className="flex items-start gap-3 p-4"
-                  >
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {customer.name?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
-
-                    <div className="min-w-0 flex-1 space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="truncate text-sm font-medium text-foreground">
-                          {customer.name}
-                        </p>
-
-                        <span className="shrink-0 text-[11px] text-muted-foreground">
-                          {formatDate(new Date(customer.createdAt))}
-                        </span>
-                      </div>
-
-                      {customer.email && (
-                        <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                          <Mail className="size-3 shrink-0" />
-                          <span className="truncate">{customer.email}</span>
-                        </div>
-                      )}
-
-                      {customer.company && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Building2 className="size-3 shrink-0" />
-                          <span className="truncate">{customer.company}</span>
-                        </div>
-                      )}
-
-                      {!customer.email && customer.phone && (
-                        <p className="text-xs text-muted-foreground">
-                          {customer.phone}
-                        </p>
-                      )}
-                    </div>
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-foreground">
+              Customer Purchase Frequency
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-0">
+            {loading || !data ? (
+              <div className="h-[220px] animate-pulse rounded bg-muted" />
+            ) : (
+              data.purchaseFrequency.map((f) => (
+                <div key={f.bucket} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-foreground">
+                      {f.bucket}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {f.customers} · {f.percent}%
+                    </span>
                   </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${f.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-border/60 shadow-sm">
+          <CardHeader className="border-b border-border/50 px-3.5 py-3 sm:px-5">
+            <CardTitle className="text-sm font-semibold tracking-tight">
+              Recent Customer Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading || !data ? (
+              <div className="h-[240px] animate-pulse bg-muted/40" />
+            ) : data.recentActivity.length === 0 ? (
+              <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+                No recent activity
+              </p>
+            ) : (
+              <ul className="divide-y divide-border/40">
+                {data.recentActivity.map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 sm:px-5"
+                  >
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <ShoppingCart className="size-3.5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-foreground">
+                        {a.customerName}
+                      </p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {a.activity} · {formatDate(a.date)}
+                      </p>
+                    </div>
+                    {a.amount !== undefined && (
+                      <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
+                        {formatDashboardCurrency(a.amount)}
+                      </span>
+                    )}
+                  </li>
                 ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Data limitation */}
-      <Card className="border-dashed border-border/70 bg-muted/20 shadow-none">
-        <CardContent className="flex gap-3 p-4">
-          <div className="mt-0.5 shrink-0">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-              <Users className="size-4 text-muted-foreground" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Insights */}
+      {data && data.insights.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {data.insights.map((insight) => {
+            const Icon = INSIGHT_ICON[insight.icon];
+            return (
+              <Card key={insight.title} className="border-border/70 shadow-sm">
+                <CardContent className="flex items-start gap-3 p-4">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Icon className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      {insight.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {insight.description}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-      {sampleTruncated && (
-        <p className="text-right text-[11px] text-muted-foreground">
-          Customer activity is based on the {sample.length} most recent
-          records.
+      {data && (
+        <p className="rounded-lg bg-muted/40 px-3.5 py-2.5 text-[11px] text-muted-foreground sm:text-xs">
+          All customer insights are based on your selected date range:{" "}
+          {data.period.label}
         </p>
       )}
     </div>

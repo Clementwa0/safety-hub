@@ -1,4 +1,4 @@
-# Spec 06 — Protect Historical Orders
+# Spec 06 - Protect Historical Orders
 
 ## Objective
 Prevent destructive deletion of historically relevant orders.

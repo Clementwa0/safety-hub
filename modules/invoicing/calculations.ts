@@ -12,7 +12,7 @@ import type {
  * copy-pasted in three places (lib/sales.ts#computeTotals,
  * app/api/invoices/[id]/payments/route.ts#invoiceTotal, and
  * modules/analytics/sales-dashboard.ts#total), each commented "must stay
- * identical to the others — if one changes, so must the rest". That's
+ * identical to the others - if one changes, so must the rest". That's
  * exactly the kind of duplication that silently drifts. Every one of
  * those call sites now delegates here instead.
  *
@@ -49,7 +49,7 @@ export function calculateLineItemTotal(item: MoneyLineItem): number {
  * Computes subtotal/discount/tax/total for a full set of line items.
  * Summation happens in full float precision across all lines (matching
  * the previous behavior everywhere) and is rounded to the cent only once,
- * on the way out — rounding per-line first would compound error over an
+ * on the way out - rounding per-line first would compound error over an
  * invoice with many lines instead of cancelling it out.
  */
 export function calculateInvoiceTotals(items: MoneyLineItem[]): InvoiceTotals {
@@ -93,7 +93,7 @@ export function calculateInvoiceBalance(total: number, amountPaid: number): numb
 /**
  * Derives the payment-driven status ("unpaid" / "partially_paid" /
  * "paid") from an invoice's total and its actual amountPaid. This is the
- * ONLY place that decides those three statuses — callers must never set
+ * ONLY place that decides those three statuses - callers must never set
  * them from client input (see the PATCH /api/invoices/[id] and the
  * invoice-form UI, both of which now treat status as staff-editable only
  * for the lifecycle states this function doesn't cover: "draft" and
@@ -112,10 +112,10 @@ export function calculatePaymentStatus(total: number, amountPaid: number): Payme
 }
 
 /**
- * Sums the payments that actually count toward an invoice's amountPaid —
+ * Sums the payments that actually count toward an invoice's amountPaid -
  * i.e. every recorded payment except ones that have been voided/refunded.
  * This is the authoritative way to recompute Invoice.amountPaid from the
- * Payment ledger (used after a void — see invoice.service.ts#voidPayment)
+ * Payment ledger (used after a void - see invoice.service.ts#voidPayment)
  * rather than trusting whatever the invoice document currently holds.
  */
 export function sumActivePayments(payments: LedgerPayment[]): number {

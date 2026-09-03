@@ -3,126 +3,95 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   Package,
-  Tags,
   ClipboardList,
   Receipt,
   ShoppingBag,
-  MessagesSquare,
   Boxes,
   BarChart3,
   Users,
-  UserCog,
   Settings,
+  Star,
 } from "lucide-react";
+
+export interface NavigationChild {
+  name: string;
+  path: string;
+}
 
 export interface NavigationItem {
   name: string;
   path: string;
   icon: LucideIcon;
-  badgeKey?: "contactMessages" | "storeOrders";
   adminOnly?: boolean;
+  children?: NavigationChild[];
 }
 
-export interface NavigationGroup {
-  name: string;
-  items: NavigationItem[];
-}
 
-/**
- * Standalone dashboard item shown above the grouped sections.
- */
-export const sentinelDashboardItem: NavigationItem = {
-  name: "Dashboard",
-  path: "/sentinel/dashboard",
-  icon: LayoutDashboard,
-};
-
-export const sentinelNavigationGroups: NavigationGroup[] = [
+export const sentinelNavigationItems: NavigationItem[] = [
   {
-    name: "Catalog",
-    items: [
-      {
-        name: "Products",
-        path: "/sentinel/products",
-        icon: Package,
-      },
-      {
-        name: "Categories",
-        path: "/sentinel/categories",
-        icon: Tags,
-      },
+    name: "Dashboard",
+    path: "/sentinel/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Products",
+    path: "/sentinel/products",
+    icon: Package,
+    children: [
+      { name: "All Products", path: "/sentinel/products" },
+      { name: "Categories", path: "/sentinel/categories" },
     ],
   },
-
   {
-    name: "Operations",
-    items: [
-      {
-        name: "Inventory",
-        path: "/sentinel/inventory",
-        icon: Boxes,
-      },
-       {
-        name: "Store Orders",
-        path: "/sentinel/store-orders",
-        icon: ShoppingBag,
-        badgeKey: "storeOrders",
-      },
-      {
-        name: "Quotations",
-        path: "/sentinel/quotations",
-        icon: ClipboardList,
-      },
-      {
-        name: "Orders",
-        path: "/sentinel/orders",
-        icon: ClipboardList,
-      },
-      {
-        name: "Invoices",
-        path: "/sentinel/invoices",
-        icon: Receipt,
-      },
+    name: "Inventory",
+    path: "/sentinel/inventory",
+    icon: Boxes,
+  },
+  {
+    name: "Orders",
+    path: "/sentinel/orders",
+    icon: ClipboardList,
+    children: [
+      { name: "Store Orders", path: "/sentinel/store-orders" },
+      { name: "Sales Orders", path: "/sentinel/orders" },
+      { name: "Invoices", path: "/sentinel/invoices" },
     ],
   },
   {
     name: "Customers",
-    items: [
-      {
-        name: "Customers",
-        path: "/sentinel/customers",
-        icon: Users,
-      },
-    ],
+    path: "/sentinel/customers",
+    icon: Users,
   },
-
   {
-    name: "Insights",
-    items: [
-      {
-        name: "Reports",
-        path: "/sentinel/reports",
-        icon: BarChart3,
-        adminOnly: true,
-      },
-    ],
+    name: "Quotations",
+    path: "/sentinel/quotations",
+    icon: Receipt,
   },
-
   {
-    name: "System",
-    items: [
-      {
-        name: "Users",
-        path: "/sentinel/users",
-        icon: UserCog,
-        adminOnly: true,
-      },
-      {
-        name: "Settings",
-        path: "/sentinel/settings",
-        icon: Settings,
-        adminOnly: true,
-      },
-    ],
+    name: "Reports",
+    path: "/sentinel/reports",
+    icon: BarChart3,
+    adminOnly: true,
   },
+  {
+    name: "Settings",
+    path: "/sentinel/settings",
+    icon: Settings,
+    adminOnly: true,
+  },
+];
+
+export interface QuickAction {
+  name: string;
+  path: string;
+  icon: LucideIcon;
+  /** Tailwind background class for the circular icon badge. */
+  tint: string;
+}
+
+export const sentinelQuickActions: QuickAction[] = [
+  { name: "Add Product", path: "/sentinel/products/new", icon: Package, tint: "bg-blue-600" },
+  { name: "Receive Stock", path: "/sentinel/inventory", icon: Boxes, tint: "bg-emerald-600" },
+  { name: "New Quotation", path: "/sentinel/quotations/new", icon: Receipt, tint: "bg-violet-600" },
+  { name: "Create Order", path: "/sentinel/orders/new", icon: ShoppingBag, tint: "bg-orange-600" },
 ];

@@ -14,7 +14,7 @@ const bodySchema = z.object({
 
 /**
  * Staff-gated signature for direct-to-Cloudinary uploads (see
- * `useCloudinaryUpload`). The file itself never touches our servers —
+ * `useCloudinaryUpload`). The file itself never touches our servers -
  * we only hand back a short-lived signature the browser uses to PUT
  * straight at Cloudinary.
  */

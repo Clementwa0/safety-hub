@@ -4,8 +4,8 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
  * NOTE ON NAMING
  * ---------------
  * A saved address only makes sense for a signed-in storefront customer
- * (the `User` model, see `lib/models/User.ts` — stored in the
- * `storefront_customers` collection post-unification) — guests
+ * (the `User` model, see `lib/models/User.ts` - stored in the
+ * `storefront_customers` collection post-unification) - guests
  * never accumulate a reusable address book, they just type a one-off
  * shipping address at checkout (`StoreOrder.shippingAddress`). This model
  * is intentionally separate from that embedded checkout snapshot: it's the

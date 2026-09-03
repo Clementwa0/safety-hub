@@ -81,7 +81,7 @@ function SearchResults() {
         </div>
       ) : !query ? (
         <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center text-sm text-muted-foreground">
-          Try searching for a product name, brand, or category — or{" "}
+          Try searching for a product name, brand, or category - or{" "}
           <Link href="/shop" className="font-medium text-secondary hover:underline">
             browse the full shop
           </Link>

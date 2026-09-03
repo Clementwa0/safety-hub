@@ -13,7 +13,7 @@ import type { CloudinaryFolderKey } from "@/lib/cloudinary";
  * file never passes through our own serverless functions.
  */
 
-const MAX_BYTES = 10 * 1024 * 1024; // 10MB — plenty for product photography
+const MAX_BYTES = 10 * 1024 * 1024; // 10MB - plenty for product photography
 const ACCEPTED_TYPES = [
   "image/jpeg",
   "image/png",

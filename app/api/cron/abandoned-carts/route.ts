@@ -13,7 +13,7 @@ export const maxDuration = 60;
  * Auth is via the `Authorization: Bearer <CRON_SECRET>` header ONLY. A
  * `?secret=` query-string fallback used to also be accepted, but query
  * strings routinely end up in server access logs, proxy logs, and browser
- * history — any of which could leak the secret. Vercel Cron (and any other
+ * history - any of which could leak the secret. Vercel Cron (and any other
  * sane scheduler) sends the secret as a header, so there's no legitimate
  * caller that needs the query-string form.
  */

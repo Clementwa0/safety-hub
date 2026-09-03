@@ -120,7 +120,7 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
 
   // Post-unification, `Cart.user` can point at a staff/admin account too
   // (there's only one identity model). Restrict to role: "customer" here
-  // so staff/admin carts are never sent this marketing email — a cart
+  // so staff/admin carts are never sent this marketing email - a cart
   // whose owner isn't in this map falls through the existing
   // `!customer?.email` skip below, same as it always did.
   const customers = await StorefrontCustomerModel.find({
@@ -177,7 +177,7 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
     const greetingName = customer.name ? customer.name.split(" ")[0] : "there";
 
     const textLines = lines.map(
-      (line) => `• ${line.name} ×${line.quantity} — ${formatKES(line.lineTotal)}`
+      (line) => `• ${line.name} ×${line.quantity} - ${formatKES(line.lineTotal)}`
     );
 
     try {
@@ -204,7 +204,7 @@ export async function sendAbandonedCartEmails(): Promise<AbandonedCartRunResult>
               ${lines
                 .map(
                   (line) =>
-                    `<li>${line.name} ×${line.quantity} — ${formatKES(
+                    `<li>${line.name} ×${line.quantity} - ${formatKES(
                       line.lineTotal
                     )}</li>`
                 )

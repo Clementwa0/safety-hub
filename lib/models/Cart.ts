@@ -10,7 +10,7 @@ export interface ICartItem {
 }
 
 export interface ICart extends Document {
-  /** Refs `User` — the single identity collection post-unification (stored
+  /** Refs `User` - the single identity collection post-unification (stored
    *  in the `storefront_customers` collection for compatibility). */
   user?: mongoose.Types.ObjectId;
   sessionId?: string;

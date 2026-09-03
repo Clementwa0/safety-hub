@@ -5,7 +5,7 @@ export interface IOrderLineItem {
   name: string;
   description?: string;
   /** Present only when this line is a specific size/variant of a
-   *  variant-enabled product — matches `IProductVariant.sku`/`size` on the
+   *  variant-enabled product - matches `IProductVariant.sku`/`size` on the
    *  Product document. Absent for simple (non-variant) products. */
   variantSku?: string;
   size?: string;
@@ -30,7 +30,7 @@ export interface IOrder extends Document {
   /** True only when this Order came from convertQuotationToOrder, which placed a
    *  `Product.reserved` hold for its items. Direct-created orders (POST /api/orders)
    *  never reserve, so their "shipped" transition must decrement stock without also
-   *  touching `reserved` — this flag is how that transition tells the two cases apart. */
+   *  touching `reserved` - this flag is how that transition tells the two cases apart. */
   reservedStock: boolean;
   fulfillmentStatus: "AVAILABLE" | "PARTIALLY_AVAILABLE" | "BACKORDERED";
   createdAt: Date;

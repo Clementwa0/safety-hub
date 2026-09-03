@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -44,7 +44,6 @@ export default function QuotationViewPage() {
     const timeout = window.setTimeout(() => {
       void load();
     }, 0);
-
     return () => window.clearTimeout(timeout);
   }, [load]);
 
@@ -85,60 +84,79 @@ export default function QuotationViewPage() {
   const customerCompany = quotation.customer?.company;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2 sm:space-y-3">
       <PageHeader
         title={`Quotation ${quotation.number}`}
         description={`For ${customerName}${customerCompany ? ` · ${customerCompany}` : ""}`}
-        breadcrumbs={[
-          { label: "Admin", href: "/sentinel/dashboard" },
-          { label: "Quotations", href: "/sentinel/quotations" },
-          { label: quotation.number },
-        ]}
+
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={sendToCustomer}>
-              <Send className="h-4 w-4" /> Send
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <Button variant="outline" onClick={sendToCustomer} size="sm" className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm">
+              <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Send</span>
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="h-4 w-4" /> Print
+            <Button variant="outline" onClick={() => window.print()} size="sm" className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm">
+              <Printer className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Print</span>
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>
-              <Download className="h-4 w-4" /> Export PDF
+            <Button variant="outline" onClick={() => window.print()} size="sm" className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm">
+              <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">PDF</span>
             </Button>
-            <Button nativeButton={false} render={<Link href={`/sentinel/quotations/${quotation.id}/edit`} />}>
-              <Pencil className="h-4 w-4" /> Edit
+            <Button
+              nativeButton={false}
+              render={<Link href={`/sentinel/quotations/${quotation.id}/edit`} />}
+              size="sm"
+              className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm"
+            >
+              <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Edit</span>
             </Button>
-            {canConvert ? (
-              <Button onClick={() => void convert()} disabled={converting}>
-                <FileCheck2 className="h-4 w-4" /> Convert to sales order
+            {canConvert && (
+              <Button
+                onClick={() => void convert()}
+                disabled={converting}
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm"
+              >
+                <FileCheck2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">Convert</span>
               </Button>
-            ) : null}
+            )}
           </div>
         }
+        className="[&>h1]:text-base [&>p]:text-xs sm:[&>h1]:text-lg sm:[&>p]:text-sm"
       />
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <div>
-            <CardTitle className="text-base">Status</CardTitle>
-            <div className="mt-2"><QuotationStatusBadge status={quotation.status} /></div>
+      <Card className="border-border/40 shadow-sm">
+        <CardContent className="flex flex-col gap-2 p-2 sm:p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-muted-foreground sm:text-sm">Status</span>
+            <QuotationStatusBadge status={quotation.status}  />
           </div>
-          <div className="w-full max-w-xs space-y-2">
-            <Label>Change status</Label>
-            <Select value={quotation.status} disabled={updating}
-              onValueChange={(v) => typeof v === "string" && void updateStatus(v as QuotationStatus)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-muted-foreground sm:text-sm">Change</Label>
+            <Select
+              value={quotation.status}
+              disabled={updating}
+              onValueChange={(v) => typeof v === "string" && void updateStatus(v as QuotationStatus)}
+            >
+              <SelectTrigger className="h-7 w-32 text-xs sm:h-8 sm:text-sm">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {QUOTATION_STATUSES.map((o) => (
-                  <SelectItem key={o} value={o}><span className="capitalize">{o}</span></SelectItem>
+                  <SelectItem key={o} value={o} className="capitalize text-xs sm:text-sm">
+                    {o}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        </CardHeader>
+        </CardContent>
       </Card>
 
-      <StockAvailabilityPanel items={quotation.items} />
+      <StockAvailabilityPanel items={quotation.items}  />
 
       <DocumentPreview
         documentType="Quotation"
@@ -150,6 +168,7 @@ export default function QuotationViewPage() {
         items={quotation.items}
         notes={quotation.notes}
         terms={quotation.terms}
+        className="border-border/40 shadow-sm"
       />
     </div>
   );

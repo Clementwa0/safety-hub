@@ -1,4 +1,4 @@
-# Spec 13 — Financial Integration Tests
+# Spec 13 - Financial Integration Tests
 
 ## Objective
 Provide integration coverage for critical financial workflows.
