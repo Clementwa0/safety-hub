@@ -311,7 +311,7 @@ export async function buildSalesOverviewReport(query: ReportQuery): Promise<Sale
       date: new Date(so.createdAt).getTime(),
       amount: so.total,
       status: so.status,
-      channel: "store" as const,
+      channel: "storefront" as const,
     })),
   ]
     .sort((a, b) => b.date - a.date)

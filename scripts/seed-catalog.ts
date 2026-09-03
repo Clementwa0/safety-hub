@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { ProductModel } from "../lib/models/Product";
 import { CategoryModel } from "../lib/models/Category";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI ?? "";
 
 if (!MONGODB_URI) {
   throw new Error("MONGODB_URI is not defined.");

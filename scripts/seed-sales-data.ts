@@ -61,7 +61,7 @@ import { calculateInvoiceTotals } from "../modules/invoicing/calculations";
 // Config
 // ---------------------------------------------------------------------
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI ?? "";
 
 if (!MONGODB_URI) {
   throw new Error(
