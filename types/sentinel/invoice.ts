@@ -14,7 +14,10 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 export interface Invoice {
   id: string;
   number: string;
-  customer: Customer;
+  // Historical invoices can outlive a deleted customer document -
+  // populate("customer") then resolves to null. See the matching note on
+  // Quotation.customer in ./quotation.ts.
+  customer: Customer | null;
   items: LineItem[];
   status: InvoiceStatus;
   issueDate: number;

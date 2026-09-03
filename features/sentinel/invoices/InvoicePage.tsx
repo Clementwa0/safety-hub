@@ -50,8 +50,8 @@ export default function InvoicesPage() {
     return invoices.filter((inv) => {
       const matchesSearch = !term ||
         inv.number.toLowerCase().includes(term) ||
-        inv.customer.name.toLowerCase().includes(term) ||
-        (inv.customer.company?.toLowerCase().includes(term) ?? false);
+        (inv.customer?.name.toLowerCase().includes(term) ?? false) ||
+        (inv.customer?.company?.toLowerCase().includes(term) ?? false);
       const effective = invoiceService.effectiveStatus(inv);
       const matchesStatus = status === "all" || effective === status;
       return matchesSearch && matchesStatus;

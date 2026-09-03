@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { FileCheck2, Pencil, Printer } from "lucide-react";
+import { FileCheck2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
+import { ShareDocumentMenu } from "@/components/sentinel/sales/ShareDocumentMenu";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Loading } from "@/components/shared/Loading";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -96,21 +97,27 @@ export default function OrderViewPage() {
   }
 
   const canConvert = !order.invoiceId && order.status !== "cancelled";
-  // Historical records can outlive a deleted customer document. Keep the
-  // order readable instead of assuming Mongoose population always resolves.
-  const customer = order.customer ?? { name: "Deleted customer" };
+  // Historical orders can outlive a deleted customer document -
+  // populate("customer") then resolves to null (see Order["customer"] in
+  // types/sentinel/order.ts).
+  const customerName = order.customer?.name ?? "Deleted customer";
+  const customerCompany = order.customer?.company;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={`Order ${order.number}`}
-        description={`For ${customer.name}${customer.company ? ` · ${customer.company}` : ""}`}
+        description={`For ${customerName}${customerCompany ? ` · ${customerCompany}` : ""}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="h-4 w-4" />
-              <span className="hidden sm:inline">Print</span>
-            </Button>
+            <ShareDocumentMenu
+              type="order"
+              id={order.id}
+              documentLabel="Sales Order"
+              documentNumber={order.number}
+              customerName={order.customer?.name}
+              customerEmail={order.customer?.email || undefined}
+            />
             <Button
               nativeButton={false}
               render={<Link href={`/sentinel/orders/${order.id}/edit`} />}
@@ -180,7 +187,7 @@ export default function OrderViewPage() {
         documentNumber={order.number}
         issueDate={order.createdAt}
         status={order.status}
-        customer={customer}
+        customer={order.customer}
         items={order.items}
         notes={order.notes}
       />

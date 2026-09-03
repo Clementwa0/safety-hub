@@ -13,6 +13,8 @@ export type QuotationStatus = (typeof QUOTATION_STATUSES)[number];
 export interface Quotation {
   id: string;
   number: string;
+  // Historical quotations can outlive a deleted customer document -
+  // populate("customer") then resolves to null.
   customer: Customer | null;
   items: LineItem[];
   status: QuotationStatus;

@@ -16,7 +16,10 @@ export type OrderFulfillmentStatus = (typeof ORDER_FULFILLMENT_STATUSES)[number]
 export interface Order {
   id: string;
   number: string;
-  customer: Customer;
+  // Historical orders can outlive a deleted customer document -
+  // populate("customer") then resolves to null. See the matching note on
+  // Quotation.customer in ./quotation.ts.
+  customer: Customer | null;
   items: LineItem[];
   status: OrderStatus;
   notes?: string;

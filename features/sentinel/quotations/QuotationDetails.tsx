@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Download, FileCheck2, Pencil, Printer, Send } from "lucide-react";
+import { FileCheck2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import DocumentPreview from "@/components/sentinel/sales/DocumentPreview";
+import { ShareDocumentMenu } from "@/components/sentinel/sales/ShareDocumentMenu";
 import { StockAvailabilityPanel } from "@/components/sentinel/sales/StockAvailabilityPanel";
 import { QuotationStatusBadge } from "@/components/sentinel/sales/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -70,10 +71,6 @@ export default function QuotationViewPage() {
     finally { setConverting(false); }
   };
 
-  const sendToCustomer = () => {
-    toast.success("Quotation queued to send (placeholder).");
-  };
-
   if (loading) return <Loading label="Loading quotation..." />;
   if (error || !quotation) {
     return <EmptyState title="Quotation not found" description={error ?? "This quotation may have been deleted."} />;
@@ -91,18 +88,16 @@ export default function QuotationViewPage() {
 
         actions={
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" onClick={sendToCustomer} size="sm" className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm">
-              <Send className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden xs:inline">Send</span>
-            </Button>
-            <Button variant="outline" onClick={() => window.print()} size="sm" className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm">
-              <Printer className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden xs:inline">Print</span>
-            </Button>
-            <Button variant="outline" onClick={() => window.print()} size="sm" className="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm">
-              <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden xs:inline">PDF</span>
-            </Button>
+            <ShareDocumentMenu
+              type="quotation"
+              id={quotation.id}
+              documentLabel="Quotation"
+              documentNumber={quotation.number}
+              customerName={quotation.customer?.name}
+              customerEmail={quotation.customer?.email || undefined}
+              triggerSize="sm"
+              triggerClassName="h-7 gap-1 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm"
+            />
             <Button
               nativeButton={false}
               render={<Link href={`/sentinel/quotations/${quotation.id}/edit`} />}

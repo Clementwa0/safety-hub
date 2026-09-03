@@ -2,8 +2,8 @@ import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/render
 
 import { formatKES, formatDate } from "@/lib/format";
 import { computeTotals, lineItemTotal } from "@/lib/sales";
-import type { Invoice, InvoiceStatus } from "@/types/sentinel/invoice";
 import type { PortalSettings } from "@/services/sentinel/settings.service";
+import type { NormalizedSalesDocument } from "@/types/sentinel/document-share";
 
 const COLORS = {
   primary: "#0F2D52",
@@ -223,38 +223,36 @@ const styles = StyleSheet.create({
   },
 });
 
-interface InvoicePdfDocumentProps {
-  invoice: Invoice;
-  effectiveStatus: InvoiceStatus;
-  balance: number;
+interface SalesDocumentPdfDocumentProps {
+  doc: NormalizedSalesDocument;
   settings: PortalSettings;
   logoDataUri?: string;
 }
 
-export function InvoicePdfDocument({
-  invoice,
-  effectiveStatus,
-  balance,
-  settings,
-  logoDataUri,
-}: InvoicePdfDocumentProps) {
-  const totals = computeTotals(invoice.items);
-  const { customer, items } = invoice;
+/**
+ * The single PDF layout for invoices, quotations, and sales orders. Every
+ * document type is normalized into `NormalizedSalesDocument`
+ * (modules/sales-documents/fetch.ts) before it reaches this component, so
+ * this file never branches on `doc.type` for layout - only the optional
+ * `paymentSummary` block (invoices only) is conditional.
+ */
+export function SalesDocumentPdfDocument({ doc, settings, logoDataUri }: SalesDocumentPdfDocumentProps) {
+  const totals = computeTotals(doc.items);
+  const { customer, items } = doc;
+  const customerName = customer?.name ?? "Deleted customer";
 
   return (
     <Document
-      title={`Invoice ${invoice.number}`}
+      title={`${doc.label} ${doc.number}`}
       author={settings.companyName}
-      subject={`Invoice for ${customer.name}`}
+      subject={`${doc.label} for ${customerName}`}
     >
       <Page size="A4" style={styles.page} wrap>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.eyebrow}>Invoice</Text>
-            <Text style={styles.documentNumber}>{invoice.number}</Text>
-            <Text style={styles.statusLine}>
-              Status: {effectiveStatus.replace(/_/g, " ")}
-            </Text>
+            <Text style={styles.eyebrow}>{doc.label}</Text>
+            <Text style={styles.documentNumber}>{doc.number}</Text>
+            <Text style={styles.statusLine}>Status: {doc.statusLabel}</Text>
           </View>
           <View style={styles.companyBlock}>
             {/* eslint-disable-next-line jsx-a11y/alt-text -- this is
@@ -275,21 +273,19 @@ export function InvoicePdfDocument({
         <View style={styles.metaRow}>
           <View style={styles.billTo}>
             <Text style={styles.billToLabel}>Bill to</Text>
-            <Text style={styles.billToName}>{customer.name || "-"}</Text>
-            {customer.company ? <Text style={styles.billToLine}>{customer.company}</Text> : null}
-            {customer.email ? <Text style={styles.billToLine}>{customer.email}</Text> : null}
-            {customer.phone ? <Text style={styles.billToLine}>{customer.phone}</Text> : null}
-            {customer.address ? <Text style={styles.billToLine}>{customer.address}</Text> : null}
+            <Text style={styles.billToName}>{customerName}</Text>
+            {customer?.company ? <Text style={styles.billToLine}>{customer.company}</Text> : null}
+            {customer?.email ? <Text style={styles.billToLine}>{customer.email}</Text> : null}
+            {customer?.phone ? <Text style={styles.billToLine}>{customer.phone}</Text> : null}
+            {customer?.address ? <Text style={styles.billToLine}>{customer.address}</Text> : null}
           </View>
           <View style={styles.datesBlock}>
-            <View style={styles.dateRow}>
-              <Text style={styles.dateLabel}>Issue date</Text>
-              <Text style={styles.dateValue}>{formatDate(invoice.issueDate)}</Text>
-            </View>
-            <View style={styles.dateRow}>
-              <Text style={styles.dateLabel}>Due date</Text>
-              <Text style={styles.dateValue}>{formatDate(invoice.dueDate)}</Text>
-            </View>
+            {doc.dates.map((date) => (
+              <View key={date.label} style={styles.dateRow}>
+                <Text style={styles.dateLabel}>{date.label}</Text>
+                <Text style={styles.dateValue}>{formatDate(date.value)}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
@@ -303,7 +299,7 @@ export function InvoicePdfDocument({
         </View>
 
         {items.length === 0 ? (
-          <Text style={styles.emptyRow}>No items on this invoice.</Text>
+          <Text style={styles.emptyRow}>No items on this {doc.label.toLowerCase()}.</Text>
         ) : (
           items.map((item) => (
             <View key={item.id} style={styles.tableRow} wrap={false}>
@@ -319,16 +315,16 @@ export function InvoicePdfDocument({
 
         <View style={styles.footerBlock} wrap={false}>
           <View style={styles.notesBlock}>
-            {invoice.notes ? (
+            {doc.notes ? (
               <>
                 <Text style={styles.notesLabel}>Notes</Text>
-                <Text style={styles.notesText}>{invoice.notes}</Text>
+                <Text style={styles.notesText}>{doc.notes}</Text>
               </>
             ) : null}
-            {invoice.terms ? (
+            {doc.terms ? (
               <>
                 <Text style={styles.notesLabel}>Terms</Text>
-                <Text style={styles.notesText}>{invoice.terms}</Text>
+                <Text style={styles.notesText}>{doc.terms}</Text>
               </>
             ) : null}
           </View>
@@ -351,28 +347,28 @@ export function InvoicePdfDocument({
               <Text style={styles.grandTotalValue}>{formatKES(totals.total)}</Text>
             </View>
 
-            <View style={styles.paymentSummary}>
-              <View style={styles.totalsRow}>
-                <Text style={styles.totalsLabel}>Amount paid</Text>
-                <Text style={styles.totalsValue}>{formatKES(invoice.amountPaid)}</Text>
+            {doc.paymentSummary ? (
+              <View style={styles.paymentSummary}>
+                <View style={styles.totalsRow}>
+                  <Text style={styles.totalsLabel}>Amount paid</Text>
+                  <Text style={styles.totalsValue}>{formatKES(doc.paymentSummary.amountPaid)}</Text>
+                </View>
+                <View style={styles.totalsRow}>
+                  <Text style={styles.totalsLabel}>Balance due</Text>
+                  <Text style={styles.totalsValue}>{formatKES(doc.paymentSummary.balance)}</Text>
+                </View>
               </View>
-              <View style={styles.totalsRow}>
-                <Text style={styles.totalsLabel}>Balance due</Text>
-                <Text style={styles.totalsValue}>{formatKES(balance)}</Text>
-              </View>
-            </View>
+            ) : null}
           </View>
         </View>
 
         <View style={styles.pageFooter} fixed>
           <Text>{settings.companyName}</Text>
-          <Text
-            render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
-          />
+          <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
         </View>
       </Page>
     </Document>
   );
 }
 
-export default InvoicePdfDocument;
+export default SalesDocumentPdfDocument;
