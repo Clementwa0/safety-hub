@@ -11,7 +11,7 @@
  */
 
 export const CLOUDINARY_CLOUD_NAME =
-  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim() ?? "";
+  process.env.CLOUDINARY_CLOUD_NAME?.trim() ?? "";
 
 /** Folders every module uploads into, so the Cloudinary media library stays tidy. */
 export const CLOUDINARY_FOLDERS = {
