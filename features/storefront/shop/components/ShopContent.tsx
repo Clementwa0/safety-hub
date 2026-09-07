@@ -225,7 +225,6 @@ export default function ShopContent() {
                   <ProductCard
                     key={product.id}
                     product={mapToProductCardItem(product)}
-                    featured={product.featured ?? false}
                     priority={index < 6}
                   />
                 ))}

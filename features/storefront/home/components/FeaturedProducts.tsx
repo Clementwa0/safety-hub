@@ -62,7 +62,6 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
               >
                 <ProductCard
                   product={product}
-                  featured={true}
                 />
               </div>
             ))}

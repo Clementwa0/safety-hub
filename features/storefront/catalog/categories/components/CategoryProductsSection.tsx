@@ -204,7 +204,7 @@ export default function CategoryProductsSection({
         <>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {visibleProducts.map((product) => (
-              <ProductCard key={product.id} product={product} featured={product.featured} />
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
 

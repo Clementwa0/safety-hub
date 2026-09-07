@@ -41,7 +41,6 @@ export interface ProductCardItem {
 
 export interface ProductCardProps {
   product: ProductCardItem;
-  featured?: boolean;
   priority?: boolean;
   compact?: boolean;
   showActionText?: boolean;
@@ -50,7 +49,6 @@ export interface ProductCardProps {
 
 export default function ProductCard({
   product,
-  featured,
   priority = false,
   compact = false,
   showActionText = false,
@@ -73,18 +71,39 @@ export default function ProductCard({
     brand,
     compareAtPrice,
     hasVariants,
+    featured: productFeatured,
     isNewArrival,
   } = product;
 
   const isVariant = Boolean(hasVariants);
-  const availableStock = getAvailableQuantity({ stock, reserved });
+
+  const availableStock = getAvailableQuantity({
+    stock,
+    reserved,
+  });
+
   const isInStock = availableStock > 0;
+
   const isOutOfStock = !isVariant && !isInStock;
-  const isLowStock = !isVariant && isInStock && availableStock < 10;
-  const isFeatured = featured ?? product.featured ?? false;
+
+  const isLowStock =
+    !isVariant && isInStock && availableStock < 10;
+
+  /**
+   * IMPORTANT:
+   * Featured status comes ONLY from the product data.
+   * No parent component can force a product to become featured.
+   */
+  const isFeatured = productFeatured === true;
+
+  /**
+   * New arrival status also comes ONLY from the product data.
+   */
+  const isNew = isNewArrival === true;
 
   const isDiscounted =
-    typeof compareAtPrice === "number" && compareAtPrice > price;
+    typeof compareAtPrice === "number" &&
+    compareAtPrice > price;
 
   const discount = isDiscounted
     ? getDiscountPercent(price, compareAtPrice)
@@ -93,6 +112,7 @@ export default function ProductCard({
   const productHref = `/products/${id}`;
 
   const contentSpacing = compact ? "p-1.5" : "p-3";
+
   const gap = compact ? "gap-0.5" : "gap-1";
 
   const nameSize = compact
@@ -103,11 +123,17 @@ export default function ProductCard({
     ? "px-1 py-0.5 text-[6px]"
     : "px-2 py-0.5 text-[8px]";
 
-  const priceSize = compact ? "text-sm" : "text-base sm:text-lg";
+  const priceSize = compact
+    ? "text-sm"
+    : "text-base sm:text-lg";
 
-  const comparePriceSize = compact ? "text-[9px]" : "text-xs sm:text-sm";
+  const comparePriceSize = compact
+    ? "text-[9px]"
+    : "text-xs sm:text-sm";
 
-  const labelSize = compact ? "text-[7px]" : "text-[8px]";
+  const labelSize = compact
+    ? "text-[7px]"
+    : "text-[8px]";
 
   const handleAction = async () => {
     if (isVariant) {
@@ -143,8 +169,15 @@ export default function ProductCard({
 
   return (
     <motion.article
-      whileHover={reduceMotion ? undefined : { y: -2 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      whileHover={
+        reduceMotion
+          ? undefined
+          : { y: -2 }
+      }
+      transition={{
+        duration: 0.2,
+        ease: "easeOut",
+      }}
       className={cn(
         "group flex h-full flex-col overflow-hidden rounded-lg",
         "border bg-card shadow-sm",
@@ -159,11 +192,9 @@ export default function ProductCard({
         className="block flex-1"
       >
         {/* Product image */}
-        {/* Product image */}
         <div
           className={cn(
             "relative overflow-hidden bg-muted/40",
-            // Responsive image area
             compact
               ? "h-28 sm:h-32 md:h-36"
               : "h-36 sm:h-44 md:h-52 lg:h-56 xl:h-60",
@@ -175,32 +206,40 @@ export default function ProductCard({
             fill
             preset="card"
             priority={priority}
-            loading={priority ? undefined : "lazy"}
+            loading={
+              priority
+                ? undefined
+                : "lazy"
+            }
             quality={compact ? 75 : 80}
             sizes="
-      (max-width: 480px) 42vw,
-      (max-width: 640px) 40vw,
-      (max-width: 768px) 30vw,
-      (max-width: 1024px) 22vw,
-      (max-width: 1280px) 18vw,
-      16vw
-    "
+              (max-width: 480px) 42vw,
+              (max-width: 640px) 40vw,
+              (max-width: 768px) 30vw,
+              (max-width: 1024px) 22vw,
+              (max-width: 1280px) 18vw,
+              16vw
+            "
             className={cn(
               "object-contain",
               "p-2 sm:p-3 md:p-4",
               "transition-transform duration-500",
-              !reduceMotion && "group-hover:scale-[1.03]",
+              !reduceMotion &&
+                "group-hover:scale-[1.03]",
             )}
           />
 
-          {/* Badges */}
+          {/* Product badges */}
           <div className="pointer-events-none absolute inset-x-1 top-1 flex items-start justify-between gap-0.5">
+            {/* Left badges */}
             <div className="flex max-w-[60%] flex-wrap gap-0.5">
+              {/* Featured badge */}
               {isFeatured && (
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "rounded font-semibold uppercase leading-none tracking-wide",
+                    "rounded font-semibold uppercase",
+                    "leading-none tracking-wide",
                     badgeSize,
                   )}
                 >
@@ -208,10 +247,14 @@ export default function ProductCard({
                 </Badge>
               )}
 
-              {isNewArrival && (
+              {/* New arrival badge */}
+              {isNew && (
                 <Badge
                   className={cn(
-                    "rounded border-0 bg-blue-500 font-semibold uppercase leading-none tracking-wide text-white hover:bg-blue-500",
+                    "rounded border-0 bg-blue-500",
+                    "font-semibold uppercase leading-none",
+                    "tracking-wide text-white",
+                    "hover:bg-blue-500",
                     badgeSize,
                   )}
                 >
@@ -220,12 +263,15 @@ export default function ProductCard({
               )}
             </div>
 
+            {/* Right badges */}
             <div className="flex max-w-[40%] flex-wrap justify-end gap-0.5">
+              {/* Out of stock */}
               {isOutOfStock && (
                 <Badge
                   variant="destructive"
                   className={cn(
-                    "rounded font-semibold uppercase leading-none tracking-wide",
+                    "rounded font-semibold uppercase",
+                    "leading-none tracking-wide",
                     badgeSize,
                   )}
                 >
@@ -233,25 +279,32 @@ export default function ProductCard({
                 </Badge>
               )}
 
-              {isDiscounted && discount !== null && (
-                <Badge
-                  variant="destructive"
-                  className={cn(
-                    "flex items-center gap-1 rounded-md font-bold uppercase leading-none tracking-wide",
-                    compact
-                      ? "px-1.5 py-1 text-[8px]"
-                      : "px-2.5 py-1.5 text-[10px]",
-                  )}
-                >
-                  <CiDiscount1
+              {/* Discount */}
+              {isDiscounted &&
+                discount !== null && (
+                  <Badge
+                    variant="destructive"
                     className={cn(
-                      "shrink-0",
-                      compact ? "h-3 w-3" : "h-3.5 w-3.5",
+                      "flex items-center gap-1 rounded-md",
+                      "font-bold uppercase leading-none",
+                      "tracking-wide",
+                      compact
+                        ? "px-1.5 py-1 text-[8px]"
+                        : "px-2.5 py-1.5 text-[10px]",
                     )}
-                  />
-                  -{discount}%
-                </Badge>
-              )}
+                  >
+                    <CiDiscount1
+                      className={cn(
+                        "shrink-0",
+                        compact
+                          ? "h-3 w-3"
+                          : "h-3.5 w-3.5",
+                      )}
+                    />
+
+                    -{discount}%
+                  </Badge>
+                )}
             </div>
           </div>
 
@@ -267,19 +320,31 @@ export default function ProductCard({
                 "group-hover:opacity-100",
               )}
             >
-              <AiOutlineEye className="text-[10px]" aria-hidden="true" />
+              <AiOutlineEye
+                className="text-[10px]"
+                aria-hidden="true"
+              />
+
               Quick View
             </span>
           </div>
         </div>
 
         {/* Product information */}
-        <div className={cn("flex flex-col", contentSpacing, gap)}>
+        <div
+          className={cn(
+            "flex flex-col",
+            contentSpacing,
+            gap,
+          )}
+        >
           <div className="flex min-w-0 items-center justify-between gap-1">
             {brand ? (
               <p
                 className={cn(
-                  "min-w-0 truncate font-semibold uppercase tracking-wider text-muted-foreground/60",
+                  "min-w-0 truncate font-semibold",
+                  "uppercase tracking-wider",
+                  "text-muted-foreground/60",
                   labelSize,
                 )}
               >
@@ -291,7 +356,8 @@ export default function ProductCard({
 
             <p
               className={cn(
-                "shrink-0 truncate font-medium text-muted-foreground/50",
+                "shrink-0 truncate font-medium",
+                "text-muted-foreground/50",
                 labelSize,
               )}
             >
@@ -352,7 +418,9 @@ export default function ProductCard({
             "shrink-0 rounded-full",
             "bg-sky-700 text-secondary-foreground",
             "hover:bg-secondary/90",
-            compact ? "h-7 w-7" : "px-2",
+            compact
+              ? "h-7 w-7"
+              : "px-2",
             "active:scale-95",
           )}
         >
@@ -363,7 +431,11 @@ export default function ProductCard({
             />
           ) : (
             <FaCartPlus
-              className={compact ? "text-[9px]" : "text-xs"}
+              className={
+                compact
+                  ? "text-[9px]"
+                  : "text-xs"
+              }
               aria-hidden="true"
             />
           )}
@@ -402,8 +474,13 @@ function StockStatus({
   stock: number;
   compact: boolean;
 }) {
-  const textSize = compact ? "text-[7px]" : "text-[10px]";
-  const iconSize = compact ? "text-[7px]" : "text-[9px]";
+  const textSize = compact
+    ? "text-[7px]"
+    : "text-[10px]";
+
+  const iconSize = compact
+    ? "text-[7px]"
+    : "text-[9px]";
 
   if (isVariant) {
     return (
@@ -412,7 +489,8 @@ function StockStatus({
         className={cn(
           "w-fit rounded border-blue-200 bg-blue-50",
           "font-semibold text-blue-700",
-          "dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300",
+          "dark:border-blue-900 dark:bg-blue-950/30",
+          "dark:text-blue-300",
           textSize,
         )}
       >
@@ -430,6 +508,7 @@ function StockStatus({
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0"
           />
         </svg>
+
         Multiple sizes
       </Badge>
     );
@@ -437,7 +516,12 @@ function StockStatus({
 
   if (!isInStock) {
     return (
-      <span className={cn("font-medium text-destructive", textSize)}>
+      <span
+        className={cn(
+          "font-medium text-destructive",
+          textSize,
+        )}
+      >
         Out of Stock
       </span>
     );
@@ -447,16 +531,22 @@ function StockStatus({
     return (
       <span
         className={cn(
-          "flex items-center gap-0.5 font-medium text-orange-600",
+          "flex items-center gap-0.5",
+          "font-medium text-orange-600",
           textSize,
         )}
       >
         <FaTriangleExclamation
-          className={cn("shrink-0", iconSize)}
+          className={cn(
+            "shrink-0",
+            iconSize,
+          )}
           aria-hidden="true"
         />
 
-        {compact ? `${stock} left` : `Only ${stock} left`}
+        {compact
+          ? `${stock} left`
+          : `Only ${stock} left`}
       </span>
     );
   }
@@ -464,11 +554,19 @@ function StockStatus({
   return (
     <span
       className={cn(
-        "flex items-center gap-0.5 font-medium text-green-600",
+        "flex items-center gap-0.5",
+        "font-medium text-green-600",
         textSize,
       )}
     >
-      <FaCircleCheck className={cn("shrink-0", iconSize)} aria-hidden="true" />
+      <FaCircleCheck
+        className={cn(
+          "shrink-0",
+          iconSize,
+        )}
+        aria-hidden="true"
+      />
+
       In Stock
     </span>
   );
@@ -490,13 +588,15 @@ function Price({
   comparePriceSize: string;
 }) {
   const isDiscounted =
-    typeof compareAtPrice === "number" && compareAtPrice > price;
+    typeof compareAtPrice === "number" &&
+    compareAtPrice > price;
 
   return (
     <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5">
       <span
         className={cn(
-          "whitespace-nowrap font-bold leading-none tracking-tight text-secondary",
+          "whitespace-nowrap font-bold leading-none",
+          "tracking-tight text-secondary",
           priceSize,
         )}
       >
