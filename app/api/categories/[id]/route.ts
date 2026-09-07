@@ -93,7 +93,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     }
 
     try {
-      await assertCategoryDeletable(category._id as string);
+      await assertCategoryDeletable(String(category._id));
     } catch (error) {
       if (error instanceof CategoryReferencedError) {
         return apiError(error.message, [], 409);

@@ -83,7 +83,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     }
 
     try {
-      await assertCustomerDeletable(customer._id as string);
+      await assertCustomerDeletable(String(customer._id));
     } catch (error) {
       if (error instanceof CustomerReferencedError) {
         return apiError(error.message, [], 409);
