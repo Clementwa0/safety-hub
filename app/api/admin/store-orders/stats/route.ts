@@ -2,6 +2,7 @@ import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { StoreOrderModel, STORE_ORDER_STATUSES } from "@/lib/models/StoreOrder";
 import { requireStaff } from "@/lib/auth";
+import { STORE_ORDER_REVENUE_MATCH } from "@/modules/analytics/revenue-recognition";
 
 export async function GET() {
   try {
@@ -16,8 +17,16 @@ export async function GET() {
       StoreOrderModel.aggregate<{ _id: string; count: number }>([
         { $group: { _id: "$status", count: { $sum: 1 } } },
       ]),
+      // Uses the same delivered-AND-paid definition as the Sales
+      // Dashboard's "Revenue Recognized" KPI (see
+      // modules/analytics/revenue-recognition.ts) — this endpoint used
+      // to match on `{ paymentStatus: "paid" }` alone, which counted a
+      // paid-but-not-yet-delivered order (and even a paid order later
+      // cancelled) as revenue here while the dashboard correctly left
+      // it out, so the two screens disagreed on the same underlying
+      // data.
       StoreOrderModel.aggregate<{ _id: null; revenue: number }>([
-        { $match: { paymentStatus: "paid" } },
+        { $match: STORE_ORDER_REVENUE_MATCH },
         { $group: { _id: null, revenue: { $sum: "$total" } } },
       ]),
       StoreOrderModel.countDocuments(),

@@ -25,12 +25,7 @@ type SafeImageProps = Omit<ImageProps, "src" | "onError"> & {
   transform?: CloudinaryTransformOptions;
 };
 
-/**
- * Every image in the app goes through here. Two jobs:
- *   1. Fall back to the local placeholder when a URL is missing or broken.
- *   2. Route Cloudinary URLs through f_auto/q_auto + a per-slot width so we
- *      never ship a 4MB original into a 320px card.
- */
+
 export function SafeImage({ src, alt, preset, transform, ...props }: SafeImageProps) {
   const [failed, setFailed] = useState(false);
 
@@ -61,7 +56,6 @@ export function SafeImage({ src, alt, preset, transform, ...props }: SafeImagePr
         {...props}
         src={cloudinaryUrl(src, options)}
         alt={alt}
-        // Cloudinary already resized/optimised; double-optimising just adds latency.
         unoptimized
         onError={() => setFailed(true)}
       />

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NextRequest } from "next/server";
 
 import { apiError, apiSuccess } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { requireStaff } from "@/lib/auth";
 import { CLOUDINARY_FOLDERS, type CloudinaryFolderKey } from "@/lib/cloudinary";
 import { getCloudinaryServerConfig, signCloudinaryParams } from "@/lib/cloudinary/sign.server";
@@ -20,6 +21,9 @@ const bodySchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    const limited = enforceRateLimit(request, "cloudinary-sign", { limit: 30, windowMs: 60_000 });
+    if (limited) return limited;
+
     const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);

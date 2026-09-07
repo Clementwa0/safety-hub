@@ -5,7 +5,7 @@ export interface IOrderLineItem {
   name: string;
   description?: string;
   /** Present only when this line is a specific size/variant of a
-   *  variant-enabled product - matches `IProductVariant.sku`/`size` on the
+   *  variant-enabled product — matches `IProductVariant.sku`/`size` on the
    *  Product document. Absent for simple (non-variant) products. */
   variantSku?: string;
   size?: string;
@@ -30,7 +30,7 @@ export interface IOrder extends Document {
   /** True only when this Order came from convertQuotationToOrder, which placed a
    *  `Product.reserved` hold for its items. Direct-created orders (POST /api/orders)
    *  never reserve, so their "shipped" transition must decrement stock without also
-   *  touching `reserved` - this flag is how that transition tells the two cases apart. */
+   *  touching `reserved` — this flag is how that transition tells the two cases apart. */
   reservedStock: boolean;
   fulfillmentStatus: "AVAILABLE" | "PARTIALLY_AVAILABLE" | "BACKORDERED";
   createdAt: Date;
@@ -59,8 +59,14 @@ const orderSchema = new Schema<IOrder>(
       default: "pending",
     },
     notes: { type: String },
-    quotationId: { type: Schema.Types.ObjectId, ref: "Quotation" },
-    invoiceId: { type: Schema.Types.ObjectId, ref: "Invoice" },
+    // `unique + sparse`: many Orders may have neither field set, but at
+    // most one Order may ever point at a given Quotation/Invoice — this
+    // is what keeps the Quotation -> Order -> Invoice chain a true 1:1
+    // relationship even against a direct POST /api/orders call that
+    // supplies someone else's quotationId/invoiceId, not just against
+    // the normal conversion routes.
+    quotationId: { type: Schema.Types.ObjectId, ref: "Quotation", unique: true, sparse: true },
+    invoiceId: { type: Schema.Types.ObjectId, ref: "Invoice", unique: true, sparse: true },
     stockDecremented: { type: Boolean, default: false },
     reservedStock: { type: Boolean, default: false },
     fulfillmentStatus: {

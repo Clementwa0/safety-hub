@@ -3,11 +3,11 @@ import jwt from "jsonwebtoken";
 import type { SalesDocumentType } from "@/types/sentinel/document-share";
 
 // Secure document links (WhatsApp / copy link) don't require the recipient
-// to be signed in to Sentinel, so they're valid for a while rather than
-// just the current session - 30 days comfortably covers an invoice's
-// payment terms or a quotation's validity window without staying open
-// forever.
-const SHARE_TOKEN_EXPIRY = "30d";
+// These are bearer credentials in a URL, so a shorter lifetime materially
+// reduces the impact of accidental forwarding, browser history, or logs.
+const SHARE_TOKEN_EXPIRY = "7d";
+const SHARE_TOKEN_ISSUER = "safety-hub";
+const SHARE_TOKEN_AUDIENCE = "sales-document-pdf";
 
 interface SharePayload {
   docType: SalesDocumentType;
@@ -15,20 +15,23 @@ interface SharePayload {
 }
 
 function getShareTokenSecret(): string {
-  // JWT_SECRET is reserved for exactly this kind of standalone signed
-  // token; AUTH_SECRET is Auth.js's own signing key and is only used as a
-  // fallback so this still works in environments that haven't set
-  // JWT_SECRET yet.
-  const secret = process.env.JWT_SECRET || process.env.AUTH_SECRET;
+  // This must be distinct from Auth.js's session key: compromising or
+  // rotating one credential must not affect the other security boundary.
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error("Missing JWT_SECRET (or AUTH_SECRET) - required to sign document share links.");
+    throw new Error("Missing JWT_SECRET - required to sign document share links.");
   }
   return secret;
 }
 
 export function signDocumentShareToken(docType: SalesDocumentType, docId: string): string {
   const payload: SharePayload = { docType, docId };
-  return jwt.sign(payload, getShareTokenSecret(), { expiresIn: SHARE_TOKEN_EXPIRY });
+  return jwt.sign(payload, getShareTokenSecret(), {
+    algorithm: "HS256",
+    expiresIn: SHARE_TOKEN_EXPIRY,
+    issuer: SHARE_TOKEN_ISSUER,
+    audience: SHARE_TOKEN_AUDIENCE,
+  });
 }
 
 /**
@@ -42,7 +45,11 @@ export function verifyDocumentShareToken(
   docId: string,
 ): boolean {
   try {
-    const decoded = jwt.verify(token, getShareTokenSecret()) as jwt.JwtPayload & Partial<SharePayload>;
+    const decoded = jwt.verify(token, getShareTokenSecret(), {
+      algorithms: ["HS256"],
+      issuer: SHARE_TOKEN_ISSUER,
+      audience: SHARE_TOKEN_AUDIENCE,
+    }) as jwt.JwtPayload & Partial<SharePayload>;
     return decoded.docType === docType && decoded.docId === docId;
   } catch {
     return false;

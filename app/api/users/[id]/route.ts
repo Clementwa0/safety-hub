@@ -4,11 +4,12 @@ import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { hashPassword, requireAdmin, serializeUser } from "@/lib/auth";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 const updateUserSchema = z.object({
   name: z.string().trim().min(2).optional(),
   status: z.enum(["active", "suspended"]).optional(),
-  // Empty/omitted password means "leave it unchanged" - only hash and
+  // Empty/omitted password means "leave it unchanged" — only hash and
   // save a new one when a non-empty value is actually sent.
   password: z.string().min(6).optional().or(z.literal("")),
 });
@@ -30,7 +31,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     await connectToDatabase();
     // Scoped to role: admin/staff so this endpoint can't be used to edit
-    // an ordinary storefront customer's account - they share the same
+    // an ordinary storefront customer's account — they share the same
     // collection post-unification, but this is Sentinel user management.
     const user = await StorefrontCustomerModel.findOne({
       _id: id,
@@ -49,6 +50,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiError("The admin account can't be suspended.", [], 400);
     }
 
+    const before = { name: user.name, status: user.status };
+    let passwordChanged = false;
+
     if (parsed.data.name) {
       user.name = parsed.data.name;
     }
@@ -57,9 +61,26 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
     if (parsed.data.password) {
       user.passwordHash = await hashPassword(parsed.data.password);
+      passwordChanged = true;
     }
 
     await user.save();
+
+    // Never log `password`/`passwordHash` — see the redaction guard in
+    // modules/audit/audit.service.ts, which strips them defensively even
+    // if a caller passed them by mistake. Here we simply never put them
+    // in metadata to begin with, and record a password change as a
+    // boolean flag rather than the value itself.
+    const after = { name: user.name, status: user.status };
+    if (JSON.stringify(before) !== JSON.stringify(after) || passwordChanged) {
+      await recordAuditEvent({
+        actor: admin.name || admin.email || "system",
+        action: "user_mutated",
+        entity: "User",
+        entityId: String(user._id),
+        metadata: { before, after, passwordChanged },
+      });
+    }
 
     return apiSuccess(serializeUser(user.toObject()), "User updated");
   } catch (error) {
@@ -95,6 +116,14 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     }
 
     await user.deleteOne();
+
+    await recordAuditEvent({
+      actor: admin.name || admin.email || "system",
+      action: "user_mutated",
+      entity: "User",
+      entityId: String(user._id),
+      metadata: { deleted: true, email: user.email, role: user.role },
+    });
 
     return apiSuccess(null, "User deleted");
   } catch (error) {

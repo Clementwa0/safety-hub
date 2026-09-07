@@ -9,6 +9,7 @@ import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/sch
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { createWithDocumentNumber } from "@/lib/db/document-number";
 import { snapshotLineItemAvailability } from "@/modules/inventory/availability";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 const quotationSchema = z
   .object({
@@ -103,6 +104,14 @@ export async function POST(request: NextRequest) {
       notes: parsed.data.notes,
       terms: parsed.data.terms,
     }));
+
+    await recordAuditEvent({
+      actor: user.name || user.email || "system",
+      action: "quotation_mutated",
+      entity: "Quotation",
+      entityId: String(quotation._id),
+      metadata: { created: true, number: quotation.number, status: quotation.status },
+    });
 
     return apiSuccess(serializeDoc(quotation.toObject()), "Quotation created");
   } catch (error) {

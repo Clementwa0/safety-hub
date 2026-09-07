@@ -18,16 +18,22 @@ import { linkGuestOrdersToCustomer } from "@/modules/checkout/account-linking";
 import { UserModel } from "@/lib/models/User";
 
 const providers = [
+  // `allowDangerousEmailAccountLinking` is deliberately left at its default
+  // (false). With it enabled, anyone who can get an email verified with
+  // *any* OAuth provider (many let you claim an unverified/alias address)
+  // could sign in and be auto-linked to an existing account with that same
+  // email - including one originally created via Credentials or a
+  // different provider - and inherit its role and history. Without it,
+  // the adapter refuses to link and surfaces an `OAuthAccountNotLinked`
+  // error instead, which is the safe failure mode here.
   Google({
     clientId: process.env.AUTH_GOOGLE_ID!,
     clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-    allowDangerousEmailAccountLinking: true,
   }),
 
   Facebook({
     clientId: process.env.AUTH_FACEBOOK_ID!,
     clientSecret: process.env.AUTH_FACEBOOK_SECRET!,
-    allowDangerousEmailAccountLinking: true,
   }),
 
   Credentials({

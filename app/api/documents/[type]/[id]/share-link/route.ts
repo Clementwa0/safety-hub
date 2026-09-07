@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { apiError, apiSuccess } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { connectToDatabase } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { loadSalesDocument } from "@/modules/sales-documents/fetch";
@@ -10,13 +11,16 @@ import { parseSalesDocumentType } from "@/types/sentinel/document-share";
 /**
  * Mints the secure, token-authenticated link used by "Copy secure link"
  * and the WhatsApp share message. Staff-only to issue - once minted, the
- * link itself is what carries access (see pdf/route.ts), valid for 30 days.
+ * link itself is what carries access (see pdf/route.ts), valid for 7 days.
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ type: string; id: string }> },
 ) {
   try {
+    const limited = enforceRateLimit(request, "document-share-link", { limit: 30, windowMs: 60_000 });
+    if (limited) return limited;
+
     const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);

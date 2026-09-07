@@ -5,13 +5,24 @@ import { nextDocumentNumber } from "@/lib/sales";
 const MAX_ATTEMPTS = 5;
 
 function isDuplicateNumberError(error: unknown): boolean {
+  return isDuplicateKeyErrorOn(error, "number");
+}
+
+/**
+ * True when `error` is a MongoDB duplicate-key error (code 11000) on the
+ * given field. Generalizes the `number`-specific check above so other
+ * unique-index backstops (e.g. `Invoice.orderId`, `Order.quotationId`)
+ * can distinguish "someone else's write won this race" from a genuine
+ * server error using the same shape of check.
+ */
+export function isDuplicateKeyErrorOn(error: unknown, field: string): boolean {
   return (
     typeof error === "object" &&
     error !== null &&
     "code" in error &&
     (error as { code?: number }).code === 11000 &&
     "keyPattern" in error &&
-    Boolean((error as { keyPattern?: Record<string, unknown> }).keyPattern?.number)
+    Boolean((error as { keyPattern?: Record<string, unknown> }).keyPattern?.[field])
   );
 }
 

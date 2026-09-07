@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db";
 import { CategoryModel } from "@/lib/models/Category";
 import { ProductModel } from "@/lib/models/Product";
 import { requireStaff } from "@/lib/auth";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 const categorySchema = z.object({
   name: z.string().trim().min(3),
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
       ]),
     ]);
 
-    // The aggregate groups by Product.category, which is an ObjectId - key
+    // The aggregate groups by Product.category, which is an ObjectId — key
     // the lookup map by the stringified id, not by category name.
     const countByCategory = new Map(counts.map((entry) => [String(entry._id), entry.count]));
     const payload = categories.map((category) =>
@@ -82,6 +83,14 @@ export async function POST(request: NextRequest) {
     const category = await CategoryModel.create({
       ...parsed.data,
       slug,
+    });
+
+    await recordAuditEvent({
+      actor: user.name || user.email || "system",
+      action: "category_mutated",
+      entity: "Category",
+      entityId: String(category._id),
+      metadata: { created: true, name: category.name },
     });
 
     return apiSuccess(serializeDoc(category.toObject()), "Category created");

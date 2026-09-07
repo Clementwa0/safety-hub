@@ -9,6 +9,13 @@ import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/sch
 import { findOrCreateCustomer } from "@/modules/customers/customers";
 import { deleteDraftInvoice, translateInvoiceServiceError } from "@/modules/invoicing/invoice.service";
 import { canEditInvoiceItems } from "@/modules/invoicing/invoice-status";
+import { canMutateCommercialReference } from "@/modules/orders/order-status";
+import {
+  assertOrderBelongsToCustomer,
+  assertQuotationBelongsToCustomer,
+  CommercialReferenceError,
+} from "@/modules/orders/commercial-references";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 // "paid" and "partially_paid" are deliberately excluded here - those are
 // derived exclusively from the Payment ledger via
@@ -87,6 +94,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiError("Invoice not found", [], 404);
     }
 
+    const previousStatus = invoice.status;
+
     // See the identical comment in quotations/[id]/route.ts's PATCH: a
     // partial payload has to be checked against whichever date isn't
     // included, taken from the existing document, not from `undefined`.
@@ -101,7 +110,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // even limited to draft/unpaid/cancelled, setting status back to
     // "draft" or "unpaid" on an invoice that actually has money against
     // it would make the stored status lie about the real balance (the
-    // ledger - Invoice.amountPaid - is unaffected by this PATCH, so the
+    // ledger — Invoice.amountPaid — is unaffected by this PATCH, so the
     // two would silently disagree). Cancelling is unaffected by this
     // check: a partially paid invoice can still be cancelled, preserving
     // both its payment history and its true amountPaid.
@@ -119,36 +128,88 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     if (parsed.data.items && !canEditInvoiceItems(invoice.status)) {
-      return apiError("Issued invoices cannot change their commercial line items", [], 400);
+      return apiError("Issued invoices cannot change their commercial line items", [], 409);
+    }
+
+    // Customer is as much a commercial field as items/pricing — an
+    // issued invoice's billing party can't be swapped out after the
+    // fact any more than its line items can. Reuses the same
+    // draft-only gate as the items check above.
+    if (parsed.data.customer !== undefined && !canEditInvoiceItems(invoice.status)) {
+      return apiError("Issued invoices cannot change their customer", [], 409);
     }
 
     if (
       parsed.data.quotationId !== undefined &&
-      invoice.quotationId &&
-      String(invoice.quotationId) !== parsed.data.quotationId
+      !canMutateCommercialReference(
+        invoice.quotationId ? String(invoice.quotationId) : undefined,
+        parsed.data.quotationId,
+      )
     ) {
-      return apiError("Invoice quotation references cannot be changed after issuance", [], 400);
+      return apiError("Invoice quotation references cannot be changed after issuance", [], 409);
     }
 
     if (
       parsed.data.orderId !== undefined &&
-      invoice.orderId &&
-      String(invoice.orderId) !== parsed.data.orderId
+      !canMutateCommercialReference(
+        invoice.orderId ? String(invoice.orderId) : undefined,
+        parsed.data.orderId,
+      )
     ) {
-      return apiError("Invoice order references cannot be changed after issuance", [], 400);
+      return apiError("Invoice order references cannot be changed after issuance", [], 409);
     }
 
+    let resolvedCustomerId: typeof invoice.customer | undefined;
     if (parsed.data.customer) {
       if (typeof parsed.data.customer === "string") {
         const customer = await CustomerModel.findById(parsed.data.customer);
         if (!customer) {
           return apiError("Customer not found", [], 404);
         }
-        invoice.customer = customer._id;
+        resolvedCustomerId = customer._id;
       } else {
         const customer = await findOrCreateCustomer(parsed.data.customer);
-        invoice.customer = customer._id;
+        resolvedCustomerId = customer._id;
       }
+    }
+
+    // The customer this invoice will end up with once this PATCH
+    // applies — used to validate any quotation/order link, new or
+    // already established, actually agrees with it.
+    const effectiveCustomerId = resolvedCustomerId ?? invoice.customer;
+
+    try {
+      // A quotationId/orderId being set on this invoice for the first
+      // time must reference a real document belonging to the same
+      // customer — otherwise this invoice could be linked to someone
+      // else's quotation or order.
+      if (parsed.data.quotationId !== undefined && !invoice.quotationId) {
+        await assertQuotationBelongsToCustomer(parsed.data.quotationId, effectiveCustomerId);
+      }
+      if (parsed.data.orderId !== undefined && !invoice.orderId) {
+        await assertOrderBelongsToCustomer(parsed.data.orderId, effectiveCustomerId);
+      }
+
+      // A customer change on an invoice that's already linked to a
+      // quotation/order must not silently detach it from that link's
+      // real customer.
+      if (resolvedCustomerId && (invoice.quotationId || invoice.orderId)) {
+        if (invoice.quotationId) {
+          await assertQuotationBelongsToCustomer(String(invoice.quotationId), resolvedCustomerId);
+        }
+        if (invoice.orderId) {
+          await assertOrderBelongsToCustomer(String(invoice.orderId), resolvedCustomerId);
+        }
+      }
+    } catch (error) {
+      if (error instanceof CommercialReferenceError) {
+        return apiError(error.message, [], error.status);
+      }
+      throw error;
+    }
+
+    if (resolvedCustomerId) {
+      invoice.customer = resolvedCustomerId;
     }
 
     Object.assign(invoice, parsed.data, {
@@ -157,6 +218,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : invoice.dueDate,
     });
     await invoice.save();
+
+    if (previousStatus !== invoice.status) {
+      await recordAuditEvent({
+        actor: user.name || user.email || "system",
+        action: "invoice_mutated",
+        entity: "Invoice",
+        entityId: String(invoice._id),
+        metadata: { before: { status: previousStatus }, after: { status: invoice.status } },
+      });
+    }
 
     return apiSuccess(serializeDoc(invoice.toObject()), "Invoice updated");
   } catch (error) {
@@ -187,7 +258,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     const { id } = await params;
     await connectToDatabase();
 
-    await deleteDraftInvoice(id);
+    await deleteDraftInvoice(id, user.name || user.email || "system");
 
     return apiSuccess(null, "Invoice deleted");
   } catch (error) {

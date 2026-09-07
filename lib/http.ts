@@ -13,11 +13,6 @@ function buildHeaders(init?: RequestInit): HeadersInit {
   return headers;
 }
 
-/**
- * Combines the envelope's top-level message with any field-level
- * validation errors the server returned, e.g. "Validation failed: String
- * must contain at least 1 character" instead of just "Validation failed".
- */
 function buildErrorMessage(payload: ApiEnvelope<unknown> | null): string {
   const base = payload?.message || "Request failed";
   if (payload?.errors?.length) {

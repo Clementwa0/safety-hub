@@ -4,6 +4,7 @@ import { apiError, apiSuccess } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { UserModel as StorefrontCustomerModel } from "@/lib/models/User";
 import { hashPassword, requireAdmin, serializeUser } from "@/lib/auth";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 const createUserSchema = z.object({
   name: z.string().trim().min(2),
@@ -14,7 +15,7 @@ const createUserSchema = z.object({
 
 /**
  * Sentinel user management. Reads/writes the same unified `UserModel`
- * (`storefront_customers` collection) as everything else - that
+ * (`storefront_customers` collection) as everything else — that
  * collection also holds ordinary storefront customers, who must never
  * show up in (or be created through) this list, so every query here is
  * scoped to `role: { $in: ["admin", "staff"] }`.
@@ -23,10 +24,10 @@ const createUserSchema = z.object({
  * layer in lib/models/User.ts), but any number of staff accounts. Staff
  * have the same Sentinel access as admin except Users, Settings, and
  * Reports (gated by requireAdmin() on those specific routes/pages).
- * This endpoint only ever creates `role: "staff"` - the admin account is
+ * This endpoint only ever creates `role: "staff"` — the admin account is
  * provisioned out of band via `scripts/admin/create-admin.ts` and can't
  * be created here. Only an already-authenticated admin can reach this
- * route (requireAdmin() below) - there's no anonymous bootstrap path.
+ * route (requireAdmin() below) — there's no anonymous bootstrap path.
  */
 export async function GET() {
   try {
@@ -79,6 +80,14 @@ export async function POST(request: NextRequest) {
       passwordHash,
       role: parsed.data.role,
       status: "active",
+    });
+
+    await recordAuditEvent({
+      actor: admin.name || admin.email || "system",
+      action: "user_mutated",
+      entity: "User",
+      entityId: String(user._id),
+      metadata: { created: true, email: normalizedEmail, role: parsed.data.role },
     });
 
     return apiSuccess(serializeUser(user.toObject()), "Staff account created");

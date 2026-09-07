@@ -8,8 +8,14 @@ import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
-import { createWithDocumentNumber } from "@/lib/db/document-number";
+import { createWithDocumentNumber, isDuplicateKeyErrorOn } from "@/lib/db/document-number";
 import { reserveAvailableStock } from "@/modules/inventory/inventory.service";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
+import {
+  assertInvoiceBelongsToCustomer,
+  assertQuotationBelongsToCustomer,
+  CommercialReferenceError,
+} from "@/modules/orders/commercial-references";
 
 const orderSchema = z.object({
   customer: customerInputSchema,
@@ -82,6 +88,27 @@ export async function POST(request: NextRequest) {
       customer = await findOrCreateCustomer(parsed.data.customer);
     }
 
+    // A direct order-creation request can supply a quotationId/invoiceId
+    // just like the quotation-conversion and order-to-invoice flows do —
+    // so it must be held to the same relationship rules: the referenced
+    // document has to actually exist, and it has to belong to the same
+    // customer this order is being created for. Without this, anyone
+    // could POST /api/orders with someone else's quotationId and splice
+    // an unrelated order into that quotation's history.
+    try {
+      if (parsed.data.quotationId) {
+        await assertQuotationBelongsToCustomer(parsed.data.quotationId, customer._id);
+      }
+      if (parsed.data.invoiceId) {
+        await assertInvoiceBelongsToCustomer(parsed.data.invoiceId, customer._id);
+      }
+    } catch (error) {
+      if (error instanceof CommercialReferenceError) {
+        return apiError(error.message, [], error.status);
+      }
+      throw error;
+    }
+
     const session = await mongoose.startSession();
     try {
       let createdOrder: unknown = null;
@@ -124,6 +151,17 @@ export async function POST(request: NextRequest) {
         order.fulfillmentStatus = fullyAvailable ? "AVAILABLE" : partiallyAvailable ? "PARTIALLY_AVAILABLE" : "BACKORDERED";
         await order.save({ session });
         createdOrder = order;
+
+        await recordAuditEvent(
+          {
+            actor: user.name || user.email || "system",
+            action: "order_mutated",
+            entity: "Order",
+            entityId: String(order._id),
+            metadata: { created: true, number: order.number, status: order.status },
+          },
+          session,
+        );
       });
 
       if (!createdOrder) {
@@ -136,6 +174,19 @@ export async function POST(request: NextRequest) {
           : createdOrder;
 
       return apiSuccess(serializeDoc(payload), "Order created");
+    } catch (error) {
+      // Lost a race to another request claiming the same
+      // quotation/invoice — the unique index on Order.quotationId /
+      // Order.invoiceId (see lib/models/Order.ts) rejected this insert.
+      // The transaction is fully rolled back, so nothing was left
+      // behind; report it as a conflict rather than a generic 500.
+      if (isDuplicateKeyErrorOn(error, "quotationId")) {
+        return apiError("Another order already exists for this quotation", [], 409);
+      }
+      if (isDuplicateKeyErrorOn(error, "invoiceId")) {
+        return apiError("Another order already exists for this invoice", [], 409);
+      }
+      throw error;
     } finally {
       await session.endSession();
     }

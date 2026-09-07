@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NextRequest } from "next/server";
 
 import { apiError, apiSuccess, parseJsonBodyFromRequest } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { connectToDatabase } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { loadSalesDocument } from "@/modules/sales-documents/fetch";
@@ -22,6 +23,9 @@ export async function POST(
   { params }: { params: Promise<{ type: string; id: string }> },
 ) {
   try {
+    const limited = enforceRateLimit(request, "document-email", { limit: 10, windowMs: 60_000 });
+    if (limited) return limited;
+
     const user = await requireStaff();
     if (!user) {
       return apiError("Unauthorized", [], 401);

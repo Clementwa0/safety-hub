@@ -1,7 +1,7 @@
 /**
  * Integration tests for modules/invoicing/invoice.service.ts against a
- * real (in-memory) MongoDB replica set, since the behavior under test -
- * transactions, write-conflict retries, atomic balance checks - can't be
+ * real (in-memory) MongoDB replica set, since the behavior under test —
+ * transactions, write-conflict retries, atomic balance checks — can't be
  * verified against a mock. Requires `mongodb-memory-server` (added to
  * devDependencies) and `mongoose`, so `pnpm install` must be run before
  * `pnpm test` picks these up. A replica set is required because
@@ -14,10 +14,13 @@ import { MongoMemoryReplSet } from "mongodb-memory-server";
 
 import { InvoiceModel } from "@/lib/models/Invoice";
 import { PaymentModel } from "@/lib/models/Payment";
+import { OrderModel } from "@/lib/models/Order";
 import {
   assertPaymentMutationAuthorized,
+  convertOrderToInvoice,
   deleteDraftInvoice,
   recordPayment,
+  translateInvoiceServiceError,
   voidPayment,
 } from "@/modules/invoicing/invoice.service";
 import { recordAuditEvent } from "@/modules/audit/audit.service";
@@ -39,6 +42,7 @@ after(async () => {
 afterEach(async () => {
   await InvoiceModel.deleteMany({});
   await PaymentModel.deleteMany({});
+  await OrderModel.deleteMany({});
 });
 
 /** KES 100,000 invoice (1 line, no tax/discount) in a given starting status. */
@@ -270,5 +274,88 @@ describe("payment authorization and audit trail", () => {
     assert.ok(audit);
     assert.equal(audit?.entity, "Invoice");
     assert.equal(audit?.actor, "staff@example.com");
+  });
+});
+
+let orderCounter = 0;
+async function makeOrder(overrides: Partial<{ status: "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" }> = {}) {
+  orderCounter += 1;
+  return OrderModel.create({
+    number: `ORD-TEST-${Date.now()}-${orderCounter}`,
+    customer: new mongoose.Types.ObjectId(),
+    items: [{ name: "Safety helmet", quantity: 2, unitPrice: 1_500, taxRate: 16, discount: 0 }],
+    status: overrides.status ?? "confirmed",
+  });
+}
+
+describe("convertOrderToInvoice", () => {
+  it("creates an invoice and atomically stamps order.invoiceId", async () => {
+    const order = await makeOrder();
+    const { invoice, alreadyExisted } = await convertOrderToInvoice(String(order._id));
+
+    assert.equal(alreadyExisted, false);
+    assert.equal(invoice.status, "unpaid");
+    assert.equal(String(invoice.orderId), String(order._id));
+    assert.equal(String(invoice.customer), String(order.customer));
+
+    const reloadedOrder = await OrderModel.findById(order._id);
+    assert.equal(String(reloadedOrder?.invoiceId), String(invoice._id));
+    assert.equal(await InvoiceModel.countDocuments({ orderId: order._id }), 1);
+  });
+
+  it("rejects converting a cancelled order and leaves no invoice or order change", async () => {
+    const order = await makeOrder({ status: "cancelled" });
+
+    await assert.rejects(convertOrderToInvoice(String(order._id)), (error: unknown) => {
+      const { status } = translateInvoiceServiceError(error);
+      assert.equal(status, 400);
+      return true;
+    });
+
+    assert.equal(await InvoiceModel.countDocuments({}), 0);
+    const reloadedOrder = await OrderModel.findById(order._id);
+    assert.equal(reloadedOrder?.invoiceId, undefined);
+  });
+
+  it("rejects converting an order that doesn't exist", async () => {
+    await assert.rejects(
+      convertOrderToInvoice(String(new mongoose.Types.ObjectId())),
+      (error: unknown) => {
+        const { status } = translateInvoiceServiceError(error);
+        assert.equal(status, 404);
+        return true;
+      },
+    );
+    assert.equal(await InvoiceModel.countDocuments({}), 0);
+  });
+
+  it("is idempotent: converting an already-invoiced order returns the existing invoice without creating a second one", async () => {
+    const order = await makeOrder();
+    const first = await convertOrderToInvoice(String(order._id));
+    const second = await convertOrderToInvoice(String(order._id));
+
+    assert.equal(second.alreadyExisted, true);
+    assert.equal(String(second.invoice._id), String(first.invoice._id));
+    assert.equal(await InvoiceModel.countDocuments({ orderId: order._id }), 1);
+  });
+
+  it("never creates more than one invoice for the same order under concurrent conversion requests", async () => {
+    const order = await makeOrder();
+
+    const results = await Promise.allSettled([
+      convertOrderToInvoice(String(order._id)),
+      convertOrderToInvoice(String(order._id)),
+    ]);
+
+    const succeeded = results.filter((r) => r.status === "fulfilled");
+    assert.equal(succeeded.length, 2, "both concurrent conversions should resolve successfully");
+
+    const invoiceIds = succeeded.map((r) => String((r as PromiseFulfilledResult<Awaited<ReturnType<typeof convertOrderToInvoice>>>).value.invoice._id));
+    assert.equal(invoiceIds[0], invoiceIds[1], "both requests must resolve to the same invoice");
+
+    assert.equal(await InvoiceModel.countDocuments({ orderId: order._id }), 1);
+
+    const reloadedOrder = await OrderModel.findById(order._id);
+    assert.equal(String(reloadedOrder?.invoiceId), invoiceIds[0]);
   });
 });

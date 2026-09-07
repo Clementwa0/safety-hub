@@ -1,12 +1,6 @@
 import { Product } from "@/types/product";
 import { formatKES } from "../format";
 
-/**
- * Pure WhatsApp message/link helpers. Deliberately don't read company info
- * from a module-level constant - callers pass in the business name/number
- * from `useSettings()` so these stay in sync with Sentinel → Settings
- * without needing a page reload.
- */
 
 export function normalizeWhatsAppNumber(value: string) {
   const digits = value.replace(/\D/g, "");

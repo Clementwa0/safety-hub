@@ -252,14 +252,23 @@ export default function AdminProductsPage() {
     setBulkBusy(true);
 
     try {
-      await productService.bulkAction(
+      const result = await productService.bulkAction(
         selectedIds,
         "delete",
       );
 
-      toast.success(
-        `${selectedIds.length} product(s) deleted`,
-      );
+      const deletedCount = result.deleted ?? selectedIds.length;
+      const blockedCount = result.blocked?.length ?? 0;
+
+      if (blockedCount > 0) {
+        toast.warning(
+          `${deletedCount} product(s) deleted. ${blockedCount} skipped because they have sales history — archive ${blockedCount === 1 ? "it" : "them"} instead.`,
+        );
+      } else {
+        toast.success(
+          `${deletedCount} product(s) deleted`,
+        );
+      }
 
       setSelectedIds([]);
       setBulkDeleteOpen(false);

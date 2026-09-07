@@ -4,6 +4,13 @@ import type { Product, ProductInput, ProductStatus } from "@/types/product";
 
 export { normalizeProduct };
 
+export interface BulkProductActionResult {
+  updated?: number;
+  deleted?: number;
+  blocked?: { id: string; name?: string; reason: string }[];
+  missing?: string[];
+}
+
 export interface ProductAvailability {
   productId: string;
   stock: number;
@@ -84,8 +91,8 @@ export const productService = {
     return normalizeProduct(product as Product & { _id?: string; [key: string]: unknown });
   },
 
-  async bulkAction(ids: string[], action: BulkProductAction, status?: ProductStatus): Promise<void> {
-    await apiRequest<{ updated?: number; deleted?: number }>("/api/products/bulk", {
+  async bulkAction(ids: string[], action: BulkProductAction, status?: ProductStatus): Promise<BulkProductActionResult> {
+    return apiRequest<BulkProductActionResult>("/api/products/bulk", {
       method: "POST",
       body: JSON.stringify({ ids, action, status }),
     });

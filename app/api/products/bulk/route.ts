@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { ProductModel } from "@/lib/models/Product";
 import { requireStaff } from "@/lib/auth";
 import { bulkProductActionSchema } from "@/lib/validation/product";
+import { bulkDeleteProducts } from "@/modules/catalog/bulk-delete-products";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,8 +25,26 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case "delete": {
-        const result = await ProductModel.deleteMany({ _id: { $in: ids } });
-        return apiSuccess({ deleted: result.deletedCount ?? 0 }, "Products deleted");
+        const result = await bulkDeleteProducts(ids, user.name || user.email || "system");
+
+        if (result.deleted.length === 0 && (result.blocked.length > 0 || result.missing.length > 0)) {
+          return apiError(
+            "No products were deleted. Some have sales history and must be archived instead; others no longer exist.",
+            [
+              ...result.blocked.map((b) => `${b.name ?? b.id}: ${b.reason}`),
+              ...result.missing.map((id) => `${id}: product not found`),
+            ],
+            409,
+          );
+        }
+
+        const skipped = result.blocked.length + result.missing.length;
+        return apiSuccess(
+          { deleted: result.deleted.length, blocked: result.blocked, missing: result.missing },
+          skipped > 0
+            ? `${result.deleted.length} product(s) deleted; ${skipped} skipped (sales history or not found).`
+            : "Products deleted",
+        );
       }
       case "set-status": {
         if (!status) return apiError("A status is required.", [], 400);

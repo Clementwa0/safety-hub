@@ -5,13 +5,6 @@ import { useCallback, useRef, useState } from "react";
 import { apiRequest } from "@/lib/http";
 import type { CloudinaryFolderKey } from "@/lib/cloudinary";
 
-/**
- * Signed direct-to-Cloudinary upload.
- *
- * Flow: ask our staff-gated signing route for a signature, then PUT the raw
- * file straight at Cloudinary with XHR so we get real progress events. The
- * file never passes through our own serverless functions.
- */
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB - plenty for product photography
 const ACCEPTED_TYPES = [

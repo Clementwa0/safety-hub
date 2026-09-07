@@ -1,26 +1,28 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
-import { OrderModel } from "@/lib/models/Order";
-import { InvoiceModel } from "@/lib/models/Invoice";
 import { requireStaff } from "@/lib/auth";
-import { createWithDocumentNumber } from "@/lib/db/document-number";
+import { convertOrderToInvoice, translateInvoiceServiceError } from "@/modules/invoicing/invoice.service";
 
 // POST /api/orders/[id]/convert-to-invoice
 //
 // The second half of the Quotation -> Order -> Invoice pipeline (see
 // convertQuotationToOrder in app/api/quotations/[id]/route.ts for the
-// first half). This route is now purely a billing-document step - it no
+// first half). This route is now purely a billing-document step — it no
 // longer touches `Product.stock` or `Product.reserved`. Stock actually
 // leaves inventory when the Order reaches "shipped" (see the PATCH
 // handler in app/api/orders/[id]/route.ts), which can happen before or
 // after the order is invoiced; the two are independent now, matching how
 // shipping and billing are independent in the real world.
 //
-// A cancelled order should never reach this endpoint (nothing to invoice)
-// and an order that's already invoiced is caught by the existing-invoice
-// check below, same idempotency pattern as the quotation -> order
-// conversion.
+// All the actual work — the existence/state checks, the atomic
+// create-invoice-and-stamp-order-invoiceId transaction, and the
+// duplicate-conversion race handling — lives in
+// modules/invoicing/invoice.service.ts#convertOrderToInvoice, so it can
+// be exercised directly in tests without going through a Next.js
+// request/response cycle. This route is just the HTTP adapter around
+// it, translating the service's `__TAG__message` errors the same way
+// the payments routes already do.
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -33,42 +35,15 @@ export async function POST(
 
     const { id } = await params;
     await connectToDatabase();
-    const order = await OrderModel.findById(id);
 
-    if (!order) {
-      return apiError("Order not found", [], 404);
-    }
+    const { invoice, alreadyExisted } = await convertOrderToInvoice(id, user.name || user.email || "system");
 
-    if (order.status === "cancelled") {
-      return apiError("Cancelled orders cannot be invoiced", [], 400);
-    }
-
-    const existingInvoice = await InvoiceModel.findOne({ orderId: order._id });
-    if (existingInvoice) {
-      return apiSuccess(serializeDoc(existingInvoice.toObject()), "Invoice already exists");
-    }
-
-    const invoice = await createWithDocumentNumber(InvoiceModel, "INV", (number) => ({
-      number,
-      customer: order.customer,
-      items: order.items,
-      status: "unpaid",
-      issueDate: new Date(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-      amountPaid: 0,
-      quotationId: order.quotationId,
-      orderId: order._id,
-    }));
-
-    order.invoiceId = invoice._id;
-    await order.save();
-
-    return apiSuccess(serializeDoc(invoice.toObject()), "Invoice created from sales order");
-  } catch (error) {
-    return apiError(
-      error instanceof Error ? error.message : "Failed to convert order to invoice",
-      [],
-      500,
+    return apiSuccess(
+      serializeDoc(invoice.toObject()),
+      alreadyExisted ? "Invoice already exists" : "Invoice created from sales order",
     );
+  } catch (error) {
+    const { message, status } = translateInvoiceServiceError(error);
+    return apiError(message, [], status);
   }
 }

@@ -159,7 +159,16 @@ export default function ProductCard({
         className="block flex-1"
       >
         {/* Product image */}
-        <div className="relative aspect-square overflow-hidden bg-muted/40">
+        {/* Product image */}
+        <div
+          className={cn(
+            "relative overflow-hidden bg-muted/40",
+            // Responsive image area
+            compact
+              ? "h-28 sm:h-32 md:h-36"
+              : "h-36 sm:h-44 md:h-52 lg:h-56 xl:h-60",
+          )}
+        >
           <SafeImage
             src={image}
             alt={name}
@@ -167,11 +176,20 @@ export default function ProductCard({
             preset="card"
             priority={priority}
             loading={priority ? undefined : "lazy"}
-            quality={85}
-            sizes="(max-width:480px) 45vw, (max-width:640px) 40vw, (max-width:768px) 30vw, (max-width:1024px) 22vw, 18vw"
+            quality={compact ? 75 : 80}
+            sizes="
+      (max-width: 480px) 42vw,
+      (max-width: 640px) 40vw,
+      (max-width: 768px) 30vw,
+      (max-width: 1024px) 22vw,
+      (max-width: 1280px) 18vw,
+      16vw
+    "
             className={cn(
-              "object-cover transition-transform duration-500",
-              !reduceMotion && "group-hover:scale-[1.04]",
+              "object-contain",
+              "p-2 sm:p-3 md:p-4",
+              "transition-transform duration-500",
+              !reduceMotion && "group-hover:scale-[1.03]",
             )}
           />
 

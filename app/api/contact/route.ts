@@ -4,6 +4,7 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { ContactMessageModel } from "@/lib/models/ContactMessage";
 import { apiError, apiSuccess } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { createNotification } from "@/modules/notifications/notifications.service";
 
 export const runtime = "nodejs";
@@ -31,6 +32,9 @@ const getEnv = () => {
 
 export async function POST(request: Request) {
   try {
+    const limited = enforceRateLimit(request, "contact", { limit: 5, windowMs: 60_000 });
+    if (limited) return limited;
+
     const body = await request.json();
     const parsed = contactSchema.safeParse(body);
 

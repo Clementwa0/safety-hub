@@ -5,7 +5,7 @@ export interface IInvoiceLineItem {
   name: string;
   description?: string;
   /** Present only when this line is a specific size/variant of a
-   *  variant-enabled product - matches `IProductVariant.sku`/`size` on the
+   *  variant-enabled product — matches `IProductVariant.sku`/`size` on the
    *  Product document. Absent for simple (non-variant) products. */
   variantSku?: string;
   size?: string;
@@ -57,7 +57,13 @@ const invoiceSchema = new Schema<IInvoice>(
     notes: { type: String },
     terms: { type: String },
     quotationId: { type: Schema.Types.ObjectId, ref: "Quotation" },
-    orderId: { type: Schema.Types.ObjectId, ref: "Order" },
+    // `unique + sparse`: at most one Invoice may ever point back at a
+    // given Order. This is the DB-level backstop for order->invoice
+    // conversion — even if two concurrent conversion requests both pass
+    // an application-level "does an invoice already exist" check, the
+    // second insert is rejected here with a duplicate-key error instead
+    // of silently creating a second invoice for the same order.
+    orderId: { type: Schema.Types.ObjectId, ref: "Order", unique: true, sparse: true },
   },
   {
     timestamps: true,

@@ -12,7 +12,6 @@ import { checkImageLoads, validateImageUrlFormat } from "@/lib/image-url";
 import {
   cloudinaryPresetUrl,
   cloudinaryPublicId,
-  isCloudinaryConfigured,
   isCloudinaryUrl,
   type CloudinaryFolderKey,
 } from "@/lib/cloudinary";
@@ -71,7 +70,6 @@ export function CloudinaryImageField({
   const [showUrlInput, setShowUrlInput] = useState(false);
 
   const { upload, uploading, progress, error: uploadError, setError } = useCloudinaryUpload(folder);
-  const uploadEnabled = isCloudinaryConfigured();
 
   // Validate/preview whatever URL is currently stored, uploaded or pasted.
   useEffect(() => {
@@ -179,7 +177,7 @@ export function CloudinaryImageField({
           type="button"
           variant="outline"
           size="sm"
-          disabled={disabled || uploading || !uploadEnabled}
+          disabled={disabled || uploading}
           onClick={() => fileInputRef.current?.click()}
         >
           {uploading ? (
@@ -210,13 +208,6 @@ export function CloudinaryImageField({
           </button>
         ) : null}
       </div>
-
-      {!uploadEnabled ? (
-        <p className="text-xs text-amber-600">
-          Cloudinary uploads are unavailable - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not set. Paste an
-          image URL instead.
-        </p>
-      ) : null}
 
       {uploading ? (
         <div className="h-1 w-full overflow-hidden rounded-full bg-muted">

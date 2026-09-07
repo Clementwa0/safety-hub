@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { apiError } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { connectToDatabase } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { loadSalesDocument } from "@/modules/sales-documents/fetch";
@@ -23,6 +24,10 @@ export async function GET(
   { params }: { params: Promise<{ type: string; id: string }> },
 ) {
   try {
+    // PDF rendering is CPU-intensive and share-token requests are public.
+    const limited = enforceRateLimit(request, "document-pdf", { limit: 60, windowMs: 60_000 });
+    if (limited) return limited;
+
     const { type: routeSegment, id } = await params;
     const type = parseSalesDocumentType(routeSegment);
     if (!type) {
@@ -57,6 +62,10 @@ export async function GET(
         // secure link (opened in a browser tab), never a "Download" button.
         "Content-Disposition": `inline; filename="${filename}"`,
         "Cache-Control": "no-store",
+        // The URL contains a bearer token. Do not let browser navigation
+        // from this response disclose it to another origin.
+        "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {

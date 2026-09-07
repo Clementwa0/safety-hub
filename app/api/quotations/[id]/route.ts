@@ -12,6 +12,7 @@ import { createWithDocumentNumber } from "@/lib/db/document-number";
 import { snapshotLineItemAvailability } from "@/modules/inventory/availability";
 import { reserveAvailableStock } from "@/modules/inventory/inventory.service";
 import { canDeleteConvertedQuotation } from "@/modules/orders/order-status";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 import mongoose from "mongoose";
 
 const quotationSchema = z.object({
@@ -73,6 +74,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return apiError("Quotation not found", [], 404);
     }
 
+    const previousStatus = quotation.status;
+
+    // Once a quotation has been converted to a Sales Order, it becomes
+    // part of the commercial history that the Order (and, later, the
+    // Invoice) trace back to — the customer, items, pricing, terms, and
+    // the order linkage itself must never drift out from under a
+    // document another record already relies on. Rather than enumerate
+    // which subset of fields counts as "commercial" (quantities, prices,
+    // discounts, and tax all live inside `items`; "totals" is derived
+    // from `items`, not a stored field), a converted quotation is simply
+    // frozen: any PATCH is rejected outright, not just ones that happen
+    // to touch a listed field. `orderId` itself was never PATCH-able
+    // (see quotationSchema above), so the order linkage can't be
+    // reassigned through this route either.
+    if (quotation.orderId) {
+      return apiError(
+        "This quotation has been converted to a sales order and is now commercially immutable",
+        [],
+        409,
+      );
+    }
+
     // A PATCH payload is partial - a request updating only `validUntil`
     // (or only `issueDate`) must still be checked against whichever of
     // the two isn't in this payload, taken from the existing document.
@@ -115,6 +138,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     });
     await quotation.save();
 
+    await recordAuditEvent({
+      actor: user.name || user.email || "system",
+      action: "quotation_mutated",
+      entity: "Quotation",
+      entityId: String(quotation._id),
+      metadata: { before: { status: previousStatus }, after: { status: quotation.status } },
+    });
+
     return apiSuccess(serializeDoc(quotation.toObject()), "Quotation updated");
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to update quotation", [], 500);
@@ -137,10 +168,21 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     }
 
     if (!canDeleteConvertedQuotation(quotation)) {
-      return apiError("Converted quotations cannot be deleted because they are part of the commercial history", [], 400);
+      return apiError(
+        "Converted quotations cannot be deleted because they are part of the commercial history",
+        [],
+        409,
+      );
     }
 
     await QuotationModel.deleteOne({ _id: quotation._id });
+    await recordAuditEvent({
+      actor: user.name || user.email || "system",
+      action: "quotation_mutated",
+      entity: "Quotation",
+      entityId: String(quotation._id),
+      metadata: { deleted: true, number: quotation.number, status: quotation.status },
+    });
     return apiSuccess(null, "Quotation deleted");
   } catch (error) {
     return apiError(error instanceof Error ? error.message : "Failed to delete quotation", [], 500);
@@ -150,14 +192,14 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 const postActionSchema = z.object({
   // Present + true only on the "Duplicate" action (see
   // services/sentinel/quotation.service.ts's duplicate() vs
-  // convertToOrder() - both POST to this same endpoint). Absent/false
+  // convertToOrder() — both POST to this same endpoint). Absent/false
   // means "convert this quotation to a sales order", the original meaning
   // of a bare POST here (originally converted straight to an Invoice;
   // see convertQuotationToOrder's docstring for why that changed).
   duplicate: z.boolean().optional(),
 });
 
-async function duplicateQuotation(quotation: IQuotation) {
+async function duplicateQuotation(quotation: IQuotation, actor: string) {
   // Preserve the original's validity window length (e.g. "valid for 30
   // days"), just re-anchored to today, rather than copying the original's
   // now-possibly-past validUntil date verbatim.
@@ -173,9 +215,17 @@ async function duplicateQuotation(quotation: IQuotation) {
     validUntil: new Date(now.getTime() + validityMs),
     notes: quotation.notes,
     terms: quotation.terms,
-    // orderId intentionally omitted - a duplicate is a fresh quotation,
+    // orderId intentionally omitted — a duplicate is a fresh quotation,
     // never linked to the original's (or anyone's) order.
   }));
+
+  await recordAuditEvent({
+    actor,
+    action: "quotation_mutated",
+    entity: "Quotation",
+    entityId: String(copy._id),
+    metadata: { created: true, duplicatedFrom: String(quotation._id), number: copy.number },
+  });
 
   return apiSuccess(serializeDoc(copy.toObject()), "Quotation duplicated");
 }
@@ -198,7 +248,7 @@ async function duplicateQuotation(quotation: IQuotation) {
  * an Order already exists for this quotation, it's returned as-is rather
  * than reserving stock a second time.
  */
-async function convertQuotationToOrder(quotationId: string) {
+async function convertQuotationToOrder(quotationId: string, actor: string) {
   const session = await mongoose.startSession();
   let createdOrder: IOrder | null = null;
   let alreadyExisted = false;
@@ -254,6 +304,27 @@ async function convertQuotationToOrder(quotationId: string) {
       quotation.orderId = order._id;
       await quotation.save({ session });
       createdOrder = order;
+
+      await recordAuditEvent(
+        {
+          actor,
+          action: "quotation_mutated",
+          entity: "Quotation",
+          entityId: String(quotation._id),
+          metadata: { convertedToOrder: String(order._id), previousStatus: "accepted" },
+        },
+        session,
+      );
+      await recordAuditEvent(
+        {
+          actor,
+          action: "order_mutated",
+          entity: "Order",
+          entityId: String(order._id),
+          metadata: { created: true, fromQuotation: String(quotation._id), number: order.number },
+        },
+        session,
+      );
     });
     return apiSuccess(
       serializeDoc(createdOrder),
@@ -273,7 +344,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
 
-    // Body is optional - convertToOrder() sends none at all, so an
+    // Body is optional — convertToOrder() sends none at all, so an
     // empty body must not be treated as invalid JSON.
     let body: unknown = {};
     const raw = await request.text();
@@ -298,8 +369,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     return parsed.data.duplicate
-      ? await duplicateQuotation(quotation)
-      : await convertQuotationToOrder(String(quotation._id));
+      ? await duplicateQuotation(quotation, user.name || user.email || "system")
+      : await convertQuotationToOrder(String(quotation._id), user.name || user.email || "system");
   } catch (error) {
     return apiError(
       error instanceof Error ? error.message : "Failed to process quotation",

@@ -12,15 +12,24 @@ export function apiSuccess<T>(data: T, message = "Success") {
 export function apiError(
   message: string,
   errors: string[] = [],
-  status = 400
+  status = 400,
+  headers?: HeadersInit,
 ) {
+  // Route handlers must not accidentally turn database, SMTP, or provider
+  // exceptions into a public API contract.  Most handlers still supply a
+  // useful operation-specific fallback, but the implementation detail is
+  // deliberately discarded for every 5xx response in this last line of
+  // defence.
+  const publicMessage = status >= 500 ? "An unexpected server error occurred." : message;
+  const publicErrors = status >= 500 ? [] : errors;
+
   return NextResponse.json(
     {
       success: false,
-      message,
-      errors,
+      message: publicMessage,
+      errors: publicErrors,
     },
-    { status }
+    { status, headers }
   );
 }
 

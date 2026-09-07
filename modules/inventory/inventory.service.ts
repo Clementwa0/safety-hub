@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { ProductModel, type IProduct, type IProductVariant } from "@/lib/models/Product";
 import { recordMovement } from "@/modules/inventory/movements";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 export interface InventoryItem {
   productId: mongoose.Types.ObjectId | string;
@@ -226,7 +227,7 @@ export async function shipStock(
 
 /** Adjusts the on-hand quantity for a simple product without changing reservations. */
 export async function adjustStock(
-  input: InventoryItem & { stock: number; session?: mongoose.ClientSession },
+  input: InventoryItem & { stock: number; session?: mongoose.ClientSession; actor?: string },
 ): Promise<IProduct> {
   if (!Number.isInteger(input.stock) || input.stock < 0) {
     throw new InventoryError("Stock must be a whole number of zero or more", "INVALID_ADJUSTMENT");
@@ -266,6 +267,17 @@ export async function adjustStock(
     session: input.session,
   });
 
+  await recordAuditEvent(
+    {
+      actor: input.actor ?? "system",
+      action: "inventory_adjusted",
+      entity: "Product",
+      entityId: String(previous._id),
+      metadata: { before: { stock: previous.stock }, after: { stock: input.stock } },
+    },
+    input.session,
+  );
+
   const updatedQuery = ProductModel.findById(input.productId);
   if (input.session) {
     updatedQuery.session(input.session);
@@ -286,6 +298,7 @@ export async function syncVariantInventory(input: {
   productId: mongoose.Types.ObjectId | string;
   variants: IProductVariant[];
   session?: mongoose.ClientSession;
+  actor?: string;
 }): Promise<IProduct> {
   const query = ProductModel.findById(input.productId);
   if (input.session) {
@@ -332,6 +345,16 @@ export async function syncVariantInventory(input: {
       resultingStock: stock,
       session: input.session,
     });
+    await recordAuditEvent(
+      {
+        actor: input.actor ?? "system",
+        action: "inventory_adjusted",
+        entity: "Product",
+        entityId: String(updated._id),
+        metadata: { before: { stock: current.stock }, after: { stock } },
+      },
+      input.session,
+    );
   }
 
   return updated;

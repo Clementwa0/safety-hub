@@ -4,6 +4,8 @@ import { apiError, apiSuccess, serializeDoc } from "@/lib/api";
 import { connectToDatabase } from "@/lib/db";
 import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
+import { assertCustomerDeletable, CustomerReferencedError } from "@/modules/customers/customer-guard";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 const customerSchema = z.object({
   name: z.string().trim().min(2).optional(),
@@ -74,11 +76,30 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 
     const { id } = await params;
     await connectToDatabase();
-    const customer = await CustomerModel.findByIdAndDelete(id);
+    const customer = await CustomerModel.findById(id);
 
     if (!customer) {
       return apiError("Customer not found", [], 404);
     }
+
+    try {
+      await assertCustomerDeletable(customer._id as string);
+    } catch (error) {
+      if (error instanceof CustomerReferencedError) {
+        return apiError(error.message, [], 409);
+      }
+      throw error;
+    }
+
+    await CustomerModel.deleteOne({ _id: customer._id });
+
+    await recordAuditEvent({
+      actor: user.name || user.email || "system",
+      action: "customer_mutated",
+      entity: "Customer",
+      entityId: String(customer._id),
+      metadata: { deleted: true, name: customer.name },
+    });
 
     return apiSuccess(null, "Customer deleted");
   } catch (error) {

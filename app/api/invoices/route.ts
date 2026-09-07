@@ -7,7 +7,13 @@ import { CustomerModel } from "@/lib/models/Customer";
 import { requireStaff } from "@/lib/auth";
 import { lineItemSchema, customerInputSchema, isDateOrderValid } from "@/lib/schemas/sales";
 import { findOrCreateCustomer } from "@/modules/customers/customers";
-import { createWithDocumentNumber } from "@/lib/db/document-number";
+import { createWithDocumentNumber, isDuplicateKeyErrorOn } from "@/lib/db/document-number";
+import {
+  assertOrderBelongsToCustomer,
+  assertQuotationBelongsToCustomer,
+  CommercialReferenceError,
+} from "@/modules/orders/commercial-references";
+import { recordAuditEvent } from "@/modules/audit/audit.service";
 
 // "paid"/"partially_paid" and `amountPaid` are deliberately not
 // accepted here - see the identical note in app/api/invoices/[id]/route.ts.
@@ -96,19 +102,56 @@ export async function POST(request: NextRequest) {
       customer = await findOrCreateCustomer(parsed.data.customer);
     }
 
-    const invoice = await createWithDocumentNumber(InvoiceModel, "INV", (number) => ({
-      number,
-      customer: customer._id,
-      items: parsed.data.items,
-      status: parsed.data.status ?? "draft",
-      issueDate: parsed.data.issueDate ? new Date(parsed.data.issueDate) : new Date(),
-      dueDate: new Date(parsed.data.dueDate),
-      amountPaid: 0,
-      notes: parsed.data.notes,
-      terms: parsed.data.terms,
-      quotationId: parsed.data.quotationId,
-      orderId: parsed.data.orderId,
-    }));
+    // A direct invoice-creation request can supply a quotationId/orderId
+    // just like the order-conversion flow does — hold it to the same
+    // rule: the referenced document must exist and belong to the same
+    // customer this invoice is for.
+    try {
+      if (parsed.data.quotationId) {
+        await assertQuotationBelongsToCustomer(parsed.data.quotationId, customer._id);
+      }
+      if (parsed.data.orderId) {
+        await assertOrderBelongsToCustomer(parsed.data.orderId, customer._id);
+      }
+    } catch (error) {
+      if (error instanceof CommercialReferenceError) {
+        return apiError(error.message, [], error.status);
+      }
+      throw error;
+    }
+
+    let invoice;
+    try {
+      invoice = await createWithDocumentNumber(InvoiceModel, "INV", (number) => ({
+        number,
+        customer: customer._id,
+        items: parsed.data.items,
+        status: parsed.data.status ?? "draft",
+        issueDate: parsed.data.issueDate ? new Date(parsed.data.issueDate) : new Date(),
+        dueDate: new Date(parsed.data.dueDate),
+        amountPaid: 0,
+        notes: parsed.data.notes,
+        terms: parsed.data.terms,
+        quotationId: parsed.data.quotationId,
+        orderId: parsed.data.orderId,
+      }));
+    } catch (error) {
+      // Lost a race to another request claiming the same order — the
+      // unique index on Invoice.orderId (see lib/models/Invoice.ts)
+      // rejected this insert. Reported as a conflict, not a 500.
+      if (isDuplicateKeyErrorOn(error, "orderId")) {
+        return apiError("Another invoice already exists for this order", [], 409);
+      }
+      throw error;
+    }
+
+    await recordAuditEvent({
+      actor: user.name || user.email || "system",
+      action: "invoice_mutated",
+      entity: "Invoice",
+      entityId: String(invoice._id),
+      metadata: { created: true, number: invoice.number, status: invoice.status },
+    });
 
     return apiSuccess(serializeDoc(invoice.toObject()), "Invoice created");
   } catch (error) {

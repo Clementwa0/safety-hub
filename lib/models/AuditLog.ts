@@ -3,12 +3,33 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
 export type AuditAction =
   | "payment_recorded"
   | "payment_voided"
+  | "payment_refunded"
   | "settings_updated"
   | "inventory_adjusted"
   | "order_mutated"
   | "quotation_mutated"
   | "invoice_mutated"
+  | "store_order_mutated"
+  | "product_mutated"
+  | "category_mutated"
+  | "customer_mutated"
   | "user_mutated";
+
+export const AUDIT_ACTIONS: AuditAction[] = [
+  "payment_recorded",
+  "payment_voided",
+  "payment_refunded",
+  "settings_updated",
+  "inventory_adjusted",
+  "order_mutated",
+  "quotation_mutated",
+  "invoice_mutated",
+  "store_order_mutated",
+  "product_mutated",
+  "category_mutated",
+  "customer_mutated",
+  "user_mutated",
+];
 
 export interface IAuditLog extends Document {
   actor: string;
@@ -24,16 +45,7 @@ const auditLogSchema = new Schema<IAuditLog>(
     actor: { type: String, required: true, trim: true },
     action: {
       type: String,
-      enum: [
-        "payment_recorded",
-        "payment_voided",
-        "settings_updated",
-        "inventory_adjusted",
-        "order_mutated",
-        "quotation_mutated",
-        "invoice_mutated",
-        "user_mutated",
-      ],
+      enum: AUDIT_ACTIONS,
       required: true,
     },
     entity: { type: String, required: true, trim: true },

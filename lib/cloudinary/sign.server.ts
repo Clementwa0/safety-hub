@@ -1,14 +1,5 @@
 import crypto from "node:crypto";
 
-/**
- * Server-only Cloudinary credentials + signing.
- *
- * The API secret NEVER leaves the server: the browser asks
- * `/api/uploads/cloudinary/sign` for a short-lived signature, then uploads
- * the file straight to Cloudinary. That keeps large files off our own
- * serverless functions (no body-size limit, no extra bandwidth cost) while
- * still restricting who can upload - the signing route is staff-gated.
- */
 
 export interface CloudinaryServerConfig {
   cloudName: string;
@@ -17,10 +8,7 @@ export interface CloudinaryServerConfig {
 }
 
 export function getCloudinaryServerConfig(): CloudinaryServerConfig {
-  const cloudName =
-    process.env.CLOUDINARY_CLOUD_NAME?.trim() ||
-    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim() ||
-    "";
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim() ?? "";
   const apiKey = process.env.CLOUDINARY_API_KEY?.trim() ?? "";
   const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim() ?? "";
 
@@ -33,11 +21,7 @@ export function getCloudinaryServerConfig(): CloudinaryServerConfig {
   return { cloudName, apiKey, apiSecret };
 }
 
-/**
- * Cloudinary signs the alphabetically sorted `key=value` pairs of every
- * parameter sent with the upload (excluding `file`, `api_key`,
- * `resource_type` and `cloud_name`), with the API secret appended.
- */
+
 export function signCloudinaryParams(
   params: Record<string, string | number>,
   apiSecret: string,

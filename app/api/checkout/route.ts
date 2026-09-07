@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { apiError, apiSuccess, serializeStoreOrderForCustomer } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/api-rate-limit";
 import { connectToDatabase } from "@/lib/db";
 import { resolveCartIdentity, persistCartIdentity } from "@/modules/cart/session";
 import { resolveStorefrontCustomer } from "@/lib/auth/identity";
@@ -9,6 +10,9 @@ import { CartError } from "@/modules/cart/cart";
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = enforceRateLimit(request, "checkout", { limit: 10, windowMs: 60_000 });
+    if (limited) return limited;
+
     const body = await request.json().catch(() => null);
     const parsed = checkoutSchema.safeParse(body);
 
